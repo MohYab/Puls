@@ -11,7 +11,7 @@ decisions, what I learned, feedback, scope changes.
 
 **What I did**
 - Created the GitHub repository "Puls".
-- Added README, .gitignore and this project log.
+- Added README, .gitignore, this project log, and project brief.
 
 **Why**
 - To have a clear starting point and to document the work from day one,
