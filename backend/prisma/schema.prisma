@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  DOCTOR
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  doctor Doctor?
+
+  @@map("users")
+}
+
+model Doctor {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  specialization String?
+
+  user         User           @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+  notes        ClinicalNote[]
+
+  @@map("doctors")
+}
+
+model Patient {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime
+  phone       String?
+  email       String?
+  createdAt   DateTime @default(now())
+
+  appointments Appointment[]
+  notes        ClinicalNote[]
+
+  @@map("patients")
+}
+
+model AppointmentType {
+  id          String  @id @default(cuid())
+  name        String
+  duration    Int // minutes
+  description String?
+
+  appointments Appointment[]
+
+  @@map("appointment_types")
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  patientId         String
+  doctorId          String
+  appointmentTypeId String
+  startTime         DateTime
+  endTime           DateTime
+  status            AppointmentStatus @default(SCHEDULED)
+  bookingComment    String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  patient         Patient         @relation(fields: [patientId], references: [id])
+  doctor          Doctor          @relation(fields: [doctorId], references: [id])
+  appointmentType AppointmentType @relation(fields: [appointmentTypeId], references: [id])
+  note            ClinicalNote?
+
+  @@index([doctorId, startTime])
+  @@map("appointments")
+}
+
+model ClinicalNote {
+  id            String   @id @default(cuid())
+  appointmentId String   @unique
+  patientId     String
+  doctorId      String
+  templateId    String?
+  content       Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointment Appointment            @relation(fields: [appointmentId], references: [id])
+  patient     Patient                @relation(fields: [patientId], references: [id])
+  doctor      Doctor                 @relation(fields: [doctorId], references: [id])
+  template    DocumentationTemplate? @relation(fields: [templateId], references: [id])
+
+  @@map("clinical_notes")
+}
+
+model DocumentationTemplate {
+  id              String  @id @default(cuid())
+  name            String
+  description     String?
+  templateContent Json
+
+  notes ClinicalNote[]
+
+  @@map("documentation_templates")
+}

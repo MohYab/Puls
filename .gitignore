@@ -17,3 +17,10 @@ build/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+# Prisma auto-generated AI agent skills (not needed in repo)
+backend/.claude/
+backend/.cursor/
+backend/.devin/
+backend/.windsurf/
+backend/.agents/
+backend/skills-lock.json
