@@ -110,3 +110,66 @@ less to show technically in the report.
 **Status:** Open. Will compare `localStorage` (simple, vulnerable to XSS) vs
 an httpOnly cookie (safer, more CORS/CSRF complexity) before implementing
 authentication.
+
+## 9. TypeScript 7.0 incompatible with typescript-eslint
+
+**Decision:** Pin `typescript` to `6.0.3` in both frontend and backend.
+
+**Why:** TypeScript 7.0 was released during the project as a new Go-based
+compiler with no stable programmatic API yet. `typescript-eslint` closed a
+support request for TS 7 as "not planned", pending TS 7.1. Installing
+dependencies without pinning pulled in TS 7.0.2, which broke
+`typescript-eslint` with an `ERESOLVE` dependency conflict.
+
+**Alternative considered:** wait for `typescript-eslint` to support TS 7.
+Rejected — no fixed timeline, and the project cannot be blocked by an
+upstream ecosystem gap.
+
+---
+
+## 10. Prisma pinned to version 7, not the default `latest`
+
+**Decision:** Pin `prisma` and `@prisma/client` to `^7` instead of installing
+`latest`.
+
+**Why:** `npm install prisma` installed Prisma 8 (an early release candidate)
+by default. Prisma 8 is a new CLI architecture that no longer reads
+`schema.prisma` and has no `generate`, `migrate dev` or `db push` commands —
+it replaces the classic workflow this project is built around. Prisma 7 is
+the current recommended, stable version for production use.
+
+**Alternative considered:** adopt Prisma 8's new workflow. Rejected — it is
+a release candidate, undocumented for this project's needs, and far riskier
+for a degree project with a fixed deadline.
+
+---
+
+## 11. PostgreSQL user needs explicit schema and CREATEDB privileges
+
+**Decision:** `puls_user` is granted `CREATEDB` and made owner of the
+`public` schema, instead of relying on `GRANT ALL PRIVILEGES ON DATABASE`
+alone.
+
+**Why:** Prisma Migrate creates a temporary "shadow database" when running
+migrations, which requires `CREATEDB`. Separately, PostgreSQL 15+ no longer
+gives regular users implicit rights to create objects in the `public`
+schema, even if they own the database. Both had to be granted explicitly.
+
+---
+
+## 12. Prisma Client requires an explicit driver adapter
+
+**Decision:** `PrismaClient` is instantiated with an explicit
+`@prisma/adapter-pg` driver adapter in a single shared file
+(`src/utils/prisma.ts`), rather than relying on `DATABASE_URL` alone.
+
+**Why:** As of Prisma 7, `DATABASE_URL` alone is no longer enough —
+`PrismaClient` requires a driver adapter to be passed to its constructor.
+A single shared client also avoids creating multiple database connections
+across controllers and services.
+
+**Alternative considered:** instantiate `PrismaClient` separately in each
+service file. Rejected — wasteful and inconsistent; a shared instance is
+standard practice regardless of the Prisma version issue.
+
+---
