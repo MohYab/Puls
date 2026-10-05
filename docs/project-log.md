@@ -7,7 +7,7 @@ decisions, what I learned, feedback, scope changes.
 
 ## Week 1 – Pre-study and scope
 
-**Period:** week 36 2026
+**Period:** week 36 2026-08-31 to 2026-09-06
 
 ### Summary of the week
 
@@ -151,7 +151,7 @@ and P2 (should have), and a clear list of what is out of scope.
 
 ## Week 2 – UX/UI and architecture
 
-**Period:** week 37 2026
+**Period:** week 37 2026-09-07 to 2026-09-13
 
 ### Summary of the week
 
@@ -298,3 +298,199 @@ that starts in week 3 with the project setup.
 - Set up Prisma and write the first schema based on docs/er-diagram.md.
 - Run the first migration.
 - Goal: a working development environment, no features yet.
+
+## Week 3–4 – Project setup, database and backend foundation
+
+**Period:** week 38-39 2026-09-14 to 2026-09-27
+
+### Summary
+
+These two weeks were combined because setting up the project turned into
+far more troubleshooting than expected — almost every tool in the stack had
+released a new major version in the days or weeks before this project
+started, and none of them were compatible with each other yet. By the end,
+both frontend and backend scaffolds exist, PostgreSQL is running with a
+seeded database, Prisma is fully wired up with a working driver adapter, and
+the first real API endpoint works end to end (route → controller → service →
+Prisma → database).
+
+This turned into the most valuable troubleshooting experience of the project
+so far, and a good example of working with a fast-moving ecosystem rather
+than a frozen tutorial stack.
+
+### Entry 1: Frontend scaffold
+
+**What I did**
+
+- Created the frontend with Vite (React + TypeScript template).
+- Configured Tailwind CSS, ESLint and Prettier.
+- Created the folder structure from docs/architecture.md.
+
+**Problem and solution**
+
+- `npm install tailwindcss postcss autoprefixer` installed Tailwind v4,
+  which no longer uses `npx tailwindcss init -p` or a `postcss.config.js`.
+  Solved by switching to Tailwind v4's own Vite plugin (`@tailwindcss/vite`)
+  and a single `@import "tailwindcss";` line in the CSS file instead of the
+  v3 setup.
+- The installed TypeScript version (6.0.3) was newer than VS Code's bundled
+  language server, which didn't recognise the new `erasableSyntaxOnly`
+  compiler option. Solved by selecting "Use Workspace Version" in the
+  editor, and by opening the `frontend/` folder directly as the workspace
+  root instead of the repository root.
+
+**What I learned**
+
+- A tutorial or instruction set written even a few months ago can assume an
+  older major version of a tool. Checking `npx <tool> -v` and reading the
+  actual error message is more reliable than assuming the setup steps are
+  still accurate.
+
+### Entry 2: Backend scaffold
+
+**What I did**
+
+- Created the backend with Express, TypeScript, `tsx` for development, and
+  a minimal `/api/health` endpoint.
+- Configured ESLint and Prettier, matching the frontend's settings.
+
+**Problem and solution**
+
+- `eslint.config.js` failed with `Cannot use import statement outside a
+module`, because `backend/package.json` was missing `"type": "module"`
+  (Vite sets this automatically for the frontend, but a plain `npm init -y`
+  backend does not). Solved by adding `"type": "module"` to `package.json`.
+- Installing ESLint tooling failed with an `ERESOLVE` conflict: `npm install
+typescript` had pulled in TypeScript 7.0.2, a brand-new major version
+  (a new Go-based compiler) that `typescript-eslint` does not support yet
+  (its own support request for TS 7 was closed as "not planned"). Solved by
+  pinning `typescript` to `6.0.3` in both frontend and backend. See
+  docs/decisions.md #9.
+
+### Entry 3: PostgreSQL setup
+
+**What I did**
+
+- Installed PostgreSQL locally, created a `puls_dev` database and a
+  `puls_user` role for the project.
+
+**What I learned**
+
+- PostgreSQL 15+ changed the default privileges on the `public` schema,
+  which caused a permission error later during migrations (see Entry 4).
+  This was new to me — in older PostgreSQL versions, granting privileges on
+  the database used to be enough.
+
+### Entry 4: Prisma setup, schema and first migration
+
+**What I did**
+
+- Installed Prisma and ran `prisma init`.
+- Wrote `prisma/schema.prisma` based on docs/er-diagram.md: 7 models, 2
+  enums (`Role`, `AppointmentStatus`), JSON fields for clinical note content
+  and documentation template content, and a unique `appointmentId` on
+  `ClinicalNote` to enforce one note per appointment.
+- Ran the first migration and generated Prisma Client.
+
+**Problems and solutions**
+
+- `npm install prisma` installed Prisma 8 (a release candidate) by default.
+  Prisma 8 has a completely new CLI that does not read `schema.prisma` and
+  has no `migrate dev` command, which is why `prisma init` produced no
+  schema file on the first attempt. Solved by pinning `prisma` and
+  `@prisma/client` to `^7`, the current recommended stable version. See
+  docs/decisions.md #10.
+- `prisma migrate dev` failed with `P3014` (could not create the shadow
+  database) because `puls_user` lacked the `CREATEDB` privilege. Solved with
+  `ALTER USER puls_user CREATEDB`.
+- The next attempt failed with `permission denied for schema public`, caused
+  by the PostgreSQL 15+ privilege change noted in Entry 3. Solved with
+  `GRANT ALL ON SCHEMA public TO puls_user` and `ALTER SCHEMA public OWNER
+TO puls_user`. See docs/decisions.md #11.
+- After the migration succeeded, `prisma generate` had to be run explicitly
+  to produce the Prisma Client, it was not generated automatically.
+
+**What I learned**
+
+- Database permission errors are rarely about the application code; they
+  are almost always about what the database user is actually allowed to do.
+  Reading the exact error code (e.g. `P3014`) and looking it up directly
+  was faster than guessing.
+
+### Entry 5: Seed data
+
+**What I did**
+
+- Wrote `prisma/seed.ts`: 2 users (1 doctor, 1 admin), 3 dummy patients,
+  4 appointment types, 4 documentation templates, 3 appointments and 1
+  clinical note.
+- Configured the seed command in `prisma7.config.ts` (Prisma 7 moved this
+  out of `package.json`).
+
+**Problem and solution**
+
+- The seed script failed with `PrismaClientInitializationError`: Prisma 7
+  requires `PrismaClient` to be given an explicit driver adapter
+  (`@prisma/adapter-pg`) — `DATABASE_URL` alone is no longer enough. Solved
+  by creating a single shared Prisma Client in `src/utils/prisma.ts`, which
+  all future services will import instead of creating their own client
+  instances. See docs/decisions.md #12.
+
+### Entry 6: First real API endpoint
+
+**What I did**
+
+- Built `GET /api/appointment-types` end to end: route → controller →
+  service → Prisma → database, plus a central `AppError` class and an
+  Express error-handling middleware matching the error format in
+  docs/api.md.
+
+**Problem and solution**
+
+- The endpoint failed with `P1010: User was denied access` even though the
+  same database user worked fine for migrations and seeding. Cause:
+  `src/utils/prisma.ts` read `process.env.DATABASE_URL` before `.env` had
+  been loaded, because ES module imports run before the rest of a file's
+  code `dotenv.config()` in `index.ts` ran too late. Solved by adding
+  `import "dotenv/config";` directly at the top of `src/utils/prisma.ts`,
+  so the environment is loaded as soon as that file is imported, regardless
+  of import order elsewhere.
+
+**What I learned**
+
+- This was the same root cause as the earlier `prisma7.config.ts` issue,
+  just in a different file — environment variables must be loaded before
+  anything that reads them, including indirectly through imports. I now
+  check this first whenever something that depends on `.env` behaves as if
+  a variable is missing.
+
+### Also cleaned up
+
+- Prisma 7's `prisma init` automatically generated AI-agent "skills"
+  documentation folders (`.claude/`, `.cursor/`, `.devin/`, `.windsurf/`,
+  `.agents/`, `skills-lock.json`) and a `postinstall` script to keep them in
+  sync. These were removed and ignored in `.gitignore` — they are not
+  needed in the repository.
+
+### Feedback from supervisor
+
+-
+
+### Scope changes
+
+- No changes to the MVP scope.
+
+### What I would do differently
+
+- I would check installed major versions (`npx tsc -v`, `npx prisma -v`)
+  immediately after every fresh `npm install`, before writing any code
+  against them. Most of the problems this week came from assuming a tool
+  behaved like its last known stable version, when a brand-new major
+  version had actually been installed.
+
+### Next (week 5)
+
+- Authentication: login endpoint, password hashing, JWT, auth middleware,
+  roles, protected endpoints.
+- Decide JWT storage location (localStorage vs httpOnly cookie) —
+  docs/decisions.md #13.

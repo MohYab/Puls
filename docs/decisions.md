@@ -107,9 +107,8 @@ less to show technically in the report.
 
 ## 8. JWT storage location — to be decided in week 5
 
-**Status:** Open. Will compare `localStorage` (simple, vulnerable to XSS) vs
-an httpOnly cookie (safer, more CORS/CSRF complexity) before implementing
-authentication.
+**Status:** Open. Will compare `localStorage` vs an httpOnly cookie before
+implementing authentication.
 
 ## 9. TypeScript 7.0 incompatible with typescript-eslint
 
@@ -169,7 +168,7 @@ A single shared client also avoids creating multiple database connections
 across controllers and services.
 
 **Alternative considered:** instantiate `PrismaClient` separately in each
-service file. Rejected — wasteful and inconsistent; a shared instance is
+service file. Rejected, wasteful and inconsistent; a shared instance is
 standard practice regardless of the Prisma version issue.
 
 ---
