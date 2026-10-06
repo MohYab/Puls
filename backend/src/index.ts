@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import appointmentTypeRoutes from "./routes/appointmentTypes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./routes/auth.js";
+import appointmentRoutes from "./routes/appointments.js";
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/appointment-types", appointmentTypeRoutes);
 
 app.use("/api/appointment-types", appointmentTypeRoutes);
+
+app.use("/api/appointments", appointmentRoutes);
 
 app.use(errorHandler);
 
