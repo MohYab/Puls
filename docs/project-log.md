@@ -488,9 +488,131 @@ TO puls_user`. See docs/decisions.md #11.
   behaved like its last known stable version, when a brand-new major
   version had actually been installed.
 
-### Next (week 5)
+## Week 5–7 – Authentication, frontend foundation and dashboard
 
-- Authentication: login endpoint, password hashing, JWT, auth middleware,
-  roles, protected endpoints.
-- Decide JWT storage location (localStorage vs httpOnly cookie) —
-  docs/decisions.md #13.
+**Period:** week 40-42 2026-09-28 to 2026-10-18
+
+### Summary
+
+These three weeks took the project from a backend-only API to a working,
+end-to-end application: a doctor can now log in through the browser and see
+a real dashboard populated with data from the database. Authentication
+(JWT, password hashing, role-based middleware) was built first, since
+almost every other endpoint depends on it. The frontend then got routing,
+a global auth state, protected routes, and its first two real layouts. The
+week closed with the dashboard, the first feature a user actually sees
+after logging in, fully wired to the backend.
+
+### Entry 1: Authentication (week 5)
+
+**What I did**
+
+- Added password hashing (bcryptjs) and JWT-based login
+  (`POST /api/auth/login`, `GET /api/auth/me`).
+- Built `authenticate` middleware (verifies the JWT) and `authorize`
+  middleware (checks role), and protected `GET /api/appointment-types`
+  with `authenticate` as the first real use of the pattern.
+- Decided JWT storage: `localStorage`, documented as a deliberate trade-off
+  for a prototype. See docs/decisions.md #13.
+- Wrote docs/manual-testing.md with a repeatable set of curl commands to
+  verify the whole auth flow.
+
+**Problem and solution**
+
+- `tsconfig.json` still used the deprecated `"moduleResolution": "node"`
+  option, which TypeScript 6 warned would stop working in TS 7, and which
+  also did not actually match `"type": "module"` in `package.json`. Fixed
+  by switching both `module` and `moduleResolution` to `"NodeNext"`, which
+  matches the ESM imports (`.js` extensions) already used throughout the
+  backend.
+
+**What I learned**
+
+- Authentication is a good example of "build the thing everything else
+  depends on first", almost every subsequent endpoint in the backlog
+  needs `authenticate`, so getting it right early avoided rework.
+
+### Entry 2: Frontend foundation (week 6)
+
+**What I did**
+
+- Set up React Router with a login page and a dashboard page.
+- Built a `fetch`-based API client with a shared `ApiError` type, and
+  connected TanStack Query's provider.
+- Built a global auth state (`AuthProvider` + `useAuth`), a login form with
+  React Hook Form and Zod validation, a `ProtectedRoute` that redirects to
+  `/login` when no user is logged in, and two layouts: `AuthLayout` (for
+  login) and `AppLayout` (sidebar, header with the "Prototype – test data
+  only" banner, user name and log out).
+
+**Problems and solutions**
+
+- A `ReactNode` type error appeared because the project's TypeScript
+  config has `verbatimModuleSyntax` enabled, which requires type-only
+  imports to be marked explicitly (`import type { ... }`).
+- ESLint flagged `setUser` being called synchronously inside a `useEffect`
+  reading from `localStorage`. Solved by reading `localStorage` with a
+  lazy `useState` initializer instead of an effect, since the read is
+  synchronous and does not need to be an effect at all.
+- A "Fast refresh only works when a file only exports components" warning
+  appeared because one file exported both a component and a hook. Solved
+  by splitting auth into three files: `AuthContext.ts` (the context
+  object), `AuthProvider.tsx` (the component), and `useAuth.ts` (the hook)
+  — a pattern I will reuse for any other context going forward.
+
+**What I learned**
+
+- Several of this week's warnings came from React and TypeScript tooling
+  enforcing good practice (type-only imports, no synchronous state updates
+  in effects, one-component-per-file for Fast Refresh) rather than from
+  mistakes in the business logic. Reading _why_ a lint rule exists made
+  the fix obvious each time, rather than just silencing the warning.
+
+### Entry 3: Dashboard (week 7)
+
+**What I did**
+
+- Built `GET /api/appointments?date=` on the backend, scoped to the
+  logged-in doctor (or all doctors for Admin), with patient and
+  appointment type included.
+- Built the frontend data layer (types, service, a `useAppointments` query
+  hook) and two dashboard components, `TodaySchedule` and
+  `NextAppointment`, each with explicit loading and empty states, plus
+  shared `Card` and `StatusBadge` components for reuse in later features.
+- Wired it all into `DashboardPage`, with "next appointment" computed as
+  the first non-cancelled, non-completed appointment after the current
+  time.
+
+**Problem and solution**
+
+- `prisma/seed.ts` uses `create`, not `upsert`, so running it a second
+  time failed with a unique constraint error on `email`. Running
+  `npx prisma migrate reset` is meant to re-run the seed automatically,
+  but did not do so reliably on one occasion, the seed had to be run
+  manually afterward (`npx prisma db seed`). Documented as a known
+  limitation. See docs/decisions.md #14.
+
+**What I learned**
+
+- Seeing the dashboard correctly show "No upcoming appointments today" in
+  the evening, after all of today's appointments had already passed, was
+  a good real confirmation that the time-based filtering logic works
+  correctly, not just that the UI renders.
+
+### Feedback from supervisor
+
+-
+
+### Scope changes
+
+- No changes to the MVP scope.
+
+### What I would do differently
+
+-
+
+### Next (week 8)
+
+- Calendar day/week view (custom grid, per the week 2 decision).
+- Full appointment booking flow: create, edit, cancel.
+- Conflict handling (reject overlapping appointments for the same doctor).

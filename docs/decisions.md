@@ -172,3 +172,37 @@ service file. Rejected, wasteful and inconsistent; a shared instance is
 standard practice regardless of the Prisma version issue.
 
 ---
+
+## 13. JWT storage location
+
+**Decision:** The JWT is stored in `localStorage` on the frontend.
+
+**Why:** For this prototype, with no external exposure and a closed demo
+environment, the simplicity of `localStorage` outweighs the XSS risk it
+carries compared to an httpOnly cookie. This is a deliberate, documented
+trade-off for the MVP, not an oversight.
+
+**Alternative considered:** httpOnly cookie. Rejected for MVP scope — adds
+CORS/CSRF complexity that is not justified for a closed prototype. A
+production version handling real patient data would need to revisit this
+and use an httpOnly cookie instead.
+
+## 14. Seed script is not idempotent
+
+**Decision:** `prisma/seed.ts` uses `create` (not `upsert`) for all records,
+so running it twice without resetting the database fails with a unique
+constraint error on `User.email`.
+
+**Why:** For an MVP, a simple `create`-based seed script was enough to get
+working test data. Making every model idempotent (via `upsert`) would need
+defined "business keys" for models without natural uniqueness, such as
+`Patient`, which was not worth the extra complexity this early.
+
+**Known limitation:** To refresh demo data, the database must be reset
+first (`npx prisma migrate reset`, which re-runs migrations and seed
+automatically — though this did not trigger reliably once in practice, in
+which case `npx prisma db seed` can be run manually afterward).
+
+**Future improvement (P2, optional):** rewrite the seed script with
+`upsert` and fixed IDs or natural keys, so it can be run repeatedly without
+resetting the database.
