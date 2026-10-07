@@ -8,5 +8,10 @@ export default tseslint.config(
   eslintConfigPrettier,
   {
     ignores: ["dist", "node_modules"],
+  },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    },
   }
 );

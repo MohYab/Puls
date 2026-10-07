@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { getAppointments } from "../services/appointmentService.js";
+import { createAppointment } from "../services/appointmentService.js";
+import {
+  updateAppointment,
+  updateAppointmentStatus,
+  getAppointmentById,
+} from "../services/appointmentService.js";
 
 export async function listAppointments(req: Request, res: Response, next: NextFunction) {
   try {
@@ -9,6 +15,46 @@ export async function listAppointments(req: Request, res: Response, next: NextFu
       date,
     });
     res.json(appointments);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createAppointmentHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const appointment = await createAppointment(req.body, req.user!);
+    res.status(201).json(appointment);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAppointmentHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const appointment = await getAppointmentById(req.params.id as string, req.user!);
+    res.json(appointment);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateAppointmentHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const appointment = await updateAppointment(req.params.id as string, req.body, req.user!);
+    res.json(appointment);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateAppointmentStatusHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const appointment = await updateAppointmentStatus(req.params.id as string, req.body, req.user!);
+    res.json(appointment);
   } catch (err) {
     next(err);
   }

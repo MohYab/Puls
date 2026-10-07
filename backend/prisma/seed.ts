@@ -32,7 +32,7 @@ async function main() {
   });
 
   // --- Appointment types ---
-  const [routine, followUp, annual, vaccination] = await Promise.all([
+  const [routine, followUp, annual] = await Promise.all([
     prisma.appointmentType.create({
       data: { name: "Routine consultation", duration: 30, description: "Standard visit" },
     }),
