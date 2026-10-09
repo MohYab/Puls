@@ -206,3 +206,30 @@ which case `npx prisma db seed` can be run manually afterward).
 **Future improvement (P2, optional):** rewrite the seed script with
 `upsert` and fixed IDs or natural keys, so it can be run repeatedly without
 resetting the database.
+
+## 15. ESLint unused-vars uses an explicit underscore convention
+
+**Decision:** `backend/eslint.config.js` sets
+`"@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }]`.
+
+**Why:** ESLint's default `no-unused-vars` behaviour only ignores the
+_last_ parameter of a function when deciding whether an unused argument is
+allowed. Since Express error-handling middleware has a fixed four-parameter
+signature, an intentionally unused parameter that is not last (e.g. `_next`
+in `errorHandler`) was still flagged, even with the conventional underscore
+prefix. Making the underscore pattern an explicit rule setting fixes this
+consistently, instead of relying on parameter position.
+
+---
+
+## 16. Explicit type casts for Express 5 route parameters
+
+**Decision:** `req.params.id` is cast as `req.params.id as string` in
+controllers that read a route parameter.
+
+**Why:** Express 5 (installed by default) uses a newer version of
+`path-to-regexp` with stricter TypeScript types, where a route parameter's
+type is `string | string[]` rather than a plain `string` — to support route
+patterns with repeated parameters, which this project does not use. The
+cast is safe here since every route parameter in this project is always a
+single value.

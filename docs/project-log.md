@@ -611,8 +611,114 @@ after logging in, fully wired to the backend.
 
 -
 
-### Next (week 8)
+## Week 8 – Calendar and the appointment booking flow
 
-- Calendar day/week view (custom grid, per the week 2 decision).
-- Full appointment booking flow: create, edit, cancel.
-- Conflict handling (reject overlapping appointments for the same doctor).
+**Period:** week 43 2026-10-19 to 2026-10-25
+
+### Summary
+
+This was the heaviest week in the plan, and it delivered the core of the
+MVP: a doctor can now view a day-based calendar, create a new appointment
+through a full form (patient, doctor, type, date, time), see it appear
+instantly in the calendar grid, open any appointment to view its details,
+edit it, or cancel it — all backed by real conflict checking on the
+backend, so the same doctor can never be double-booked.
+
+The backend half of the week (conflict logic, update/cancel endpoints,
+patients and doctors endpoints) went smoothly and was fully curl-tested
+before any frontend work began, which made the frontend half mostly a
+matter of wiring up forms and the calendar grid to endpoints that were
+already known to behave correctly.
+
+### Entry 1: Conflict checking and appointment creation
+
+**What I did**
+
+- Implemented `POST /api/appointments`: calculates `endTime` from the
+  appointment type's duration, rejects bookings in the past, and rejects
+  overlapping appointments for the same doctor (except cancelled ones)
+  with `409 APPOINTMENT_CONFLICT` — using the overlap rule from
+  docs/api.md (`newStart < existingEnd AND newEnd > existingStart`).
+- Added `PUT /api/appointments/:id` (reuses the same conflict check,
+  excluding the appointment being edited) and
+  `PATCH /api/appointments/:id/status` (used for cancelling).
+- Added `GET /api/patients` (with `?search=`) and `GET /api/doctors` for
+  the booking form's dropdowns.
+
+**Problems and solutions**
+
+- ESLint flagged an unused `_next` parameter in `errorHandler`, despite the
+  underscore convention, because the default rule only ignores the _last_
+  unused argument. Fixed by setting `argsIgnorePattern: "^_"` explicitly.
+  See docs/decisions.md #15.
+- TypeScript failed to build with `string | string[]` errors on every
+  `req.params.id` usage. Cause: Express 5 (installed by default) has
+  stricter parameter types via a newer `path-to-regexp`. Fixed with an
+  explicit `as string` cast, safe here since no route uses repeated
+  parameters. See docs/decisions.md #16.
+
+### Entry 2: Calendar day view
+
+**What I did**
+
+- Built a custom calendar grid (per the week 2 decision): a 07:00–17:00
+  time axis with appointments rendered as absolutely positioned blocks,
+  `top` based on minutes since the calendar start and `height` based on
+  appointment duration, colour-coded by status.
+- Added day navigation (prev/next) and a toolbar with a "+ New
+  appointment" button.
+
+**What I learned**
+
+- Positioning blocks with plain CSS (`top`/`height` in pixels, computed
+  from time) was indeed manageable, confirming the outcome of the week 2
+  spike — no library was needed for this.
+
+### Entry 3: Booking form and appointment detail
+
+**What I did**
+
+- Built the full booking form (patient, doctor — only shown for Admin,
+  appointment type, date, time) with React Hook Form and Zod validation,
+  opened in a reusable `Modal` component, and connected to
+  `POST /api/appointments` via TanStack Query, with the calendar
+  automatically refreshing on success (`invalidateQueries`).
+- Built an appointment detail view, opened by clicking a calendar block,
+  with an edit mode (pre-filled form, same conflict handling) and a cancel
+  action (confirmation dialog, then `PATCH .../status`).
+
+**What I learned**
+
+- Surfacing the backend's `409 APPOINTMENT_CONFLICT` message directly in
+  the form's error state, rather than a generic "something went wrong",
+  made the conflict rule feel like a real, understandable part of the UI
+  instead of just a failed request — and was very little extra code since
+  the API already returned a clear message.
+
+### Problems and solutions
+
+- The calendar page felt very slow to load once, showing "Loading..." for
+  an extended time. Resolved by logging out and back in, which refreshed
+  an outdated JWT (from an earlier `prisma migrate reset`/seed cycle) and
+  coincided with Vite's one-time compilation of the new calendar files on
+  first visit. Not a code bug, but a reminder to always get a fresh token
+  after resetting the database during development.
+
+### Feedback from supervisor
+
+-
+
+### Scope changes
+
+- No changes to the MVP scope. US-05, US-06 and US-07 (create, edit,
+  cancel an appointment) are now fully implemented and manually verified.
+
+### What I would do differently
+
+-
+
+### Next (week 9)
+
+- Patient list with search.
+- Patient detail page.
+- Patient appointment history.
