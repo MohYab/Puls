@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getAppointments } from "../services/appointmentService.js";
+import { getAppointments, getPatientAppointments } from "../services/appointmentService.js";
 import { createAppointment } from "../services/appointmentService.js";
 import {
   updateAppointment,
@@ -57,5 +57,14 @@ export async function updateAppointmentStatusHandler(
     res.json(appointment);
   } catch (err) {
     next(err);
+  }
+}
+
+export async function listPatientAppointments(req: Request, res: Response, next: NextFunction) {
+  try {
+    const appointments = await getPatientAppointments(req.params.id as string, req.user!);
+    res.json(appointments);
+  } catch (error) {
+    next(error);
   }
 }

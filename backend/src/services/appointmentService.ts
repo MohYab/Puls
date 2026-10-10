@@ -5,6 +5,7 @@ import type {
   UpdateAppointmentInput,
   UpdateStatusInput,
 } from "../validators/appointmentValidators.js";
+import { getPatientById } from "./patientService.js";
 
 interface GetAppointmentsParams {
   requestingUser: { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
@@ -178,6 +179,31 @@ export async function getAppointmentById(
     include: {
       patient: { select: { firstName: true, lastName: true } },
       appointmentType: { select: { name: true, duration: true } },
+    },
+  });
+}
+
+export async function getPatientAppointments(
+  patientId: string,
+  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
+) {
+  // 404 om patienten saknas, istället för en tom lista
+  await getPatientById(patientId);
+
+  return prisma.appointment.findMany({
+    where: {
+      patientId,
+      // Doctor ser bara sina egna besök med patienten; Admin ser alla.
+      ...(requestingUser.role === "DOCTOR" && { doctorId: requestingUser.doctorId }),
+    },
+    orderBy: { startTime: "desc" },
+    select: {
+      id: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+      doctor: { select: { id: true, user: { select: { name: true } } } },
+      appointmentType: { select: { id: true, name: true } },
     },
   });
 }
