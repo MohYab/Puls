@@ -13,6 +13,9 @@ import {
   updateAppointmentHandler,
   updateAppointmentStatusHandler,
 } from "../controllers/appointmentController.js";
+import { createNoteHandler, getAppointmentNoteHandler } from "../controllers/noteController.js";
+import { noteContentSchema } from "../validators/noteValidators.js";
+import { authorize } from "../middleware/authorize.js";
 
 const router = Router();
 
@@ -25,6 +28,15 @@ router.patch(
   authenticate,
   validate(updateStatusSchema),
   updateAppointmentStatusHandler
+);
+
+router.get("/:id/notes", authenticate, authorize("DOCTOR"), getAppointmentNoteHandler);
+router.post(
+  "/:id/notes",
+  authenticate,
+  authorize("DOCTOR"),
+  validate(noteContentSchema),
+  createNoteHandler
 );
 
 export default router;

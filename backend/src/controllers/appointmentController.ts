@@ -68,5 +68,3 @@ export async function listPatientAppointments(req: Request, res: Response, next:
     next(error);
   }
 }
-
-//cmux1z21g0007dp1r5pp499xk

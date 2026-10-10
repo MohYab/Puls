@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.js";
 import appointmentRoutes from "./routes/appointments.js";
 import patientRoutes from "./routes/patients.js";
 import doctorRoutes from "./routes/doctors.js";
+import noteRoutes from "./routes/notes.js";
 
 dotenv.config();
 
@@ -29,6 +30,8 @@ app.use("/api/appointments", appointmentRoutes);
 
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
+
+app.use("/api/notes", noteRoutes);
 
 app.use(errorHandler);
 
