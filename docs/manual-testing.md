@@ -128,3 +128,58 @@ Known test gap: the seed data has one doctor, so the doctor filter is not verifi
 - `/patients/does-not-exist` shows "Patient not found" within about a second
 - With the backend stopped, a patient page shows the error box with "Try again"
 - Works as both doctor and admin
+
+## Clinical notes (protected, doctors only)
+
+Get ids for a COMPLETED appointment (has a seeded note), a SCHEDULED one without a note, and a CANCELLED one:
+
+```bash
+COMPLETED_ID=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="COMPLETED")][0].id')
+SCHEDULED_ID=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="SCHEDULED")][0].id')
+CANCELLED_ID=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="CANCELLED")][0].id')
+```
+
+Note: the create test consumes `SCHEDULED_ID` (one note per appointment). To repeat it, use another appointment without a note or reset the database.
+
+| #   | Request                                                        | Expected                                       |
+| --- | -------------------------------------------------------------- | ---------------------------------------------- |
+| 1   | `GET /appointments/$COMPLETED_ID/notes` as doctor              | 200 with the note                              |
+| 2   | same as admin                                                  | 403 `FORBIDDEN`                                |
+| 3   | `GET /appointments/$SCHEDULED_ID/notes` as doctor              | 404 `NOT_FOUND` (no note yet, a normal state)  |
+| 4   | `POST /appointments/$SCHEDULED_ID/notes` with `{"plan":"..."}` | 201, `content` has all four keys (rest `""`)   |
+| 5   | same POST again                                                | 409 `NOTE_EXISTS`                              |
+| 6   | `POST` with `{}`                                               | 400 `VALIDATION_ERROR`                         |
+| 7   | `POST /appointments/$CANCELLED_ID/notes`                       | 409 `APPOINTMENT_CANCELLED`                    |
+| 8   | `PUT /notes/<noteId>` with new content                         | 200, `updatedAt` changes                       |
+| 9   | `PUT` as admin / `PUT /notes/does-not-exist` as doctor         | 403 `FORBIDDEN` / 404 `NOT_FOUND`              |
+| 10  | `GET /patients/<patientId>/notes` as doctor / as admin         | 200 list, newest visit first / 403 `FORBIDDEN` |
+| 11  | any notes endpoint without token                               | 401 `UNAUTHORIZED`                             |
+
+Example (test 4):
+
+```bash
+curl -i -X POST http://localhost:3001/api/appointments/$SCHEDULED_ID/notes \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"plan":"Follow up in two weeks."}'
+```
+
+Known test gap: the seed data has one doctor, so "doctor B cannot read doctor A's note" (403) is not verified. Notes cannot be deleted (no DELETE endpoint by design).
+
+## UI checklist: documentation (week 10)
+
+- Calendar: clicking a booking as doctor shows a "Documentation" link (not for cancelled bookings, not for admin)
+- `/documentation/<appointmentId>` shows patient, time, type and status; an appointment without a note shows an empty form ("Not saved yet")
+- Saving with all fields empty shows "Write something in at least one field" and sends no request
+- Saving creates the note ("Documentation saved", button changes to "Save changes", timestamps appear); reloading keeps the text
+- Editing and saving again updates "Last updated"; the saved message disappears while typing
+- Double-clicking Save on a new note does not cause a 409 (button disabled while saving)
+- Patient page: "Previous documentation" lists the patient's notes (newest visit first, line breaks preserved) with an "Open documentation" link; a new note appears there after saving
+- Documentation page: the current note is hidden in the list beside the form
+- Patient history has a "Documentation" link on non-cancelled rows (doctor only)
+- Cancelled appointment without a note: "Appointment cancelled", no form
+- `/documentation/does-not-exist`: "Appointment not found"
+- Admin: documentation page shows "No access", patient page shows "Clinical notes are only visible to doctors.", and no `/notes` requests appear in the Network tab
+- Backend stopped: error box with "Try again"

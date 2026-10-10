@@ -37,20 +37,35 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 
 ## Patients
 
-| Method | Path                       | Role   | Notes          |
-| ------ | -------------------------- | ------ | -------------- |
-| GET    | /patients?search=          | any    | Search by name |
-| GET    | /patients/:id              | any    |                |
-| GET    | /patients/:id/appointments | any    |                |
-| GET    | /patients/:id/notes        | DOCTOR | 403 for admin  |
+| Method | Path                       | Role   | Notes                                                                     |
+| ------ | -------------------------- | ------ | ------------------------------------------------------------------------- |
+| GET    | /patients?search=          | any    | Search by name                                                            |
+| GET    | /patients/:id              | any    |                                                                           |
+| GET    | /patients/:id/appointments | any    |                                                                           |
+| GET    | /patients/:id/notes        | DOCTOR | 403 for admin; only the requesting doctor's own notes, newest visit first |
 
 ## Clinical notes
 
-| Method | Path                    | Role   | Notes                        |
-| ------ | ----------------------- | ------ | ---------------------------- |
-| GET    | /appointments/:id/notes | DOCTOR |                              |
-| POST   | /appointments/:id/notes | DOCTOR | One note per appointment     |
-| PUT    | /notes/:id              | DOCTOR | Only the doctor who wrote it |
+Doctors only: admins always get 403. A doctor can only read and write notes for their own appointments, and only the doctor who wrote a note can edit it. There is no DELETE endpoint (notes are edited, never deleted).
+
+| Method | Path                    | Role   | Notes                                                                    |
+| ------ | ----------------------- | ------ | ------------------------------------------------------------------------ |
+| GET    | /appointments/:id/notes | DOCTOR | 404 if the appointment or its note does not exist                        |
+| POST   | /appointments/:id/notes | DOCTOR | One note per appointment; 409 `NOTE_EXISTS`, 409 `APPOINTMENT_CANCELLED` |
+| PUT    | /notes/:id              | DOCTOR | Full replace of `content`; 404 if the note does not exist                |
+
+Body for POST and PUT (validated with Zod, missing fields default to `""`, at least one field must be non-empty, max 5000 characters per field):
+
+```json
+{
+  "reasonForVisit": "Annual check-up",
+  "observation": "Blood pressure normal.",
+  "assessment": "Good general health.",
+  "plan": "Follow up in 12 months."
+}
+```
+
+Response (GET, POST, PUT): the note with `id`, `appointmentId`, `patientId`, `doctorId`, `templateId`, `content`, `createdAt`, `updatedAt`, and `appointment: { startTime, appointmentType: { name } }`.
 
 ## Doctors / appointment types / templates
 
