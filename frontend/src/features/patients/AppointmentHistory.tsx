@@ -1,9 +1,13 @@
+import { Link } from "react-router-dom";
 import { Card } from "../../components/Card";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatTime } from "../../utils/date";
+import { useAuth } from "../auth/useAuth";
 import { usePatientAppointments } from "./usePatients";
 
 export function AppointmentHistory({ patientId }: { patientId: string }) {
+  const { user } = useAuth();
+  const isDoctor = user?.role === "DOCTOR";
   const { data: appointments, isPending, isError, refetch } = usePatientAppointments(patientId);
 
   return (
@@ -47,6 +51,11 @@ export function AppointmentHistory({ patientId }: { patientId: string }) {
                 <th scope="col" className="py-2 font-medium">
                   Status
                 </th>
+                {isDoctor && (
+                  <th scope="col" className="py-2 pl-4 font-medium">
+                    <span className="sr-only">Documentation</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -59,6 +68,19 @@ export function AppointmentHistory({ patientId }: { patientId: string }) {
                   <td className="py-2">
                     <StatusBadge status={appointment.status} />
                   </td>
+                  {isDoctor && (
+                    <td className="py-2 pl-4 text-right">
+                      {appointment.status !== "CANCELLED" && (
+                        <Link
+                          to={`/documentation/${appointment.id}`}
+                          aria-label={`Documentation for ${formatDate(appointment.startTime)}`}
+                          className="text-blue-700 hover:underline"
+                        >
+                          Documentation
+                        </Link>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

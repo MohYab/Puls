@@ -29,3 +29,7 @@ export function updateAppointment(id: string, payload: UpdateAppointmentPayload)
 export function cancelAppointment(id: string) {
   return apiClient.patch<Appointment>(`/appointments/${id}/status`, { status: "CANCELLED" });
 }
+
+export function getAppointment(id: string) {
+  return apiClient.get<Appointment>(`/appointments/${id}`);
+}

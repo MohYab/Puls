@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getPatient, getPatientAppointments, getPatients } from "./patientService";
-import { ApiError } from "../../services/apiClient";
+import { retryUnlessClientError } from "../../utils/queryRetry";
 
 export function usePatients(search?: string) {
   return useQuery({
@@ -15,9 +15,7 @@ export function usePatient(id: string | undefined) {
     queryKey: ["patients", "detail", id],
     queryFn: () => getPatient(id!),
     enabled: !!id,
-    // Don't retry client errors like 404; retrying can't fix them.
-    retry: (failureCount, error) =>
-      !(error instanceof ApiError && error.status < 500) && failureCount < 2,
+    retry: retryUnlessClientError,
   });
 }
 

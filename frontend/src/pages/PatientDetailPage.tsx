@@ -1,4 +1,7 @@
 import { Link, useParams } from "react-router-dom";
+import { Card } from "../components/Card";
+import { useAuth } from "../features/auth/useAuth";
+import { PreviousNotes } from "../features/notes/PreviousNotes";
 import { AppointmentHistory } from "../features/patients/AppointmentHistory";
 import { PatientInfoCard } from "../features/patients/PatientInfoCard";
 import { usePatient } from "../features/patients/usePatients";
@@ -6,6 +9,7 @@ import { ApiError } from "../services/apiClient";
 
 export default function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const { data: patient, isPending, isError, error, refetch } = usePatient(id);
 
   const isNotFound = isError && error instanceof ApiError && error.status === 404;
@@ -29,9 +33,7 @@ export default function PatientDetailPage() {
 
       {isError && !isNotFound && (
         <div role="alert" className="mt-6 rounded-md border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-800">
-            {error instanceof Error ? error.message : "Could not load patient."}
-          </p>
+          <p className="text-sm text-red-800">{error.message}</p>
           <button
             type="button"
             onClick={() => refetch()}
@@ -47,6 +49,7 @@ export default function PatientDetailPage() {
           <h1 className="mt-4 text-2xl font-semibold text-gray-900">
             {patient.firstName} {patient.lastName}
           </h1>
+
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <PatientInfoCard patient={patient} />
@@ -54,6 +57,17 @@ export default function PatientDetailPage() {
             <div className="lg:col-span-2">
               <AppointmentHistory patientId={patient.id} />
             </div>
+          </div>
+
+          {/* New: documentation section, full width below the two cards */}
+          <div className="mt-6">
+            {user?.role === "DOCTOR" ? (
+              <PreviousNotes patientId={patient.id} />
+            ) : (
+              <Card title="Documentation">
+                <p className="text-sm text-gray-600">Clinical notes are only visible to doctors.</p>
+              </Card>
+            )}
           </div>
         </>
       )}

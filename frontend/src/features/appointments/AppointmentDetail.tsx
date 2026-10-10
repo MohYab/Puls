@@ -9,6 +9,8 @@ import { updateAppointment, cancelAppointment } from "./appointmentService";
 import { getAppointmentTypes } from "../appointmentTypes/appointmentTypeService";
 import { ApiError } from "../../services/apiClient";
 import type { Appointment } from "../../types/appointment";
+import { Link } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
 
 const editSchema = z.object({
   appointmentTypeId: z.string().min(1, "Appointment type is required"),
@@ -23,6 +25,7 @@ interface AppointmentDetailProps {
 }
 
 export function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -145,7 +148,15 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
       </div>
 
       {appointment.status !== "CANCELLED" && (
-        <div className="flex justify-end gap-2 pt-2 border-t">
+        <div className="flex items-center justify-end gap-2 pt-2 border-t">
+          {user?.role === "DOCTOR" && (
+            <Link
+              to={`/documentation/${appointment.id}`}
+              className="mr-auto px-4 py-2 text-sm border rounded"
+            >
+              Documentation
+            </Link>
+          )}
           <button
             onClick={handleCancelAppointment}
             disabled={cancelMutation.isPending}

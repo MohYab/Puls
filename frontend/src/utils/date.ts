@@ -24,3 +24,7 @@ export function formatDate(isoString: string): string {
 export function formatBirthDate(isoString: string): string {
   return new Date(isoString).toLocaleDateString("sv-SE", { timeZone: "UTC" });
 }
+
+export function formatDateTime(isoString: string): string {
+  return `${formatDate(isoString)} ${formatTime(isoString)}`;
+}
