@@ -1,6 +1,15 @@
-import { Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
-import { useNavigate } from "react-router-dom";
+
+const navItems = [
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/calendar", label: "Calendar" },
+  { to: "/patients", label: "Patients" },
+];
+
+function navLinkClass({ isActive }: { isActive: boolean }) {
+  return `rounded px-2 py-1 hover:bg-gray-800 ${isActive ? "bg-gray-800 font-medium" : ""}`;
+}
 
 export function AppLayout() {
   const { user, logout } = useAuth();
@@ -16,15 +25,11 @@ export function AppLayout() {
       <aside className="w-56 bg-gray-900 text-white p-4 flex flex-col gap-2">
         <div className="text-lg font-semibold mb-4">Puls</div>
         <nav className="flex flex-col gap-1">
-          <a href="/dashboard" className="hover:bg-gray-800 rounded px-2 py-1">
-            Dashboard
-          </a>
-          <a href="/calendar" className="hover:bg-gray-800 rounded px-2 py-1">
-            Calendar
-          </a>
-          <a href="/patients" className="hover:bg-gray-800 rounded px-2 py-1">
-            Patients
-          </a>
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} className={navLinkClass}>
+              {item.label}
+            </NavLink>
+          ))}
         </nav>
       </aside>
 

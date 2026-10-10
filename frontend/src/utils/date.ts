@@ -15,3 +15,12 @@ export function formatTime(isoString: string): string {
 export function todayDateString(): string {
   return toDateString(new Date());
 }
+
+export function formatDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString("sv-SE");
+}
+
+// Date of birth is stored as UTC midnight, so format it in UTC to avoid day shifts.
+export function formatBirthDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString("sv-SE", { timeZone: "UTC" });
+}

@@ -20,3 +20,19 @@ export interface Appointment {
     duration: number;
   };
 }
+
+// Shape returned by GET /api/patients/:id/appointments (patient history).
+export interface PatientAppointment {
+  id: string;
+  startTime: string;
+  endTime: string;
+  status: AppointmentStatus;
+  doctor: {
+    id: string;
+    user: { name: string };
+  };
+  appointmentType: {
+    id: string;
+    name: string;
+  };
+}
