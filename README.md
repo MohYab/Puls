@@ -1,15 +1,30 @@
 # Puls
 
 Web-based MVP for appointment booking and digital documentation in healthcare.
-Built as a degree project Sduring an internship.
+Built as a degree project during an internship.
 
 > ⚠️ **Prototype.** This project uses test data only. It is not approved for
 > real healthcare use and must never contain real patient information.
 
 ## Status
 
-Week 7. Authentication, frontend routing, and a working
-dashboard are in place. Next up: calendar and the appointment booking flow.
+Week 10 of 17. The core of the MVP works end to end: a doctor can log in,
+see the dashboard and calendar, book, edit and cancel appointments
+(with conflict checking), search patients, view a patient's appointment
+history, and write, edit and read visit notes. Admins manage bookings but
+have no access to clinical notes.
+
+Next up: documentation templates and UX polish (week 11), admin features
+and permissions (week 12), then testing (week 13).
+
+### What works so far
+
+- Login with JWT and role-based access (Doctor, Admin)
+- Dashboard with today's schedule and the next appointment
+- Calendar day view with booking, editing and cancelling
+- Patient list with search, patient page and appointment history
+- Visit documentation with four structured fields, previous notes per
+  patient (doctors only)
 
 ## Tech stack
 
@@ -37,7 +52,8 @@ npx prisma db seed
 npm run dev
 ```
 
-Runs on `http://localhost:3001`.
+Runs on `http://localhost:3001`. The seed step can be repeated at any time
+to reset the demo data (see "Test login" below).
 
 ### Frontend
 
@@ -51,10 +67,22 @@ Runs on `http://localhost:5173`.
 
 ### Test login
 
-| Email           | Password    | Role   |
-| --------------- | ----------- | ------ |
-| erik@puls.test  | password123 | DOCTOR |
-| admin@puls.test | password123 | ADMIN  |
+All users have the password `password123`.
+
+| Email                      | Role   | Notes                                           |
+| -------------------------- | ------ | ----------------------------------------------- |
+| erik@puls.test             | DOCTOR | Dr. Erik Lindqvist                              |
+| sara@puls.test             | DOCTOR | Dr. Sara Nilsson                                |
+| johan@puls.test            | DOCTOR | Dr. Johan Ekström                               |
+| admin@puls.test            | ADMIN  | No access to clinical notes                     |
+| `<first>.<last>@puls.test` | DOCTOR | 25 more doctors, e.g. `maja.svensson@puls.test` |
+
+The seed data contains 28 doctors, 73 patients, about 135 appointments and
+about 33 notes. All of it is fictional test data.
+
+To reset the data at any time, run `npx prisma db seed` in `backend/`. The
+script clears the database first (and refuses to run in production), so it
+can be run repeatedly. IDs change on every run: log in again afterwards.
 
 See [docs/manual-testing.md](docs/manual-testing.md) for API testing
 commands.
