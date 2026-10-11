@@ -722,3 +722,207 @@ already known to behave correctly.
 - Patient list with search.
 - Patient detail page.
 - Patient appointment history.
+
+## Week 9–10 – Patients and clinical documentation
+
+**Period:** week 44–45 2026-10-26 to 2026-11-08
+
+### Summary
+
+These two weeks completed the link between booking and documentation,
+which is the central idea of the MVP. A doctor can now search for a
+patient, open the patient page and see the appointment history, then open
+any visit, write a visit note in four structured fields, save it, edit it
+later, and read the patient's earlier notes as context for the next visit.
+The same flow works from the calendar, the patient history and the
+patient's note list, so documentation is one click from wherever the doctor
+finds the visit.
+
+As in week 8, the backend came first and was curl-tested for success and
+error cases in both roles before the frontend was built. The most
+important design choice was to treat clinical notes as sensitive from the
+start: admins have no access to notes at all, a doctor can only read and
+write notes for their own appointments, all read permissions live in one
+function, and notes are never deleted. I also extended the seed data from
+one doctor to 28 doctors and 73 patients, so rules between doctors could
+finally be tested instead of assumed.
+
+The weeks also produced two scope decisions. Sharing a note with another
+doctor (with the patient's consent) was classified as SHOULD HAVE and
+planned for week 12, while a patient login was classified as out of scope
+and moved to future development, because it would need strong
+identification and access logging. Templates for documentation, UX polish
+and automated tests remain for weeks 11–13.
+
+### Entry 1: Patient list, search and detail (week 9)
+
+**What I did**
+
+- Backend: added `GET /api/patients/:id` and
+  `GET /api/patients/:id/appointments` (a doctor only sees their own
+  appointments with the patient, an admin sees all). Both were tested
+  with curl for success and error cases (200, 401, 404).
+- Frontend: types, service functions and TanStack Query hooks for the
+  patient list, a single patient and the appointment history. Built the
+  patient list with a debounced search field (300 ms), a patient detail
+  page with an information card and appointment history, and replaced
+  the plain `<a>` links in the sidebar with `NavLink` (no full page
+  reload, active link highlighted).
+- Added loading, empty, error and "not found" states to every view.
+
+**What I learned**
+
+- Debouncing the search value (not the input itself) keeps typing
+  responsive while limiting API requests. `keepPreviousData` stops the
+  table from flashing a loading state on every new search.
+- The patient detail endpoint returns fewer fields than the list, and the
+  appointment history has a different shape than calendar appointments,
+  so I used one TypeScript type per response shape instead of one type
+  with many optional fields.
+- A 404 should not be retried. Skipping retries for client errors (4xx)
+  makes "Patient not found" appear immediately instead of after several
+  seconds of automatic retries.
+
+### Entry 2: Clinical notes API (week 10)
+
+**What I did**
+
+- Built four endpoints: `GET` and `POST /api/appointments/:id/notes`,
+  `PUT /api/notes/:id` and `GET /api/patients/:id/notes`. Input is
+  validated with Zod (four text fields, at least one must be filled in,
+  max 5000 characters each).
+- Put all read permissions in one place (`canReadNote` and
+  `readableNotesWhere` in `noteService.ts`) and added a rule that admins
+  have no access at all. Added `authorize("DOCTOR")` on the routes as a
+  second layer.
+- Added explicit error codes: `NOTE_EXISTS` (one note per appointment)
+  and `APPOINTMENT_CANCELLED` (a cancelled appointment cannot be
+  documented), both 409.
+- Tested 11 cases with curl in both roles: 200, 201, 400, 401, 403, 404
+  and 409.
+
+**What I learned**
+
+- Keeping the permission rule in one function means a later change (for
+  example sharing notes between doctors) touches one place instead of
+  every endpoint.
+- The `validate` middleware writes the parsed result back to `req.body`,
+  so Zod's `trim()` and `default("")` apply before the service runs. That
+  is why a note always has all four keys.
+
+### Entry 3: Documentation page and previous notes (week 10)
+
+**What I did**
+
+- Built `/documentation/:appointmentId` with the appointment details
+  (patient, time, type, status) and a form (React Hook Form + Zod) for
+  the four note fields. The same form creates the first note and edits
+  it afterwards, and shows when it was created and last updated.
+- Added `PreviousNotes` (collapsible entries, line breaks preserved)
+  on the patient page and beside the form, and a "Documentation" link in
+  the calendar's appointment detail and in the patient's appointment
+  history. The links are only shown to doctors and not for cancelled
+  appointments.
+- "No note yet" (404) is treated as a normal state in the frontend, not
+  as an error. Admins see an explanation instead of notes, and no note
+  requests are sent for them.
+
+**What I learned**
+
+- With a synchronous submit handler and `useMutation`, `isSubmitting` is
+  never true while the request is running, so the button is not disabled
+  and a double click can send two creates (the second fails with 409).
+  `mutation.isPending` is the right signal. My older forms (booking and
+  edit) should be changed the same way.
+- Resetting the form with the saved values after a save makes the form
+  "clean" again, so the "saved" message disappears when the user starts
+  typing.
+
+### Entry 4: Larger seed data (week 10)
+
+**What I did**
+
+- Extended the seed script from one doctor to 28 doctors, 73 patients,
+  about 135 appointments and about 33 notes, so access rules between
+  doctors can be tested. Appointment dates are relative to today so the
+  dashboard always has "today" and upcoming appointments.
+- Built test cases into the data: Anna has appointments and notes with
+  two doctors, two completed appointments have no note yet, and there is
+  a no-show, cancelled appointments and patients without phone or email.
+- The seed now clears the database first (and refuses to run in
+  production), so it can be run repeatedly.
+- Phone numbers come from the range that the Swedish regulator (PTS)
+  reserves for fictional use, and e-mail addresses are generated from
+  names as plain ASCII.
+
+**What I learned**
+
+- Test data should be designed for the test cases you need. With only one
+  doctor, "doctor B cannot read doctor A's note" could not be verified
+  until week 10.
+- Even random-looking dummy phone numbers can belong to real people, so
+  fictional ranges are the safer choice for a healthcare prototype.
+
+### Problems and solutions
+
+- **"Cannot GET /api/patients/:id" as an HTML page.** A route that is not
+  registered gives Express's default HTML 404, while my own errors are
+  JSON. The route was missing in the router file. Lesson: an HTML 404
+  means "no route matched", a JSON 404 means "the route ran".
+- **A TypeScript error on `Prisma.AppointmentWhereInput`.** I had used a
+  Prisma type that was never imported. The existing services filter with
+  a plain `doctorId`, so I removed the type and followed the existing
+  pattern.
+- **Empty `$TOKEN` in curl tests (`No token provided`).** Shell variables
+  only live in the terminal window where they were set, and tokens
+  expire. Log in again and set the tokens in the same window. After
+  reseeding the database, the browser also needs a fresh login because
+  the old JWT points to a user that no longer exists.
+- **TS18046 `error is of type unknown`** on `query.error.message`. The
+  parameter types of the `retry` callback decide the error type TanStack
+  Query infers. Typing the callback parameter as `Error` fixed it.
+- **Duplicate route definitions.** I added new route lines with
+  `authorize` but kept the old ones, so the first matching route silently
+  won and the new one never ran. No error is shown, so it was found by
+  comparing the 403 message in testing.
+
+### Feedback from supervisor
+
+-
+
+### Scope changes
+
+- **Sharing notes between doctors** (the author gives another doctor
+  read access, with the patient's consent) is classified SHOULD HAVE and
+  planned for week 12 (permissions). If time is short it moves to future
+  development. Author-only read access stays the rule until then.
+- **Patient login** (see bookings, read notes, update contact details,
+  grant and revoke access) is OUT OF SCOPE and listed under future
+  development. A real patient portal needs strong identification
+  (for example BankID) and access logging.
+- Appointment rows in the patient history do not open the detail modal
+  (COULD). They link to the documentation instead.
+- The seed data was extended beyond the plan (small effort, high value
+  for testing).
+- Candidates noticed from the larger data, not yet decided: a doctor
+  filter in the admin calendar (SHOULD, week 12) and searchable patient
+  and doctor selects in the booking form (COULD, week 11).
+- Known limitation for the report: the patient data protection law
+  requirements (access logging, patient consent, blocking) are not met by
+  the MVP.
+
+### What I would do differently
+
+- Create seed data with more than one doctor from the start, so access
+  rules can be tested while they are built.
+- Use `isPending` from the beginning in forms that submit through a
+  mutation.
+- Always check the HTML-versus-JSON difference first when an endpoint
+  returns 404.
+
+### Next (week 11)
+
+- Documentation templates (the template selection in the documentation
+  form).
+- UX polish: consistent loading, empty and error states, confirmation
+  dialogs, and fixing the older forms (`isPending`, accessible labels).
