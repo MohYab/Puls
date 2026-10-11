@@ -4,10 +4,33 @@ Requires the backend running (`npm run dev` in `backend/`) and `jq` installed.
 
 ## Seed users
 
-| Email           | Password    | Role   |
-| --------------- | ----------- | ------ |
-| erik@puls.test  | password123 | DOCTOR |
-| admin@puls.test | password123 | ADMIN  |
+All users have the password `password123`.
+
+| Email                      | Role   | Notes                                                                             |
+| -------------------------- | ------ | --------------------------------------------------------------------------------- |
+| erik@puls.test             | DOCTOR | Dr. Erik Lindqvist                                                                |
+| sara@puls.test             | DOCTOR | Dr. Sara Nilsson                                                                  |
+| johan@puls.test            | DOCTOR | Dr. Johan Ekström                                                                 |
+| admin@puls.test            | ADMIN  | No access to clinical notes                                                       |
+| `<first>.<last>@puls.test` | DOCTOR | 25 more doctors, ASCII only, e.g. maja.svensson@puls.test, liam.jonsson@puls.test |
+
+## Reset and reseed the database
+
+```bash
+cd backend
+npx prisma db seed
+```
+
+The seed script clears all data first (and refuses to run when `NODE_ENV=production`), so it can be run repeatedly. IDs change on every run: log out and in again in the browser, and fetch new tokens and ids in the terminal.
+
+Content: 28 doctors, 73 patients (dummy data; phone numbers come from the range PTS reserves for fictional use, 070-1740605 to 070-1740699), about 135 appointments relative to today and about 33 notes.
+
+Core scenarios used in the tests below:
+
+- Anna has appointments and notes with both Erik and Sara
+- Folke (Erik, 3 days ago) and Eva (Johan, yesterday) have completed appointments without notes
+- Bo has a no-show, Gunilla and Hans have cancelled appointments
+- Folke has no email, Jonas and Ingrid have no phone
 
 ## Login
 
@@ -116,7 +139,7 @@ curl -i http://localhost:3001/api/patients/does-not-exist/appointments -H "Autho
 
 Expected: 200 with appointments, newest first (doctor: only own appointments, admin: all). Unknown patient: 404 `NOT_FOUND`.
 
-Known test gap: the seed data has one doctor, so the doctor filter is not verified against another doctor's appointments.
+The doctor filter is verified against other doctors' appointments in "Cross-doctor access" below.
 
 ## UI checklist: patients (week 9)
 
@@ -166,7 +189,7 @@ curl -i -X POST http://localhost:3001/api/appointments/$SCHEDULED_ID/notes \
   -d '{"plan":"Follow up in two weeks."}'
 ```
 
-Known test gap: the seed data has one doctor, so "doctor B cannot read doctor A's note" (403) is not verified. Notes cannot be deleted (no DELETE endpoint by design).
+Notes cannot be deleted (no DELETE endpoint by design). Access between doctors is tested in "Cross-doctor access" below.
 
 ## UI checklist: documentation (week 10)
 
@@ -183,3 +206,36 @@ Known test gap: the seed data has one doctor, so "doctor B cannot read doctor A'
 - `/documentation/does-not-exist`: "Appointment not found"
 - Admin: documentation page shows "No access", patient page shows "Clinical notes are only visible to doctors.", and no `/notes` requests appear in the Network tab
 - Backend stopped: error box with "Try again"
+
+## Cross-doctor access (needs the seed data)
+
+```bash
+SARA_TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"sara@puls.test","password":"password123"}' | jq -r '.token')
+
+ANNA_ID=$(curl -s "http://localhost:3001/api/patients?search=andersson" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+
+ERIK_APPT=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="COMPLETED")][0].id')
+ERIK_NOTE=$(curl -s http://localhost:3001/api/appointments/$ERIK_APPT/notes \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.id')
+```
+
+| #   | Request                                                      | Expected                |
+| --- | ------------------------------------------------------------ | ----------------------- |
+| 1   | `GET /appointments/$ERIK_APPT/notes` as Sara                 | 403 `FORBIDDEN`         |
+| 2   | `PUT /notes/$ERIK_NOTE` as Sara with `{"plan":"x"}`          | 403 `FORBIDDEN`         |
+| 3   | `GET /patients/$ANNA_ID/appointments` as Erik / Sara / admin | 2 / 1 / 3 appointments  |
+| 4   | `GET /patients/$ANNA_ID/notes` as Erik / Sara / admin        | 1 / 1 / 403 `FORBIDDEN` |
+
+Count example (test 3):
+
+```bash
+for T in "$DOCTOR_TOKEN" "$SARA_TOKEN" "$ADMIN_TOKEN"; do
+  curl -s http://localhost:3001/api/patients/$ANNA_ID/appointments -H "Authorization: Bearer $T" | jq length
+done
+```
+
+Each doctor only sees their own notes, even for a patient they share with another doctor. This is the rule that the planned note sharing between doctors (week 12) would extend.
