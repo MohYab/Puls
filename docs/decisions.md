@@ -189,6 +189,10 @@ and use an httpOnly cookie instead.
 
 ## 14. Seed script is not idempotent
 
+**Status:** Superseded by #22 (week 10). The seed script now clears the
+database first and can be run repeatedly. The text below describes the
+original decision.
+
 **Decision:** `prisma/seed.ts` uses `create` (not `upsert`) for all records,
 so running it twice without resetting the database fails with a unique
 constraint error on `User.email`.
@@ -233,3 +237,162 @@ type is `string | string[]` rather than a plain `string` — to support route
 patterns with repeated parameters, which this project does not use. The
 cast is safe here since every route parameter in this project is always a
 single value.
+
+## 17. Clinical notes are readable only by the doctor who wrote them
+
+**Decision:** A clinical note can only be read and edited by the doctor who
+wrote it. Admins have no access to notes at all. The rule lives in one
+place, `canReadNote` and `readableNotesWhere` in `noteService.ts`, and the
+endpoints contain no permission logic of their own. `authorize("DOCTOR")`
+is applied on the routes, and the service also calls `requireDoctorId`
+(two layers; the second one also narrows `doctorId` to a plain `string`
+for TypeScript).
+
+**Why:** Clinical notes are the most sensitive data in the system, so the
+default is the least access that still works. It also matches the rule for
+appointments, where a doctor only sees their own. Keeping the rule in one
+function means a later change, such as sharing notes between doctors (see
+#18), touches one place instead of every endpoint.
+
+**Alternative considered:** Letting admins read notes (rejected: scheduling
+does not need clinical content), and letting every doctor read every note
+(rejected: breaks least privilege).
+
+**Known limitation:** The MVP has no access logging, no patient consent
+handling and no way to block access. Real healthcare systems need these
+(in Sweden they are governed by the Patient Data Act), so this prototype
+must never hold real patient data. This is listed under limitations in the
+report. The earlier test gap ("doctor B cannot read doctor A's note") was
+closed in week 10 with the extended seed data.
+
+## 18. Sharing notes between doctors (planned) versus a patient login (out of scope)
+
+**Decision:** Two ideas for sharing documentation were assessed in week 10.
+
+- **A. Note sharing between doctors:** the doctor who writes a note can
+  give another doctor read access, after asking the patient. Classified
+  **SHOULD HAVE** and planned for week 12 (permissions).
+- **B. Patient login:** a patient can log in, see bookings, read notes,
+  update contact details and grant or revoke access. Classified **OUT OF
+  SCOPE** and listed under future development.
+
+**Why:**
+
+- A has medium impact and medium effort (one new table, three endpoints,
+  one dialog, a changed read rule), low risk, and high portfolio value
+  because it shows a real healthcare question (consent and access).
+- B is large and risky: a new role, a new login, a new part of the
+  frontend, and in real use strong identification (for example BankID)
+  and access logging. It is only valuable if it is finished, and a finished,
+  well-structured MVP is more important than many half-finished features.
+
+**Planned design for A (not built yet):**
+
+- New table `NoteShare` (`noteId`, `doctorId`, `grantedByDoctorId`,
+  `createdAt`), unique on `(noteId, doctorId)`. Sharing is per note, not
+  per patient.
+- Only the author can share and revoke. The recipient can read, never
+  edit. Revoking exists from the start.
+- The share dialog has a checkbox "The patient has agreed". The system
+  cannot verify consent, but the flow shows that it is a required step.
+- Admins still have no access.
+- Only `canReadNote` and `readableNotesWhere` change (plus the ownership
+  check when reading a note by appointment).
+
+**Cut-off:** If the project is behind schedule at the start of week 12, A
+moves to future development and author-only read access remains the rule.
+
+**Alternative considered:** Sharing per patient (rejected: too broad and
+harder to explain), and letting every doctor read all notes (rejected, see
+#17).
+
+## 19. Rules for the lifecycle of a clinical note
+
+**Decision:**
+
+- One note per appointment (`appointmentId` is unique). A second create
+  returns `409 NOTE_EXISTS`.
+- A cancelled appointment cannot be documented (`409 APPOINTMENT_CANCELLED`).
+- Notes can be edited but never deleted. There is no `DELETE` endpoint.
+- Saving a note does not change the appointment status automatically.
+- A note has four text fields (`reasonForVisit`, `observation`,
+  `assessment`, `plan`), at most 5000 characters each, at least one must be
+  filled in. Missing fields are stored as `""` so the content always has
+  all four keys.
+
+**Why:** Clinical records are corrected, not erased, and one note per visit
+keeps the first version simple. Automatically setting the status to
+`COMPLETED` is a convenient improvement but not needed to demonstrate the
+flow, so it is classified COULD.
+
+**Alternative considered:** A delete endpoint (rejected, see above), and
+several notes or addenda per appointment (future development).
+
+## 20. "No note yet" is a 404 that the frontend treats as a normal state
+
+**Decision:** `GET /api/appointments/:id/notes` returns `404 NOT_FOUND` when
+the appointment has no note. The `useNote` hook turns that specific 404
+into `null`, so the documentation page shows an empty form instead of an
+error.
+
+**Why:** It follows the API reference and REST conventions. It is safe to
+treat every 404 from this request as "no note yet" because the page first
+loads the appointment itself, and an unknown appointment gets a proper
+"Appointment not found" from that request.
+
+**Alternative considered:** Returning `200` with `null`. That is simpler for
+the client, but it deviates from the API reference, and the backend uses
+404 for both "appointment missing" and "note missing", so the two cases
+would be harder to tell apart.
+
+**Trade-off:** The browser's network tab shows a red 404 each time a new
+note is about to be written.
+
+## 21. Client errors are not retried, and the retry callback is typed as `Error`
+
+**Decision:** A shared `retryUnlessClientError(failureCount, error: Error)`
+in `utils/queryRetry.ts` is used in the patient and note query hooks. It
+never retries 4xx errors and retries other errors at most twice.
+
+**Why:** TanStack Query retries failed requests three times with a growing
+delay by default. A 404 or 403 cannot be fixed by retrying, so "Patient not
+found" appeared only after several seconds of loading. The parameter is
+typed as `Error` (not `unknown`) because TanStack Query infers a query's
+error type from the callback's parameter types, and `unknown` made
+`query.error.message` a TypeScript error (TS18046).
+
+**Alternative considered:** Setting the rule once in the `QueryClient`'s
+`defaultOptions`. That would remove the repeated `retry:` lines and may be
+a better long-term place. It was deferred because only a few hooks need it
+so far.
+
+## 22. The seed script clears the database first, and only uses fictional data
+
+**Decision:** `prisma/seed.ts` now deletes all data (children before
+parents) before creating it, and refuses to run when `NODE_ENV` is
+`production`. Appointment dates are relative to today. E-mail addresses
+are generated from names as plain ASCII, phone numbers come from the range
+that the Swedish regulator PTS reserves for fictional use (070-1740605 to
+070-1740699), and a generated schedule gives every extra doctor a few
+appointments. This replaces #14.
+
+**Why:**
+
+- The seed can be run repeatedly with `npx prisma db seed`, so there is no
+  need for `migrate reset`, which did not always run the seed.
+- Rules between doctors can only be tested with more than one doctor.
+- Relative dates keep the dashboard and calendar populated whenever the
+  database is seeded.
+- E-mail addresses with å, ä or ö fail Zod's e-mail validation, so those
+  doctors could not have logged in.
+- Random 070 numbers can belong to real people, which would break the rule
+  that only dummy data is used.
+
+**Alternative considered:** `upsert` with natural keys (rejected: patients
+and appointments have no natural keys, and clearing the table is simpler
+for a development database).
+
+**Known limitation:** It deletes everything, including manual test data,
+and all ids change on every run. Existing tokens in the browser and the
+terminal stop working, so log in again after seeding. It must never be run
+against a database that holds data worth keeping.
