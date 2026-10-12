@@ -396,3 +396,100 @@ for a development database).
 and all ids change on every run. Existing tokens in the browser and the
 terminal stop working, so log in again after seeding. It must never be run
 against a database that holds data worth keeping.
+
+## 23. Documentation templates are lists of field keys, locked after creation
+
+**Decision:** A template's `templateContent.sections` is a list of note field
+keys (`reasonForVisit`, `observation`, `assessment`, `plan`), and the labels
+come from `NOTE_FIELDS` in the frontend. The doctor chooses the template when
+the note is created (General consultation is preselected), and it cannot be
+changed afterwards. Changing the template in the form clears the fields the
+new template does not have. A field that already contains text is always
+shown, so saved text can never be hidden. The API only checks that
+`templateId` exists, not that `content` follows the template. Templates are
+read-only in the MVP.
+
+**Why:** Keys are stable identifiers, labels are presentation. Locking the
+template removes the question of what happens to text in fields that the new
+template lacks. Keeping the content check out of the API keeps the first
+version simple, and the frontend only shows the fields of the template.
+
+**Alternative considered:** Storing display labels in the template
+(rejected: fragile, since renaming a label would break the mapping), allowing
+a template change on an existing note (rejected: can hide or lose text), and
+letting admins edit templates (future development).
+
+## 24. Shared UI building blocks and dialog accessibility
+
+**Decision:** Forms use a shared `FormField` (a render prop that gives the
+field its `id`, `aria-invalid` and `aria-describedby`), and each form uses
+`useId` so field ids are unique. `Modal` has `role="dialog"`, a connected
+title, Escape handling for the topmost dialog only, focus moved into the
+dialog and returned on close, and a labelled close button. `ConfirmDialog`
+(built on `Modal`) replaces `window.confirm`. Shared style constants live in
+their own file (`formStyles.ts`), because the Fast Refresh lint rule does not
+allow a component file to export other values. The confirmation dialog is
+rendered inside the appointment details in the DOM, not in a portal.
+
+**Why:** The same markup was repeated in several forms and pages, and the
+labels were not connected to their fields. Shared components make the
+accessibility fix a one-place change. A native `confirm()` cannot be styled,
+cannot show an error and is hard to test.
+
+**Alternative considered:** A dialog or UI library (Radix, Headless UI).
+Rejected for the MVP to avoid a new dependency for a small need, but a
+production version should consider one.
+
+**Known limitation:** The dialog does not trap Tab focus, so Tab can move
+focus out of an open dialog.
+
+## 25. An error is never shown as an empty state
+
+**Decision:** Loading, empty and error states are three different states with
+shared components (`LoadingMessage`, `EmptyMessage`, `ErrorMessage` with a
+retry button, and `StateMessage` for "not found" and "no access"). Every query
+that feeds a view handles `isError`. List queries use the same
+`retryUnlessClientError` rule as the detail queries (see #21).
+
+**Why:** The dashboard read only `isLoading`, so a failed request was shown as
+"No appointments today". In a healthcare application "nothing scheduled" and
+"the schedule could not be loaded" mean very different things, and the retry
+rule makes real errors visible within seconds instead of after several
+automatic retries.
+
+**Alternative considered:** A global error handler on the `QueryClient`
+(rejected for now: errors are shown where the data would have been, which
+keeps the context clear).
+
+## 26. Patient search matches every word, and the sort order is stable
+
+**Decision:** The search splits the text into words. Every word must match the
+first or the last name (case-insensitive), so "anna andersson" and "andersson
+anna" both find Anna Andersson. The list is sorted by last name and then by
+first name. There is no pagination.
+
+**Why:** Users search for a full name first. Matching the whole text against
+one column returned nothing for it. Without a second sort key, patients with
+the same last name could change order between requests.
+
+**Alternative considered:** Pagination for the list (out of scope: 73 patients
+is manageable, noted as a limitation) and a database full-text search
+(rejected: too heavy for this need).
+
+**Known limitation:** The order of å, ä and ö depends on the database
+collation, so they may not sort at the end of the alphabet as in Swedish.
+
+## 27. No warning about unsaved changes
+
+**Decision:** The documentation form does not warn the user about unsaved text
+when navigating away.
+
+**Why:** Blocking in-app navigation needs `useBlocker`, which only works with
+a data router (`createBrowserRouter`). The application uses `BrowserRouter`, so
+this would mean rebuilding the routing for a small gain. Text is lost if the
+user leaves the page without saving.
+
+**Alternative considered:** A `beforeunload` handler. It only covers closing
+the tab or reloading, not navigation inside the app, so it gives a false sense
+of safety. It is listed under future development together with an autosaved
+draft.
