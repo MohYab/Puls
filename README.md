@@ -8,23 +8,26 @@ Built as a degree project during an internship.
 
 ## Status
 
-Week 10 of 17. The core of the MVP works end to end: a doctor can log in,
+Week 11 of 17. The core of the MVP works end to end: a doctor can log in,
 see the dashboard and calendar, book, edit and cancel appointments
 (with conflict checking), search patients, view a patient's appointment
-history, and write, edit and read visit notes. Admins manage bookings but
-have no access to clinical notes.
+history, and write, edit and read visit notes using documentation
+templates. Admins manage bookings but have no access to clinical notes.
 
-Next up: documentation templates and UX polish (week 11), admin features
-and permissions (week 12), then testing (week 13).
+Next up: admin features and permissions (week 12), then testing (week 13)
+and polish (week 14).
 
 ### What works so far
 
 - Login with JWT and role-based access (Doctor, Admin)
 - Dashboard with today's schedule and the next appointment
-- Calendar day view with booking, editing and cancelling
-- Patient list with search, patient page and appointment history
-- Visit documentation with four structured fields, previous notes per
-  patient (doctors only)
+- Calendar day view with booking, editing and cancelling (with a
+  confirmation dialog)
+- Patient list with name search, patient page and appointment history
+- Visit documentation with four structured fields and templates (General
+  consultation, Follow-up visit, Annual check-up, Vaccination), and previous
+  notes per patient (doctors only)
+- Consistent loading, empty and error states, and keyboard-accessible dialogs
 
 ## Tech stack
 
