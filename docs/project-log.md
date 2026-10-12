@@ -926,3 +926,159 @@ and automated tests remain for weeks 11–13.
   form).
 - UX polish: consistent loading, empty and error states, confirmation
   dialogs, and fixing the older forms (`isPending`, accessible labels).
+
+## Week 11 – Documentation templates and UX polish
+
+**Period:** week 46 2026-11-09 to 2026-11-15
+
+### Summary
+
+Week 11 added the last piece of the documentation flow, templates, and then
+spent most of its time on quality. A doctor now chooses a template when
+writing a new note (General consultation, Follow-up visit, Annual check-up
+or Vaccination), and the form shows only the fields of that template. The
+template is stored on the note and is locked after the first save.
+
+The second half of the week was a deliberate pause in new features. When I
+reviewed the screens I found the same markup repeated in many places, forms
+whose labels were not connected to their fields, dialogs without keyboard
+support, and a dashboard that showed an error as "No appointments today".
+I built a few small shared components (`FormField`, `ConfirmDialog`,
+`StateMessage` and loading, empty and error messages), made `Modal` work
+with the keyboard, and moved the older forms and pages over to them. The
+patient search was also improved so that a full name finds the patient.
+
+None of this changes what the application does on a good day, but it
+changes what the user sees when something goes wrong, which matters in a
+healthcare context.
+
+### Entry 1: Documentation templates
+
+**What I did**
+
+- Backend: added `GET /api/documentation-templates` (doctors only) and an
+  optional `templateId` on `POST /api/appointments/:id/notes`. An unknown
+  template gives 400. The templates in the seed data now list field keys
+  (`reasonForVisit`, `observation`, ...) instead of display labels.
+- Frontend: a template select above the form for a new note (General
+  consultation preselected), fields rendered from the template, and a
+  read-only "Template: ..." line once the note exists. Changing template
+  clears the fields the new template does not have, and a field that
+  already contains text is always shown.
+- 8 curl tests (200, 201, 400, 401, 403) and a manual UI checklist.
+
+**What I learned**
+
+- Storing keys instead of labels in the template content gives stable
+  identifiers, and the frontend keeps one list of labels (`NOTE_FIELDS`).
+- Locking the template after the first save avoids the hard question of
+  what happens to text in fields that the new template does not have.
+- The API only checks that the template exists, not that the content follows
+  it. That is a documented limitation, not an oversight.
+
+### Entry 2: Shared building blocks and accessibility
+
+**What I did**
+
+- Built `FormField` (label, field and error message, connected with `id`,
+  `aria-invalid` and `aria-describedby`), `StateMessage`, `ConfirmDialog`
+  and the small `LoadingMessage`, `EmptyMessage` and `ErrorMessage`.
+- Improved `Modal`: `role="dialog"`, a title connected to the dialog,
+  Escape closes only the topmost dialog, focus moves into the dialog and
+  returns to the element that opened it, and the close button has a label.
+- Moved `AppointmentForm`, `AppointmentDetail` and the documentation form
+  to `FormField`, and replaced `window.confirm` with `ConfirmDialog` when
+  cancelling an appointment (it now also shows an error if the request
+  fails, which it did not before).
+
+**What I learned**
+
+- A render prop in `FormField` makes it impossible for a label and its field
+  to get different ids.
+- `useId` gives each form its own field ids. Two forms with a field called
+  `date` would otherwise create duplicate ids.
+- A synchronous submit handler with `useMutation` needs `mutation.isPending`
+  to disable the button. `isSubmitting` is never true while the request runs.
+
+### Entry 3: Consistent states and better patient search
+
+**What I did**
+
+- The dashboard now handles failed requests with an error message and a
+  retry button. Before, a failed request showed "No appointments today."
+- The patient pages (list, detail, history, previous notes) use the same
+  loading, empty and error components, with the same retry rule for failed
+  queries.
+- Patient search: every word of the search must match the first or last name,
+  so "anna andersson" finds Anna Andersson. The list is sorted by last name
+  and then first name, so patients with the same last name keep a stable order.
+
+**What I learned**
+
+- An error must never look like an empty list. In a healthcare application
+  "you have no appointments" and "the schedule could not be loaded" mean
+  very different things.
+- Searching for a full name is the first thing a user tries, so a search that
+  matches the whole string against one column is not enough.
+
+### Problems and solutions
+
+- **The dashboard showed an error as an empty schedule.** The page only
+  read `isLoading`, so a failed request left `appointments` undefined and
+  the page printed "No appointments today." Fixed by handling `isError`.
+- **`Modal` could not be closed with the keyboard and lost focus.** Added
+  Escape handling and focus management. A list of open modals makes Escape
+  close only the topmost one, which matters when the cancel confirmation is
+  opened on top of the appointment details.
+- **Searching for a full name found nothing, and equal last names moved
+  between requests.** Fixed in the service (see Entry 3).
+- **The same route was registered twice in `index.ts`.** The second line did
+  nothing and Express shows no error. Found by reading the file during week
+  11, the same silent problem as the duplicate routes in week 10.
+- **`/documentation/null`.** The shell variable holding the appointment id was
+  empty because the terminal was a new window without the login token.
+  Variables only live in the window where they were set.
+- **A 30 to 40 second page load when testing loading states with a throttled
+  network.** The development server sends hundreds of separate files, so the
+  whole page waits long before any "Loading..." can be shown. The way to
+  test loading states is to load the app first and throttle the network
+  afterwards, then navigate to a view that has not fetched its data yet. The
+  production build is three files.
+
+### Feedback from supervisor
+
+-
+
+### Scope changes
+
+- Delivered as planned: templates, shared components, confirmation dialog,
+  consistent states and the older forms moved over.
+- **Warning about unsaved changes** is OUT OF SCOPE. In-app navigation
+  blocking needs a data router (`useBlocker`), which means rebuilding the
+  routing for a small gain. It is listed as a limitation.
+- **Searchable patient and doctor selects** (73 patients and 28 doctors in
+  plain selects) are COULD, week 14 if time allows.
+- **Marking the visit as completed when a note is saved** and **a "to
+  document" list on the dashboard** (completed visits without a note) are
+  COULD.
+- **A doctor filter in the admin calendar** moves to week 12, where it
+  belongs with permissions and admin features.
+- Known limitation: the dialog does not trap Tab focus, so Tab can leave an
+  open dialog. A production version should use a dialog library or the
+  native `<dialog>` element.
+
+### What I would do differently
+
+- Handle `isError` in every view that fetches data from the start, instead of
+  finding it when reviewing.
+- Create the shared components earlier. The red error box existed in four
+  places before I made one component for it.
+- Build `Modal` with keyboard and focus support from the beginning.
+
+### Next (week 12)
+
+- Admin features: manage appointment types, a doctor filter in the admin
+  calendar.
+- Permissions and role-based UI.
+- Sharing notes between doctors (SHOULD, with a cut-off: if the week is
+  behind schedule it moves to future development).
