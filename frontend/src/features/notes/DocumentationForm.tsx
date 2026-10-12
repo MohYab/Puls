@@ -1,11 +1,17 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { FormField } from "../../components/FormField";
+import { inputClassName } from "../../components/formStyles";
 import { ApiError } from "../../services/apiClient";
 import { noteFormSchema, type NoteFormValues } from "../../schemas/noteSchemas";
+import type { DocumentationTemplate } from "../../types/documentationTemplate";
 import type { ClinicalNote } from "../../types/note";
 import { formatDateTime } from "../../utils/date";
+import { NOTE_FIELDS, visibleFields } from "./noteFields";
 import { useSaveNote } from "./useNotes";
-import { NOTE_FIELDS } from "./noteFields";
+
+const DEFAULT_TEMPLATE_NAME = "General consultation";
 
 const EMPTY_VALUES: NoteFormValues = {
   reasonForVisit: "",
@@ -14,49 +20,89 @@ const EMPTY_VALUES: NoteFormValues = {
   plan: "",
 };
 
+function defaultTemplateId(templates: DocumentationTemplate[]): string {
+  const preferred = templates.find((t) => t.name === DEFAULT_TEMPLATE_NAME) ?? templates[0];
+  return preferred?.id ?? "";
+}
+
 interface DocumentationFormProps {
   appointmentId: string;
   note: ClinicalNote | null;
+  templates: DocumentationTemplate[];
 }
 
-export function DocumentationForm({ appointmentId, note }: DocumentationFormProps) {
+export function DocumentationForm({ appointmentId, note, templates }: DocumentationFormProps) {
   const saveNote = useSaveNote(appointmentId, note?.id);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(() => defaultTemplateId(templates));
+
+  // An existing note keeps its template (locked); a new note uses the selection.
+  const activeTemplateId = note ? note.templateId : selectedTemplateId;
+  const activeTemplate = templates.find((t) => t.id === activeTemplateId) ?? null;
+  const fields = visibleFields(activeTemplate?.templateContent.sections ?? null, note?.content);
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<NoteFormValues>({
     resolver: zodResolver(noteFormSchema),
     defaultValues: note?.content ?? EMPTY_VALUES,
   });
 
+  function handleTemplateChange(templateId: string) {
+    setSelectedTemplateId(templateId);
+
+    // Clear fields the new template does not have, so no hidden text is saved.
+    const sections = templates.find((t) => t.id === templateId)?.templateContent.sections;
+    for (const { name } of NOTE_FIELDS) {
+      if (sections && !sections.includes(name)) {
+        setValue(name, "");
+      }
+    }
+  }
+
   function onSubmit(values: NoteFormValues) {
-    // Reset with the saved content so the form is "clean" again after a save.
-    saveNote.mutate(values, { onSuccess: (saved) => reset(saved.content) });
+    saveNote.mutate(
+      { content: values, templateId: selectedTemplateId || undefined },
+      // Reset with the saved content so the form is "clean" again after a save.
+      { onSuccess: (saved) => reset(saved.content) }
+    );
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      {NOTE_FIELDS.map(({ name, label }) => (
-        <div key={name}>
-          <label htmlFor={name} className="mb-1 block text-sm font-medium">
-            {label}
-          </label>
-          <textarea
-            id={name}
-            rows={4}
-            aria-invalid={!!errors[name]}
-            {...register(name)}
-            className="w-full rounded border px-3 py-2 text-sm"
-          />
-          {errors[name] && (
-            <p role="alert" className="mt-1 text-sm text-red-600">
-              {errors[name]?.message}
-            </p>
+      {note ? (
+        <p className="text-sm text-gray-600">
+          Template:{" "}
+          <span className="font-medium text-gray-900">{activeTemplate?.name ?? "None"}</span>
+        </p>
+      ) : (
+        <FormField id="template" label="Template" hint={activeTemplate?.description ?? undefined}>
+          {(field) => (
+            <select
+              {...field}
+              value={selectedTemplateId}
+              onChange={(e) => handleTemplateChange(e.target.value)}
+              className={inputClassName}
+            >
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
           )}
-        </div>
+        </FormField>
+      )}
+
+      {fields.map(({ name, label }) => (
+        <FormField key={name} id={name} label={label} error={errors[name]?.message}>
+          {(field) => (
+            <textarea {...field} rows={4} {...register(name)} className={inputClassName} />
+          )}
+        </FormField>
       ))}
 
       {saveNote.isError && (

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Card } from "../../components/Card";
+import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatTime } from "../../utils/date";
 import { useAuth } from "../auth/useAuth";
@@ -12,23 +13,14 @@ export function AppointmentHistory({ patientId }: { patientId: string }) {
 
   return (
     <Card title="Appointment history">
-      {isPending && <p className="text-sm text-gray-600">Loading appointments...</p>}
+      {isPending && <LoadingMessage>Loading appointments...</LoadingMessage>}
 
       {isError && (
-        <div role="alert" className="text-sm">
-          <p className="text-red-700">Could not load appointment history.</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-2 rounded border border-red-300 px-3 py-1.5 text-red-700"
-          >
-            Try again
-          </button>
-        </div>
+        <ErrorMessage message="Could not load appointment history." onRetry={() => refetch()} />
       )}
 
       {appointments && appointments.length === 0 && (
-        <p className="text-sm text-gray-600">This patient has no appointments yet.</p>
+        <EmptyMessage>This patient has no appointments yet.</EmptyMessage>
       )}
 
       {appointments && appointments.length > 0 && (

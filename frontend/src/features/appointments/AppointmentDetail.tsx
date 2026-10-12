@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { FormField } from "../../components/FormField";
+import { inputClassName } from "../../components/formStyles";
 import { StatusBadge } from "../../components/StatusBadge";
-import { formatTime, toDateString } from "../../utils/date";
+import { formatDate, formatTime, toDateString } from "../../utils/date";
+import { useAuth } from "../auth/useAuth";
 import { updateAppointment, cancelAppointment } from "./appointmentService";
 import { getAppointmentTypes } from "../appointmentTypes/appointmentTypeService";
 import { ApiError } from "../../services/apiClient";
 import type { Appointment } from "../../types/appointment";
-import { Link } from "react-router-dom";
-import { useAuth } from "../auth/useAuth";
 
 const editSchema = z.object({
   appointmentTypeId: z.string().min(1, "Appointment type is required"),
@@ -26,7 +29,9 @@ interface AppointmentDetailProps {
 
 export function AppointmentDetail({ appointment, onClose }: AppointmentDetailProps) {
   const { user } = useAuth();
+  const formId = useId();
   const [isEditing, setIsEditing] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -39,7 +44,7 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<EditValues>({
     resolver: zodResolver(editSchema),
     defaultValues: {
@@ -77,41 +82,48 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
     updateMutation.mutate(values);
   }
 
-  function handleCancelAppointment() {
-    if (confirm("Cancel this appointment?")) {
-      cancelMutation.mutate();
-    }
+  function closeCancelConfirm() {
+    setShowCancelConfirm(false);
+    cancelMutation.reset(); // clear a previous error
   }
 
   if (isEditing) {
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Appointment type</label>
-          <select {...register("appointmentTypeId")} className="w-full border rounded px-3 py-2">
-            {appointmentTypes?.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} ({t.duration} min)
-              </option>
-            ))}
-          </select>
-          {errors.appointmentTypeId && (
-            <p className="text-sm text-red-600 mt-1">{errors.appointmentTypeId.message}</p>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+        <FormField
+          id={`${formId}-type`}
+          label="Appointment type"
+          error={errors.appointmentTypeId?.message}
+        >
+          {(field) => (
+            <select {...field} {...register("appointmentTypeId")} className={inputClassName}>
+              {appointmentTypes?.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.duration} min)
+                </option>
+              ))}
+            </select>
           )}
-        </div>
+        </FormField>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">Date</label>
-            <input type="date" {...register("date")} className="w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Time</label>
-            <input type="time" {...register("time")} className="w-full border rounded px-3 py-2" />
-          </div>
+          <FormField id={`${formId}-date`} label="Date" error={errors.date?.message}>
+            {(field) => (
+              <input type="date" {...field} {...register("date")} className={inputClassName} />
+            )}
+          </FormField>
+          <FormField id={`${formId}-time`} label="Time" error={errors.time?.message}>
+            {(field) => (
+              <input type="time" {...field} {...register("time")} className={inputClassName} />
+            )}
+          </FormField>
         </div>
 
-        {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+        {serverError && (
+          <p role="alert" className="text-sm text-red-600">
+            {serverError}
+          </p>
+        )}
 
         <div className="flex justify-end gap-2 pt-2">
           <button
@@ -123,10 +135,10 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={updateMutation.isPending}
             className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:opacity-50"
           >
-            {isSubmitting ? "Saving..." : "Save changes"}
+            {updateMutation.isPending ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>
@@ -158,19 +170,40 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
             </Link>
           )}
           <button
-            onClick={handleCancelAppointment}
-            disabled={cancelMutation.isPending}
-            className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded disabled:opacity-50"
+            type="button"
+            onClick={() => setShowCancelConfirm(true)}
+            className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded"
           >
-            {cancelMutation.isPending ? "Cancelling..." : "Cancel appointment"}
+            Cancel appointment
           </button>
           <button
+            type="button"
             onClick={() => setIsEditing(true)}
             className="px-4 py-2 text-sm bg-blue-600 text-white rounded"
           >
             Edit
           </button>
         </div>
+      )}
+
+      {showCancelConfirm && (
+        <ConfirmDialog
+          title="Cancel appointment"
+          message={`Cancel the appointment with ${appointment.patient.firstName} ${appointment.patient.lastName} on ${formatDate(appointment.startTime)} at ${formatTime(appointment.startTime)}? The time will be free for other bookings.`}
+          confirmLabel="Cancel appointment"
+          cancelLabel="Keep appointment"
+          pendingLabel="Cancelling..."
+          isPending={cancelMutation.isPending}
+          error={
+            cancelMutation.isError
+              ? cancelMutation.error instanceof ApiError
+                ? cancelMutation.error.message
+                : "Could not cancel the appointment."
+              : null
+          }
+          onConfirm={() => cancelMutation.mutate()}
+          onCancel={closeCancelConfirm}
+        />
       )}
     </div>
   );

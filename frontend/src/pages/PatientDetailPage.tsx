@@ -1,5 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { Card } from "../components/Card";
+import { ErrorMessage, LoadingMessage } from "../components/Feedback";
+import { StateMessage } from "../components/StateMessage";
 import { useAuth } from "../features/auth/useAuth";
 import { PreviousNotes } from "../features/notes/PreviousNotes";
 import { AppointmentHistory } from "../features/patients/AppointmentHistory";
@@ -20,27 +22,22 @@ export default function PatientDetailPage() {
         ← Back to patients
       </Link>
 
-      {isPending && <p className="mt-6 text-sm text-gray-600">Loading patient...</p>}
-
-      {isNotFound && (
+      {isPending && (
         <div className="mt-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Patient not found</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            The patient you are looking for does not exist.
-          </p>
+          <LoadingMessage>Loading patient...</LoadingMessage>
         </div>
       )}
 
+      {isNotFound && (
+        <StateMessage
+          title="Patient not found"
+          text="The patient you are looking for does not exist."
+        />
+      )}
+
       {isError && !isNotFound && (
-        <div role="alert" className="mt-6 rounded-md border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-800">{error.message}</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-3 rounded-md bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800"
-          >
-            Try again
-          </button>
+        <div className="mt-6">
+          <ErrorMessage message={error.message} onRetry={() => refetch()} />
         </div>
       )}
 
@@ -59,7 +56,6 @@ export default function PatientDetailPage() {
             </div>
           </div>
 
-          {/* New: documentation section, full width below the two cards */}
           <div className="mt-6">
             {user?.role === "DOCTOR" ? (
               <PreviousNotes patientId={patient.id} />

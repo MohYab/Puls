@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { EmptyMessage, ErrorMessage, LoadingMessage } from "../components/Feedback";
+import { inputClassName } from "../components/formStyles";
 import { usePatients } from "../features/patients/usePatients";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { formatBirthDate } from "../utils/date";
@@ -12,8 +14,8 @@ export default function PatientsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-slate-900">Patients</h1>
-      <p className="mt-1 text-sm text-slate-600">Search by name to find a patient.</p>
+      <h1 className="text-2xl font-semibold text-gray-900">Patients</h1>
+      <p className="mt-1 text-sm text-gray-600">Search by name to find a patient.</p>
 
       <div className="mt-6">
         <label htmlFor="patient-search" className="sr-only">
@@ -25,40 +27,27 @@ export default function PatientsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name..."
-          className="w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/30"
+          className={`${inputClassName} max-w-md`}
         />
       </div>
 
       <div className="mt-6" aria-live="polite">
-        {isPending && <p className="text-sm text-slate-600">Loading patients...</p>}
+        {isPending && <LoadingMessage>Loading patients...</LoadingMessage>}
 
-        {isError && (
-          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-sm text-red-800">
-              {error instanceof Error ? error.message : "Could not load patients."}
-            </p>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="mt-3 rounded-md bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800"
-            >
-              Try again
-            </button>
-          </div>
-        )}
+        {isError && <ErrorMessage message={error.message} onRetry={() => refetch()} />}
 
         {patients && patients.length === 0 && (
-          <p className="text-sm text-slate-600">
+          <EmptyMessage>
             {debouncedSearch
               ? `No patients match "${debouncedSearch}".`
               : "There are no patients yet."}
-          </p>
+          </EmptyMessage>
         )}
 
         {patients && patients.length > 0 && (
-          <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-600">
+              <thead className="border-b border-gray-200 bg-gray-50 text-gray-600">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">
                     Name
@@ -71,9 +60,9 @@ export default function PatientsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-gray-100">
                 {patients.map((patient) => (
-                  <tr key={patient.id} className="hover:bg-slate-50">
+                  <tr key={patient.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <Link
                         to={`/patients/${patient.id}`}
@@ -82,10 +71,10 @@ export default function PatientsPage() {
                         {patient.firstName} {patient.lastName}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-4 py-3 text-gray-700">
                       {formatBirthDate(patient.dateOfBirth)}
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{patient.phone ?? "–"}</td>
+                    <td className="px-4 py-3 text-gray-700">{patient.phone ?? "–"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,10 +1,17 @@
+import { ErrorMessage } from "../components/Feedback";
 import { useAppointments } from "../features/appointments/useAppointments";
 import { TodaySchedule } from "../features/dashboard/TodaySchedule";
 import { NextAppointment } from "../features/dashboard/NextAppointment";
 import { todayDateString } from "../utils/date";
 
 export default function DashboardPage() {
-  const { data: appointments, isLoading } = useAppointments(todayDateString());
+  const {
+    data: appointments,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useAppointments(todayDateString());
 
   const now = new Date();
   const next =
@@ -25,10 +32,17 @@ export default function DashboardPage() {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TodaySchedule appointments={appointments ?? []} isLoading={isLoading} />
-        <NextAppointment appointment={next} isLoading={isLoading} />
-      </div>
+      {isError ? (
+        <ErrorMessage
+          message={error?.message ?? "Could not load today's schedule."}
+          onRetry={() => refetch()}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TodaySchedule appointments={appointments ?? []} isLoading={isLoading} />
+          <NextAppointment appointment={next} isLoading={isLoading} />
+        </div>
+      )}
     </div>
   );
 }

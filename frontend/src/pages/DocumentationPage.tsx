@@ -8,26 +8,8 @@ import { useNote } from "../features/notes/useNotes";
 import { ApiError } from "../services/apiClient";
 import { formatDate, formatTime } from "../utils/date";
 import { PreviousNotes } from "../features/notes/PreviousNotes";
-
-interface StateMessageProps {
-  title: string;
-  text: string;
-  onRetry?: () => void;
-}
-
-function StateMessage({ title, text, onRetry }: StateMessageProps) {
-  return (
-    <div className="mt-6 rounded-md border border-gray-200 bg-white p-4">
-      <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-      <p className="mt-1 text-sm text-gray-600">{text}</p>
-      {onRetry && (
-        <button type="button" onClick={onRetry} className="mt-3 rounded border px-3 py-1.5 text-sm">
-          Try again
-        </button>
-      )}
-    </div>
-  );
-}
+import { useTemplates } from "../features/documentationTemplates/useTemplates";
+import { StateMessage } from "../components/StateMessage";
 
 export default function DocumentationPage() {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -37,6 +19,7 @@ export default function DocumentationPage() {
   // Admins have no access to clinical notes, so they never trigger these requests.
   const appointmentQuery = useAppointment(isDoctor ? appointmentId : undefined);
   const noteQuery = useNote(isDoctor ? appointmentId : undefined);
+  const templatesQuery = useTemplates(isDoctor);
 
   if (!isDoctor) {
     return (
@@ -77,7 +60,17 @@ export default function DocumentationPage() {
     );
   }
 
-  if (appointmentQuery.isPending || noteQuery.isPending) {
+  if (templatesQuery.isError) {
+    return (
+      <StateMessage
+        title="Could not load templates"
+        text={templatesQuery.error.message}
+        onRetry={() => templatesQuery.refetch()}
+      />
+    );
+  }
+
+  if (appointmentQuery.isPending || noteQuery.isPending || templatesQuery.isPending) {
     return <p className="text-sm text-gray-600">Loading documentation...</p>;
   }
 
@@ -132,7 +125,11 @@ export default function DocumentationPage() {
 
         <div className="lg:col-span-2">
           <Card title="Visit note">
-            <DocumentationForm appointmentId={appointment.id} note={note} />
+            <DocumentationForm
+              appointmentId={appointment.id}
+              note={note}
+              templates={templatesQuery.data}
+            />
           </Card>
         </div>
       </div>

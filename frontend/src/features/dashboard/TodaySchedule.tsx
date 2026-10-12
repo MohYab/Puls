@@ -1,4 +1,5 @@
 import { Card } from "../../components/Card";
+import { EmptyMessage, LoadingMessage } from "../../components/Feedback";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatTime } from "../../utils/date";
 import type { Appointment } from "../../types/appointment";
@@ -11,10 +12,10 @@ interface TodayScheduleProps {
 export function TodaySchedule({ appointments, isLoading }: TodayScheduleProps) {
   return (
     <Card title="Today's schedule">
-      {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
+      {isLoading && <LoadingMessage />}
 
       {!isLoading && appointments.length === 0 && (
-        <p className="text-sm text-gray-500">No appointments today.</p>
+        <EmptyMessage>No appointments today.</EmptyMessage>
       )}
 
       {!isLoading && appointments.length > 0 && (

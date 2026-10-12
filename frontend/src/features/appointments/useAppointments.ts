@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAppointment, getAppointments } from "./appointmentService";
 import { retryUnlessClientError } from "../../utils/queryRetry";
+import { getAppointment, getAppointments } from "./appointmentService";
 
 export function useAppointments(date?: string) {
   return useQuery({
     queryKey: ["appointments", date],
     queryFn: () => getAppointments(date),
+    retry: retryUnlessClientError,
   });
 }
 

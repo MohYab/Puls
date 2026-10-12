@@ -36,13 +36,20 @@ export function usePatientNotes(patientId: string | undefined) {
   });
 }
 
+interface SaveNoteVariables {
+  content: NoteContent;
+  templateId?: string; // only used when the note is created; a template cannot be changed later
+}
+
 // Creates the note the first time and updates it afterwards (one note per appointment).
 export function useSaveNote(appointmentId: string, existingNoteId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (content: NoteContent) =>
-      existingNoteId ? updateNote(existingNoteId, content) : createNote(appointmentId, content),
+    mutationFn: ({ content, templateId }: SaveNoteVariables) =>
+      existingNoteId
+        ? updateNote(existingNoteId, content)
+        : createNote(appointmentId, content, templateId),
     onSuccess: (note) => {
       queryClient.setQueryData(noteKeys.byAppointment(appointmentId), note);
       queryClient.invalidateQueries({ queryKey: noteKeys.byPatient(note.patientId) });

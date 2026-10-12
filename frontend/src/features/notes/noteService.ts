@@ -5,8 +5,11 @@ export function getNoteByAppointment(appointmentId: string) {
   return apiClient.get<ClinicalNote>(`/appointments/${appointmentId}/notes`);
 }
 
-export function createNote(appointmentId: string, content: NoteContent) {
-  return apiClient.post<ClinicalNote>(`/appointments/${appointmentId}/notes`, content);
+export function createNote(appointmentId: string, content: NoteContent, templateId?: string) {
+  return apiClient.post<ClinicalNote>(`/appointments/${appointmentId}/notes`, {
+    ...content,
+    templateId,
+  });
 }
 
 export function updateNote(noteId: string, content: NoteContent) {

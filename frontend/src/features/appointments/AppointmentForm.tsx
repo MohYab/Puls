@@ -1,7 +1,9 @@
+import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { FormField } from "../../components/FormField";
+import { inputClassName } from "../../components/formStyles";
 import {
   appointmentFormSchema,
   type AppointmentFormValues,
@@ -23,6 +25,7 @@ interface AppointmentFormProps {
 export function AppointmentForm({ defaultDate, onSuccess, onCancel }: AppointmentFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const formId = useId();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const { data: patients } = useQuery({ queryKey: ["patients"], queryFn: () => getPatients() });
@@ -35,7 +38,7 @@ export function AppointmentForm({ defaultDate, onSuccess, onCancel }: Appointmen
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
@@ -67,68 +70,70 @@ export function AppointmentForm({ defaultDate, onSuccess, onCancel }: Appointmen
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <div>
-        <label className="block text-sm font-medium mb-1">Patient</label>
-        <select {...register("patientId")} className="w-full border rounded px-3 py-2">
-          <option value="">Select patient</option>
-          {patients?.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.firstName} {p.lastName}
-            </option>
-          ))}
-        </select>
-        {errors.patientId && (
-          <p className="text-sm text-red-600 mt-1">{errors.patientId.message}</p>
-        )}
-      </div>
-
-      {user?.role === "ADMIN" && (
-        <div>
-          <label className="block text-sm font-medium mb-1">Doctor</label>
-          <select {...register("doctorId")} className="w-full border rounded px-3 py-2">
-            <option value="">Select doctor</option>
-            {doctors?.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.user.name}
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+      <FormField id={`${formId}-patient`} label="Patient" error={errors.patientId?.message}>
+        {(field) => (
+          <select {...field} {...register("patientId")} className={inputClassName}>
+            <option value="">Select patient</option>
+            {patients?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.firstName} {p.lastName}
               </option>
             ))}
           </select>
-          {errors.doctorId && (
-            <p className="text-sm text-red-600 mt-1">{errors.doctorId.message}</p>
+        )}
+      </FormField>
+
+      {user?.role === "ADMIN" && (
+        <FormField id={`${formId}-doctor`} label="Doctor" error={errors.doctorId?.message}>
+          {(field) => (
+            <select {...field} {...register("doctorId")} className={inputClassName}>
+              <option value="">Select doctor</option>
+              {doctors?.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.user.name}
+                </option>
+              ))}
+            </select>
           )}
-        </div>
+        </FormField>
       )}
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Appointment type</label>
-        <select {...register("appointmentTypeId")} className="w-full border rounded px-3 py-2">
-          <option value="">Select type</option>
-          {appointmentTypes?.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} ({t.duration} min)
-            </option>
-          ))}
-        </select>
-        {errors.appointmentTypeId && (
-          <p className="text-sm text-red-600 mt-1">{errors.appointmentTypeId.message}</p>
+      <FormField
+        id={`${formId}-type`}
+        label="Appointment type"
+        error={errors.appointmentTypeId?.message}
+      >
+        {(field) => (
+          <select {...field} {...register("appointmentTypeId")} className={inputClassName}>
+            <option value="">Select type</option>
+            {appointmentTypes?.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.duration} min)
+              </option>
+            ))}
+          </select>
         )}
-      </div>
+      </FormField>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium mb-1">Date</label>
-          <input type="date" {...register("date")} className="w-full border rounded px-3 py-2" />
-          {errors.date && <p className="text-sm text-red-600 mt-1">{errors.date.message}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Time</label>
-          <input type="time" {...register("time")} className="w-full border rounded px-3 py-2" />
-          {errors.time && <p className="text-sm text-red-600 mt-1">{errors.time.message}</p>}
-        </div>
+        <FormField id={`${formId}-date`} label="Date" error={errors.date?.message}>
+          {(field) => (
+            <input type="date" {...field} {...register("date")} className={inputClassName} />
+          )}
+        </FormField>
+        <FormField id={`${formId}-time`} label="Time" error={errors.time?.message}>
+          {(field) => (
+            <input type="time" {...field} {...register("time")} className={inputClassName} />
+          )}
+        </FormField>
       </div>
 
-      {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+      {serverError && (
+        <p role="alert" className="text-sm text-red-600">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end gap-2 pt-2">
         <button type="button" onClick={onCancel} className="px-4 py-2 text-sm border rounded">
@@ -136,10 +141,10 @@ export function AppointmentForm({ defaultDate, onSuccess, onCancel }: Appointmen
         </button>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
           className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:opacity-50"
         >
-          {isSubmitting ? "Saving..." : "Save"}
+          {mutation.isPending ? "Saving..." : "Save"}
         </button>
       </div>
     </form>
