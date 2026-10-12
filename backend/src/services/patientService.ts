@@ -2,16 +2,22 @@ import { NotFoundError } from "../utils/errors.js";
 import { prisma } from "../utils/prisma.js";
 
 export async function getAllPatients(search?: string) {
+  // Every word must match the first or the last name, so "anna andersson" finds Anna Andersson.
+  const terms = search?.trim().split(/\s+/).filter(Boolean) ?? [];
+
   return prisma.patient.findMany({
-    where: search
-      ? {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    orderBy: { lastName: "asc" },
+    where:
+      terms.length > 0
+        ? {
+            AND: terms.map((term) => ({
+              OR: [
+                { firstName: { contains: term, mode: "insensitive" as const } },
+                { lastName: { contains: term, mode: "insensitive" as const } },
+              ],
+            })),
+          }
+        : undefined,
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
 }
 

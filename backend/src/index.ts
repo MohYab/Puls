@@ -1,13 +1,14 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import appointmentTypeRoutes from "./routes/appointmentTypes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./routes/auth.js";
+import appointmentTypeRoutes from "./routes/appointmentTypes.js";
 import appointmentRoutes from "./routes/appointments.js";
 import patientRoutes from "./routes/patients.js";
 import doctorRoutes from "./routes/doctors.js";
 import noteRoutes from "./routes/notes.js";
+import documentationTemplateRoutes from "./routes/documentationTemplates.js";
 
 dotenv.config();
 
@@ -23,15 +24,11 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/appointment-types", appointmentTypeRoutes);
-
-app.use("/api/appointment-types", appointmentTypeRoutes);
-
 app.use("/api/appointments", appointmentRoutes);
-
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
-
 app.use("/api/notes", noteRoutes);
+app.use("/api/documentation-templates", documentationTemplateRoutes);
 
 app.use(errorHandler);
 

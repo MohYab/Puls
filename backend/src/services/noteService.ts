@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma.js";
-import { AppError, NotFoundError } from "../utils/errors.js";
-import type { NoteContentInput } from "../validators/noteValidators.js";
+import { AppError, NotFoundError, ValidationError } from "../utils/errors.js";
+import type { CreateNoteInput, NoteContentInput } from "../validators/noteValidators.js";
 import { getPatientById } from "./patientService.js";
 
 interface RequestingUser {
@@ -76,7 +76,7 @@ export async function getNoteByAppointment(appointmentId: string, user: Requesti
 
 export async function createNote(
   appointmentId: string,
-  input: NoteContentInput,
+  input: CreateNoteInput,
   user: RequestingUser
 ) {
   const doctorId = requireDoctorId(user);
@@ -95,8 +95,22 @@ export async function createNote(
     );
   }
 
+  const { templateId, ...content } = input;
+  if (templateId) {
+    const template = await prisma.documentationTemplate.findUnique({ where: { id: templateId } });
+    if (!template) {
+      throw new ValidationError("Documentation template not found");
+    }
+  }
+
   return prisma.clinicalNote.create({
-    data: { appointmentId, patientId: appointment.patientId, doctorId, content: input },
+    data: {
+      appointmentId,
+      patientId: appointment.patientId,
+      doctorId,
+      templateId: templateId ?? null,
+      content,
+    },
     select: noteSelect,
   });
 }

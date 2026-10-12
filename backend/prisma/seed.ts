@@ -367,7 +367,8 @@ async function main() {
   });
 
   // --- Documentation templates ---
-  const sections = ["Reason for visit", "Observation", "Assessment", "Plan"];
+  // Field keys, not labels: the frontend takes the labels from its own NOTE_FIELDS list.
+  const sections = ["reasonForVisit", "observation", "assessment", "plan"];
   await Promise.all([
     prisma.documentationTemplate.create({
       data: {
@@ -394,7 +395,7 @@ async function main() {
       data: {
         name: "Vaccination",
         description: "For vaccination visits",
-        templateContent: { sections: ["Reason for visit", "Observation", "Plan"] },
+        templateContent: { sections: ["reasonForVisit", "observation", "plan"] },
       },
     }),
   ]);
