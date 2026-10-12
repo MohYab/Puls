@@ -37,12 +37,12 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 
 ## Patients
 
-| Method | Path                       | Role   | Notes                                                                     |
-| ------ | -------------------------- | ------ | ------------------------------------------------------------------------- |
-| GET    | /patients?search=          | any    | Search by name                                                            |
-| GET    | /patients/:id              | any    |                                                                           |
-| GET    | /patients/:id/appointments | any    |                                                                           |
-| GET    | /patients/:id/notes        | DOCTOR | 403 for admin; only the requesting doctor's own notes, newest visit first |
+| Method | Path                       | Role   | Notes                                                                                                 |
+| ------ | -------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| GET    | /patients?search=          | any    | Every word must match the first or last name (case-insensitive); sorted by last name, then first name |
+| GET    | /patients/:id              | any    |                                                                                                       |
+| GET    | /patients/:id/appointments | any    |                                                                                                       |
+| GET    | /patients/:id/notes        | DOCTOR | 403 for admin; only the requesting doctor's own notes, newest visit first                             |
 
 ## Clinical notes
 
@@ -67,11 +67,32 @@ Body for POST and PUT (validated with Zod, missing fields default to `""`, at le
 
 Response (GET, POST, PUT): the note with `id`, `appointmentId`, `patientId`, `doctorId`, `templateId`, `content`, `createdAt`, `updatedAt`, and `appointment: { startTime, appointmentType: { name } }`.
 
+### Documentation templates
+
+`GET /documentation-templates` (doctors only, 403 for admin) returns all templates:
+
+```json
+[
+  {
+    "id": "cm...",
+    "name": "Vaccination",
+    "description": "For vaccination visits",
+    "templateContent": { "sections": ["reasonForVisit", "observation", "plan"] }
+  }
+]
+```
+
+`sections` lists the note fields (keys of `content`) that the template uses. The labels belong to the frontend.
+
+The template is chosen when a note is created: `POST /appointments/:id/notes` takes an optional `templateId` next to the four fields (400 `VALIDATION_ERROR` if it does not exist). It cannot be changed afterwards, and a `templateId` sent to `PUT /notes/:id` is ignored. Notes without a template (`templateId: null`) show all four fields.
+
+Known limitation: the API only checks that the template exists, not that `content` follows it. The frontend shows only the fields of the template.
+
 ## Doctors / appointment types / templates
 
-| Method    | Path                     | Role   | Notes |
-| --------- | ------------------------ | ------ | ----- |
-| GET       | /doctors                 | any    |       |
-| GET       | /appointment-types       | any    |       |
-| POST, PUT | /appointment-types       | ADMIN  |       |
-| GET       | /documentation-templates | DOCTOR |       |
+| Method    | Path                     | Role   | Notes                                              |
+| --------- | ------------------------ | ------ | -------------------------------------------------- |
+| GET       | /doctors                 | any    |                                                    |
+| GET       | /appointment-types       | any    |                                                    |
+| POST, PUT | /appointment-types       | ADMIN  |                                                    |
+| GET       | /documentation-templates | DOCTOR | Template list with `sections` (see Clinical notes) |

@@ -239,3 +239,72 @@ done
 ```
 
 Each doctor only sees their own notes, even for a patient they share with another doctor. This is the rule that the planned note sharing between doctors (week 12) would extend.
+
+## Documentation templates (doctors only)
+
+```bash
+TEMPLATE_ID=$(curl -s http://localhost:3001/api/documentation-templates \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[] | select(.name=="General consultation") | .id')
+
+# Three scheduled appointments of the doctor that have no note yet
+APPT_1=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="SCHEDULED")][0].id')
+APPT_2=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="SCHEDULED")][1].id')
+APPT_3=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq -r '[.[] | select(.status=="SCHEDULED")][2].id')
+```
+
+| #   | Request                                                         | Expected                                                               |
+| --- | --------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1   | `GET /documentation-templates` as doctor                        | 200, four templates, `sections` are field keys (Vaccination has three) |
+| 2   | same as admin                                                   | 403 `FORBIDDEN`                                                        |
+| 3   | same without token                                              | 401 `UNAUTHORIZED`                                                     |
+| 4   | `POST /appointments/$APPT_1/notes` with `plan` and `templateId` | 201, `templateId` is set                                               |
+| 5   | `POST /appointments/$APPT_2/notes` with an unknown `templateId` | 400 `VALIDATION_ERROR` ("Documentation template not found")            |
+| 6   | `POST` with only `templateId` and no text                       | 400 ("Write something in at least one field")                          |
+| 7   | `POST /appointments/$APPT_3/notes` without `templateId`         | 201, `templateId` is `null`                                            |
+| 8   | `PUT /notes/<id from test 4>` with a different `templateId`     | 200, `templateId` unchanged                                            |
+
+Example (test 4):
+
+```bash
+curl -i -X POST http://localhost:3001/api/appointments/$APPT_1/notes \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d "{\"plan\":\"Test\",\"templateId\":\"$TEMPLATE_ID\"}"
+```
+
+Tests 4 and 7 create notes, so repeating them gives `409 NOTE_EXISTS`. Reseed or use other appointments.
+
+## Patient search
+
+Every word of the search must match the first or last name (case-insensitive). The list is sorted by last name, then first name.
+
+```bash
+curl -s -G http://localhost:3001/api/patients --data-urlencode "search=anna andersson" \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[] | "\(.lastName) \(.firstName)"'
+```
+
+| Search           | Expected                                              |
+| ---------------- | ----------------------------------------------------- |
+| `anna andersson` | Andersson Anna                                        |
+| `andersson anna` | same result (word order does not matter)              |
+| `ann ande`       | same result (partial words)                           |
+| `zzz`            | empty list                                            |
+| (none)           | all patients; `Bergström Agnes` before `Bergström Bo` |
+
+Note: the order of å, ä and ö depends on the database collation.
+
+## UI checklist: templates and UX polish (week 11)
+
+- New note: a "Template" select with "General consultation" selected and its description; all four fields are shown
+- Switching to "Vaccination" hides Assessment and clears what was typed there; switching back shows an empty field
+- After the first save the select is replaced by "Template: Vaccination"; reloading keeps the template and the three fields
+- A seeded note without a template shows "Template: None" and four fields
+- If the templates cannot be loaded: "Could not load templates" with "Try again"
+- Escape closes only the topmost dialog; focus returns to the element that opened it; the close button has `aria-label="Close"`
+- Cancelling an appointment asks for confirmation (patient, date and time shown); "Keep appointment" and Escape only close the dialog; a failed request shows an error in the dialog
+- Clicking a label focuses its field in all forms; Save is disabled while saving (a double click sends one request)
+- Dashboard with the backend stopped: one error box with "Try again", never "No appointments today."
+- Patients, patient page, appointment history and previous notes show consistent loading, empty and error states; "Patient not found" and "Appointment not found" look the same
+- Searching for a full name finds the patient; the patient list is sorted alphabetically by last name
