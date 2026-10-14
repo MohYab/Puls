@@ -1081,7 +1081,7 @@ healthcare context.
 
 - Extracted `createApp()` to `backend/src/app.ts` so the Express app can be
   imported in tests without starting the HTTP server.
-- Added Vitest and Supertest (`npm test`, `npm test:watch`).
+- Added Vitest and Supertest (`npm test`, `npm run test:watch`).
 - Wrote an HTTP-level suite for clinical note access rules against seed
   data: author can read, no token → 401, admin → 403, other doctor cannot
   read or edit, and each doctor only sees their own notes for Anna.

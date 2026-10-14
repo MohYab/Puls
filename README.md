@@ -44,7 +44,7 @@ already in place (early start on week 13).
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.19+ (22 LTS recommended)
 - PostgreSQL running locally
 
 ### Backend

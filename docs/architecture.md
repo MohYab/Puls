@@ -39,7 +39,7 @@ Example for `POST /api/appointments`:
 ```
 routes/appointments.ts
   → authenticate
-  → authorize(['DOCTOR', 'ADMIN'])
+  → authorize("DOCTOR", "ADMIN")
   → validate(createAppointmentSchema)
   → appointmentController.create
       → appointmentService.create
@@ -87,9 +87,7 @@ routes/appointments.ts
 - **Errors:** every error response has the shape
   `{ "error": { "code": "STRING_CODE", "message": "human readable" } }`.
   Known error codes are listed in `docs/api.md`.
-- **Auth:** JWT sent as `Authorization: Bearer <token>`. Token storage
-  location (localStorage vs httpOnly cookie) is decided in week 5 and
-  documented there.
+- **Auth:** JWT sent as `Authorization: Bearer <token>`. localStorage, see decisions #13
 - **No delete of appointments:** cancelling sets `status = CANCELLED`
   instead of removing the row.
 - **Automated tests:** Vitest + Supertest hit the real app and seeded DB.
