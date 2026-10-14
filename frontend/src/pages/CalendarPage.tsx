@@ -5,34 +5,42 @@ import { DayView } from "../features/calendar/DayView";
 import { AppointmentForm } from "../features/appointments/AppointmentForm";
 import { AppointmentDetail } from "../features/appointments/AppointmentDetail";
 import { Modal } from "../components/Modal";
-import { toDateString } from "../utils/date";
+import { ErrorMessage, LoadingMessage } from "../components/Feedback";
+import { addDays, isSameDay, toDateString } from "../utils/date";
 import type { Appointment } from "../types/appointment";
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const { data: appointments, isLoading } = useAppointments(toDateString(currentDate));
-
-  function handlePrevDay() {
-    setCurrentDate((d) => new Date(d.getTime() - 24 * 60 * 60 * 1000));
-  }
-
-  function handleNextDay() {
-    setCurrentDate((d) => new Date(d.getTime() + 24 * 60 * 60 * 1000));
-  }
+  const {
+    data: appointments,
+    isLoading,
+    isError,
+    refetch,
+  } = useAppointments(toDateString(currentDate));
 
   return (
     <div className="flex flex-col gap-4">
       <CalendarToolbar
         date={currentDate}
-        onPrevDay={handlePrevDay}
-        onNextDay={handleNextDay}
+        isToday={isSameDay(currentDate, new Date())}
+        onPrevDay={() => setCurrentDate((d) => addDays(d, -1))}
+        onNextDay={() => setCurrentDate((d) => addDays(d, 1))}
+        onToday={() => setCurrentDate(new Date())}
         onNewAppointment={() => setIsFormOpen(true)}
       />
 
-      {isLoading && <p className="text-sm text-gray-500">Loading...</p>}
-      {!isLoading && (
+      {isLoading && <LoadingMessage>Loading appointments...</LoadingMessage>}
+
+      {isError && (
+        <ErrorMessage
+          message="Could not load appointments for this day."
+          onRetry={() => refetch()}
+        />
+      )}
+
+      {!isLoading && !isError && (
         <DayView
           appointments={appointments ?? []}
           onAppointmentClick={(appointment) => setSelectedAppointment(appointment)}

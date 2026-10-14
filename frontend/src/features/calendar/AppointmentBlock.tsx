@@ -14,15 +14,16 @@ export function AppointmentBlock({ appointment, onClick }: AppointmentBlockProps
 
   return (
     <button
+      type="button"
       onClick={() => onClick(appointment)}
       style={{ top, height }}
       className={`absolute left-1 right-1 rounded border-l-4 px-2 py-1 text-left text-xs overflow-hidden hover:shadow-md transition-shadow ${statusBorderColors[appointment.status]}`}
     >
-      <div className="font-medium">
+      <div className="truncate font-medium">
         {formatTime(appointment.startTime)} – {appointment.patient.firstName}{" "}
         {appointment.patient.lastName}
       </div>
-      <div className="text-gray-600">{appointment.appointmentType.name}</div>
+      <div className="truncate text-gray-600">{appointment.appointmentType.name}</div>
     </button>
   );
 }

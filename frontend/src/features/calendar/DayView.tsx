@@ -20,7 +20,7 @@ export function DayView({ appointments, onAppointmentClick }: DayViewProps) {
 
   return (
     <div className="flex border rounded-lg overflow-hidden bg-white">
-      <div className="w-16 shrink-0 border-r">
+      <div className="w-16 shrink-0 border-r md:w-16">
         {hours.map((hour) => (
           <div
             key={hour}

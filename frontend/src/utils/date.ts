@@ -28,3 +28,18 @@ export function formatBirthDate(isoString: string): string {
 export function formatDateTime(isoString: string): string {
   return `${formatDate(isoString)} ${formatTime(isoString)}`;
 }
+
+/**
+ * Returns a new date moved by whole calendar days, keeping the local time.
+ * Uses setDate instead of adding 24 hours, because a day is 23 or 25 hours
+ * long when daylight saving time starts or ends.
+ */
+export function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+export function isSameDay(a: Date, b: Date): boolean {
+  return toDateString(a) === toDateString(b);
+}
