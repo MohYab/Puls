@@ -1094,11 +1094,62 @@ healthcare context.
 - Starting with the highest-risk rules (journal access) gives more value
   than a broad but shallow suite.
 
+  ### Entry 5: Responsive layout and Sidebar component (step 25b)
+
+**What I did**
+
+- Moved the navigation into a `Sidebar` component with menu items in
+  `navItems.ts` and a role filter, as preparation for admin pages in week 12.
+- Built mobile navigation: a menu button in the header opens the sidebar as a
+  drawer below 768 px (Escape, click outside, link click, scroll lock, focus
+  handling). I added a focus trap myself after keyboard testing showed that
+  Tab left the drawer.
+- Calendar on mobile: wrapping toolbar, "Today" button, labelled arrow
+  buttons, an error state instead of an empty day, and DST-safe day navigation.
+- Fixed horizontal overflow on the patient page, reordered the documentation
+  page for mobile, made dialogs fit the visible screen height, and gave the
+  login page margins, a card, the prototype label and autofill attributes.
+- Used a small Console snippet to measure horizontal overflow on every page
+  instead of judging it by eye.
+
+**What I learned**
+
+- Flex and grid children do not shrink below their content by default. Two
+  different mobile bugs had this same cause (`min-w-0`, `grid-cols-1`).
+- Tab order follows the DOM, not the visual position. A close button placed
+  last in the DOM but shown at the top made the first Tab leave the drawer.
+- Adding 24 hours is not the same as "next day" around daylight saving time.
+- Device emulation is not a real device: a native select popup was misplaced
+  only in Chromium's device mode.
+
+### Problems and solutions
+
+| Problem                                            | Cause                                                     | Solution                                                      |
+| -------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------- |
+| Patient page scrolled sideways at 375 px           | Grid column without definition sized to the table's width | `grid-cols-1` (`minmax(0, 1fr)`)                              |
+| Tab left the drawer immediately                    | Close button last in the DOM                              | Moved it first; focus trap                                    |
+| Calendar stuck on 25 October                       | ±24 hours across the DST change                           | `addDays` with `setDate`                                      |
+| Calendar showed an empty day when the API was down | Only `isLoading` handled                                  | `ErrorMessage` with "Try again"                               |
+| Form below all previous notes on mobile            | DOM order followed the desktop columns                    | DOM order = mobile order, `lg:row-span-2` on desktop          |
+| Select popup shifted left                          | Chromium device emulation                                 | None needed; checked in Firefox, real device check in week 13 |
+
+### Scope changes
+
+- Step 25b was added before week 12 because the role-filtered `Sidebar` is
+  needed for the admin pages anyway.
+- Focus trap was planned out of scope but added for the drawer; a shared
+  `useFocusTrap` for `Modal` moved to week 13.
+- A week view is still missing from the calendar (MVP in the project brief);
+  decide in week 12 or 14 whether to build a simple one or document the day
+  view as enough.
+
 ### Next (week 12)
 
 - Admin features: manage appointment types, a doctor filter in the admin
   calendar.
-- Permissions and role-based UI.
+- Permissions and role-based UI (admin menu items via `roles` in `navItems.ts`).
+- Decide on the calendar week view (build a simple one or document why the
+  day view is enough).
 - Sharing notes between doctors (SHOULD, with a cut-off: if the week is
   behind schedule it moves to future development).
 - Continue automated tests in week 13 (conflicts, validation, more note

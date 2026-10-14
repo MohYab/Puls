@@ -29,6 +29,8 @@ already in place (early start on week 13).
   consultation, Follow-up visit, Annual check-up, Vaccination), and previous
   notes per patient (doctors only)
 - Consistent loading, empty and error states, and keyboard-accessible dialogs
+- Responsive layout from 375 px: mobile menu (drawer), calendar toolbar and
+  pages that stack on small screens
 - Automated backend tests for clinical note access rules (Vitest + Supertest)
 
 ## Tech stack

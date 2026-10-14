@@ -519,3 +519,88 @@ already designed for these cases (Anna with notes from Erik and Sara).
 **Known limitation:** The permission suite needs a seeded database
 (`npx prisma db seed`). Mutating tests (create note, conflict) are still
 manual or not yet automated.
+
+---
+
+## 29. Sidebar component with a role filter
+
+**Decision:** The navigation was moved out of `AppLayout` into
+`layouts/Sidebar.tsx`. Menu items live in `layouts/navItems.ts`, each with an
+optional `roles` list, and `navItemsForRole(role)` returns the items a role
+may see.
+
+**Why:** Week 12 adds admin-only pages. With a role list per item, a new menu
+entry is one line and the layout does not change. The same `Sidebar` is used
+both as the fixed desktop menu and inside the mobile drawer.
+
+**Alternative considered:** Conditional `{user.role === "ADMIN" && ...}`
+blocks in the layout. Rejected: the checks would spread through the markup and
+be duplicated in the drawer.
+
+**Note:** Hiding a link is only convenience. Access is enforced by the backend
+(`authorize`), never by the menu.
+
+## 30. Mobile navigation: header button and drawer below `md`
+
+**Decision:** Below 768 px the sidebar is hidden and a menu button in the
+header opens it as a drawer. The drawer closes on link click, Escape, click
+outside and when the window grows to desktop width. It locks page scroll,
+moves focus to its close button, traps Tab inside the drawer and returns focus
+to the menu button. Built without a library.
+
+**Why:** A fixed 224 px sidebar left about 150 px for content on a phone. A
+drawer is the common pattern for apps that already have a sidebar and scales
+when admin items are added. The behaviour needed is small enough to write and
+explain in one component.
+
+**Alternative considered:** A dropdown menu under the header (simpler, but
+pushes content down and grows with every admin item) and a headless UI
+library (more than the MVP needs).
+
+**Known limitation:** `Modal` does not trap focus yet. Both should share a
+`useFocusTrap` hook in week 13; the hook needs a wider selector than the
+drawer (form fields, skip disabled elements).
+
+## 31. Layout children must be allowed to shrink
+
+**Decision:** The content column in `AppLayout` has `min-w-0`, and page grids
+use `grid-cols-1` below their breakpoint instead of no column definition.
+
+**Why:** Flex and grid children default to `min-width: auto`, so they never
+become narrower than their widest content. On the patient page the appointment
+history table pushed the whole grid column (and the info card in it) outside a
+375 px screen, even though the table had an `overflow-x-auto` wrapper.
+`min-w-0` (flex) and `grid-cols-1` = `minmax(0, 1fr)` (grid) let the column
+shrink so the wrapper can scroll instead.
+
+**Alternative considered:** Fixed widths or hiding columns on small screens.
+Rejected as a first step: they treat the symptom on one page, while the
+shrink rule fixes the cause for every page.
+
+## 32. Calendar day navigation by calendar days, not hours
+
+**Decision:** Previous/next day uses `addDays(date, ±1)`, which calls
+`setDate`, instead of adding or subtracting 24 hours.
+
+**Why:** A day is 23 or 25 hours long when daylight saving time starts or
+ends. On 25 October 2026 (Sweden goes back to standard time), stepping forward
+24 hours from just after midnight stayed on the same day. `setDate` counts
+calendar days and keeps the local time.
+
+**Alternative considered:** A date library (date-fns). Not needed for one
+helper; can be reconsidered if date logic grows (e.g. a week view).
+
+## 33. DOM order is the mobile order
+
+**Decision:** On the documentation page the elements are written in the order
+appointment, visit note form, previous documentation. On `lg` the form spans
+two rows on the right (`lg:row-span-2`, `lg:grid-rows-[auto_1fr]`), so the
+desktop layout is unchanged.
+
+**Why:** Below `lg` the content stacks in DOM order. Before the change the
+form came last, so a doctor on a tablet had to scroll past all earlier notes
+to write the current one. DOM order also sets the Tab order, the same lesson
+as the drawer's close button.
+
+**Alternative considered:** CSS `order` on mobile. Rejected: it changes the
+visual order but not the Tab or screen reader order.

@@ -319,3 +319,55 @@ Note: the order of å, ä and ö depends on the database collation.
 - Dashboard with the backend stopped: one error box with "Try again", never "No appointments today."
 - Patients, patient page, appointment history and previous notes show consistent loading, empty and error states; "Patient not found" and "Appointment not found" look the same
 - Searching for a full name finds the patient; the patient list is sorted alphabetically by last name
+
+## UI checklist: responsive layout (step 25b)
+
+Test in DevTools device mode at 375 px, 768 px and 1280 px.
+
+**Horizontal overflow check.** Paste in the Console on each page. An empty
+list (`[]`) means nothing sticks out to the right:
+
+```js
+const w = document.documentElement.clientWidth;
+[...document.querySelectorAll("body *")]
+  .filter((el) => el.getBoundingClientRect().right > w + 1)
+  .map(
+    (el) => `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 60)}`
+  );
+```
+
+Expected `[]` at 375 px on: login, dashboard, calendar, patients, patient page,
+documentation, and with the "New appointment" dialog open.
+
+**Navigation**
+
+- Below 768 px: no sidebar; a menu button in the header opens the drawer
+- Drawer: focus starts on ✕; Tab and Shift+Tab stay inside and wrap around
+- Link click navigates and closes; Escape, ✕ and click on the dark area close;
+  focus returns to the menu button
+- Page behind does not scroll while the drawer is open
+- Widening the window to desktop with the drawer open closes it and restores scrolling
+- From 768 px: fixed sidebar as before, no menu button
+- Doctor and admin see the same three items (role filter in place for week 12)
+
+**Calendar**
+
+- 375 px: ← Today → and the date on one row, "New appointment" full width below
+- "Today" is disabled on today's date and returns to today from another day
+- Long patient names in blocks end with "…"
+- Backend stopped: "Could not load appointments for this day." with "Try again", not an empty day
+- DST: temporarily start on `new Date(2026, 9, 25, 0, 30)`; → shows Monday, October 26
+
+**Pages**
+
+- Patient page: both cards fit; the history table scrolls sideways inside its card
+- Documentation page on mobile: appointment, visit note, previous documentation;
+  on desktop the form is on the right with appointment and previous notes on the left
+- Dialogs fit the screen and scroll inside (`max-h-[90dvh]`)
+- Login: card with side margins, "Prototype – test data only" under it,
+  Zod messages (no browser bubble), autofill works
+
+**Known emulation artifact:** in Chromium device mode the native `<select>`
+popup in the booking dialog can appear shifted to the left. It works in
+Firefox and on real devices the native picker is used. Check on a real phone
+before the demo (week 13).

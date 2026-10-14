@@ -53,9 +53,8 @@ routes/appointments.ts
 /frontend
   src/
     components/     Reusable, domain-agnostic UI (Button, Card, Modal...)
-    features/        One folder per domain (auth, appointments, calendar,
-                     patients, documentation, dashboard)
-    layouts/         AppLayout, AuthLayout
+    features/        One folder per domain (auth, appointments, calendar, patients, documentation, dashboard)
+    layouts/         AppLayout, AuthLayout, Sidebar, navItems (role filter), MobileNavDrawer
     pages/           Route-level components
     hooks/           Shared hooks (e.g. useAuth)
     services/        API client functions (fetch wrappers)
@@ -65,8 +64,7 @@ routes/appointments.ts
 
 /backend
   src/
-    app.ts            createApp() – Express app without listen (used by
-                      index.ts and by tests)
+    app.ts            createApp() – Express app without listen (used by index.ts and by tests)
     index.ts          Loads env, calls createApp(), starts the server
     routes/           Express routers, one file per resource
     controllers/      Request/response handling
