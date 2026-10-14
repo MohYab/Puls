@@ -47,7 +47,7 @@ export default function PatientDetailPage() {
             {patient.firstName} {patient.lastName}
           </h1>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <PatientInfoCard patient={patient} />
             </div>

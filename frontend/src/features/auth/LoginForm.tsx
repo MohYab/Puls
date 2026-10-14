@@ -6,6 +6,7 @@ import { loginFormSchema, type LoginFormValues } from "../../schemas/authSchemas
 import { loginRequest } from "./authService";
 import { useAuth } from "./useAuth";
 import { ApiError } from "../../services/apiClient";
+import { inputClassName } from "../../components/formStyles";
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -36,39 +37,58 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full max-w-sm">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex w-full flex-col gap-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-1">
+        <label htmlFor="email" className="mb-1 block text-sm font-medium">
           Email
         </label>
         <input
           id="email"
           type="email"
+          autoComplete="username"
+          inputMode="email"
+          aria-invalid={errors.email ? "true" : undefined}
+          aria-describedby={errors.email ? "email-error" : undefined}
           {...register("email")}
-          className="w-full border rounded px-3 py-2"
+          className={inputClassName}
         />
-        {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
+        {errors.email && (
+          <p id="email-error" className="mt-1 text-sm text-red-600">
+            {errors.email.message}
+          </p>
+        )}
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium mb-1">
+        <label htmlFor="password" className="mb-1 block text-sm font-medium">
           Password
         </label>
         <input
           id="password"
           type="password"
+          autoComplete="current-password"
+          aria-invalid={errors.password ? "true" : undefined}
+          aria-describedby={errors.password ? "password-error" : undefined}
           {...register("password")}
-          className="w-full border rounded px-3 py-2"
+          className={inputClassName}
         />
-        {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>}
+        {errors.password && (
+          <p id="password-error" className="mt-1 text-sm text-red-600">
+            {errors.password.message}
+          </p>
+        )}
       </div>
 
-      {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+      {serverError && (
+        <p role="alert" className="text-sm text-red-600">
+          {serverError}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50"
+        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
       >
         {isSubmitting ? "Signing in..." : "Log in"}
       </button>

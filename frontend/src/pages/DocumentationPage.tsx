@@ -97,8 +97,13 @@ export default function DocumentationPage() {
 
       <h1 className="mt-4 text-2xl font-semibold text-gray-900">Documentation</h1>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="flex flex-col gap-6 lg:col-span-1">
+      {/*
+        DOM order = mobile order: appointment, form, previous notes.
+        On lg the form spans two rows on the right, and the previous notes
+        land under the appointment card in the left column.
+      */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr] lg:items-start">
+        <div className="lg:col-span-1">
           <Card title="Appointment">
             <dl className="grid grid-cols-[6rem_1fr] gap-y-2 text-sm">
               <dt className="text-gray-500">Patient</dt>
@@ -120,10 +125,9 @@ export default function DocumentationPage() {
               </dd>
             </dl>
           </Card>
-          <PreviousNotes patientId={appointment.patientId} excludeAppointmentId={appointment.id} />
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 lg:row-span-2">
           <Card title="Visit note">
             <DocumentationForm
               appointmentId={appointment.id}
@@ -131,6 +135,10 @@ export default function DocumentationPage() {
               templates={templatesQuery.data}
             />
           </Card>
+        </div>
+
+        <div className="lg:col-span-1">
+          <PreviousNotes patientId={appointment.patientId} excludeAppointmentId={appointment.id} />
         </div>
       </div>
     </div>

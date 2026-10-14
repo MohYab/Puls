@@ -51,7 +51,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto outline-none"
+        className="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90dvh] overflow-y-auto outline-none"
       >
         <div className="flex items-center justify-between px-5 py-3 border-b">
           <h2 id={titleId} className="font-semibold">
