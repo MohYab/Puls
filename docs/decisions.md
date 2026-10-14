@@ -493,3 +493,29 @@ user leaves the page without saving.
 the tab or reloading, not navigation inside the app, so it gives a false sense
 of safety. It is listed under future development together with an autosaved
 draft.
+
+---
+
+## 28. Automated API tests with Vitest and Supertest
+
+**Decision:** Backend tests use Vitest and Supertest against the real Express
+app and the seeded PostgreSQL database. The first suite covers clinical note
+access rules (`src/notes.permissions.test.ts`). `createApp()` lives in
+`src/app.ts` so tests can import the app without calling `listen`.
+
+**Why:** Note permissions are the highest-risk rules in the MVP (admin must
+not see notes; doctor B must not read or edit doctor A's note). Encoding the
+curl cases from `docs/manual-testing.md` as automated tests catches
+regressions when week 12 adds note sharing. HTTP-level tests exercise
+middleware and services together, which is where authorization actually
+lives.
+
+**Alternative considered:** Unit-testing `noteService` with a mocked Prisma
+client (faster, no database). Rejected for the first suite — a mock would
+not cover `authorize("DOCTOR")` or the login/JWT path. A separate test
+database was also considered; rejected for now because the existing seed is
+already designed for these cases (Anna with notes from Erik and Sara).
+
+**Known limitation:** The permission suite needs a seeded database
+(`npx prisma db seed`). Mutating tests (create note, conflict) are still
+manual or not yet automated.

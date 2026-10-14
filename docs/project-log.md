@@ -1075,6 +1075,25 @@ healthcare context.
   places before I made one component for it.
 - Build `Modal` with keyboard and focus support from the beginning.
 
+### Entry 4: Automated note permission tests (early start on week 13)
+
+**What I did**
+
+- Extracted `createApp()` to `backend/src/app.ts` so the Express app can be
+  imported in tests without starting the HTTP server.
+- Added Vitest and Supertest (`npm test`, `npm test:watch`).
+- Wrote an HTTP-level suite for clinical note access rules against seed
+  data: author can read, no token → 401, admin → 403, other doctor cannot
+  read or edit, and each doctor only sees their own notes for Anna.
+- Documented the choice in `docs/decisions.md` (#28).
+
+**What I learned**
+
+- The seed scenarios (Anna + Erik + Sara) pay off as soon as the same cases
+  become automated tests — no extra fixtures were needed.
+- Starting with the highest-risk rules (journal access) gives more value
+  than a broad but shallow suite.
+
 ### Next (week 12)
 
 - Admin features: manage appointment types, a doctor filter in the admin
@@ -1082,3 +1101,5 @@ healthcare context.
 - Permissions and role-based UI.
 - Sharing notes between doctors (SHOULD, with a cut-off: if the week is
   behind schedule it moves to future development).
+- Continue automated tests in week 13 (conflicts, validation, more note
+  cases); the permission suite is already in place as a foundation.

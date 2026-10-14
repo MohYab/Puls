@@ -2,6 +2,13 @@
 
 Requires the backend running (`npm run dev` in `backend/`) and `jq` installed.
 
+**Automated coverage:** Clinical note access rules (author can read, admin
+and other doctor get 403, no token gets 401, shared patient lists only own
+notes) are covered by `backend/src/notes.permissions.test.ts`. Run them
+with `npm test` in `backend/` after seeding. The curl tables below remain
+the checklist for cases that are not automated yet (create/edit validation,
+templates, UI).
+
 ## Seed users
 
 All users have the password `password123`.
@@ -217,10 +224,11 @@ SARA_TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
 ANNA_ID=$(curl -s "http://localhost:3001/api/patients?search=andersson" \
   -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
 
-ERIK_APPT=$(curl -s http://localhost:3001/api/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
-  | jq -r '[.[] | select(.status=="COMPLETED")][0].id')
-ERIK_NOTE=$(curl -s http://localhost:3001/api/appointments/$ERIK_APPT/notes \
-  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.id')
+# Found through Erik's note for Anna (Erik also has COMPLETED visits without notes)
+ERIK_NOTE_JSON=$(curl -s http://localhost:3001/api/patients/$ANNA_ID/notes \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq '.[0]')
+ERIK_NOTE=$(echo "$ERIK_NOTE_JSON" | jq -r '.id')
+ERIK_APPT=$(echo "$ERIK_NOTE_JSON" | jq -r '.appointmentId')
 ```
 
 | #   | Request                                                      | Expected                |
@@ -239,6 +247,9 @@ done
 ```
 
 Each doctor only sees their own notes, even for a patient they share with another doctor. This is the rule that the planned note sharing between doctors (week 12) would extend.
+
+These cross-doctor and admin cases are also asserted by
+`notes.permissions.test.ts` (`npm test` in `backend/`).
 
 ## Documentation templates (doctors only)
 

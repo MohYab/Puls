@@ -65,14 +65,19 @@ routes/appointments.ts
 
 /backend
   src/
-    routes/          Express routers, one file per resource
+    app.ts            createApp() – Express app without listen (used by
+                      index.ts and by tests)
+    index.ts          Loads env, calls createApp(), starts the server
+    routes/           Express routers, one file per resource
     controllers/      Request/response handling
     services/         Business logic
-    middleware/        authenticate, authorize, validate, errorHandler
-    validators/        Zod schemas for request bodies
-    types/              Shared TypeScript types
-    utils/              Helpers (e.g. date/time conflict check)
-    prisma/             schema.prisma, migrations, seed.ts
+    middleware/       authenticate, authorize, validate, errorHandler
+    validators/       Zod schemas for request bodies
+    types/            Shared TypeScript types
+    utils/            Helpers (e.g. date/time conflict check)
+    test/             Shared test helpers (login, auth header)
+    *.test.ts         Vitest + Supertest suites (e.g. note permissions)
+  prisma/             schema.prisma, migrations, seed.ts
 ```
 
 ## Cross-cutting decisions
@@ -87,3 +92,6 @@ routes/appointments.ts
   documented there.
 - **No delete of appointments:** cancelling sets `status = CANCELLED`
   instead of removing the row.
+- **Automated tests:** Vitest + Supertest hit the real app and seeded DB.
+  Note access rules are covered first; see `docs/decisions.md` (#28) and
+  `docs/manual-testing.md`.

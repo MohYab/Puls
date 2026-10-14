@@ -31,7 +31,6 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/patients" element={<PatientsPage />} />
-                <Route path="/patients" element={<PatientsPage />} />
                 <Route path="/patients/:id" element={<PatientDetailPage />} />
                 <Route path="/documentation/:appointmentId" element={<DocumentationPage />} />
               </Route>

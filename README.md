@@ -14,8 +14,9 @@ see the dashboard and calendar, book, edit and cancel appointments
 history, and write, edit and read visit notes using documentation
 templates. Admins manage bookings but have no access to clinical notes.
 
-Next up: admin features and permissions (week 12), then testing (week 13)
-and polish (week 14).
+Next up: admin features and permissions (week 12), then more testing
+(week 13) and polish (week 14). Automated note permission tests are
+already in place (early start on week 13).
 
 ### What works so far
 
@@ -28,6 +29,7 @@ and polish (week 14).
   consultation, Follow-up visit, Annual check-up, Vaccination), and previous
   notes per patient (doctors only)
 - Consistent loading, empty and error states, and keyboard-accessible dialogs
+- Automated backend tests for clinical note access rules (Vitest + Supertest)
 
 ## Tech stack
 
@@ -36,6 +38,7 @@ and polish (week 14).
 - Backend: Node.js, Express, TypeScript, REST API
 - Database: PostgreSQL with Prisma ORM
 - Auth: JWT with role-based access (Doctor, Admin)
+- Backend tests: Vitest, Supertest
 
 ## Getting started
 
@@ -57,6 +60,18 @@ npm run dev
 
 Runs on `http://localhost:3001`. The seed step can be repeated at any time
 to reset the demo data (see "Test login" below).
+
+### Backend tests
+
+```bash
+cd backend
+npx prisma db seed   # permission tests use seed users and notes
+npm test             # once; or: npm run test:watch
+```
+
+Requires `.env` with `DATABASE_URL` and `JWT_SECRET`. The note permission
+suite logs in as the seed users (Erik, Sara, admin) and checks 401/403/200
+access rules.
 
 ### Frontend
 
@@ -88,7 +103,7 @@ script clears the database first (and refuses to run in production), so it
 can be run repeatedly. IDs change on every run: log in again afterwards.
 
 See [docs/manual-testing.md](docs/manual-testing.md) for API testing
-commands.
+commands (curl) and how they relate to the automated suite.
 
 ## Documentation
 
