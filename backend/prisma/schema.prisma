@@ -67,7 +67,8 @@ model AppointmentType {
   id          String  @id @default(cuid())
   name        String
   duration    Int // minutes
-  description String?
+    description String?
+  isActive    Boolean @default(true)
 
   appointments Appointment[]
 

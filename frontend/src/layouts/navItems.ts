@@ -13,6 +13,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/calendar", label: "Calendar" },
   { to: "/patients", label: "Patients" },
+  { to: "/admin/appointment-types", label: "Appointment types", roles: ["ADMIN"] },
 ];
 
 export function navItemsForRole(role: UserRole | undefined): NavItem[] {

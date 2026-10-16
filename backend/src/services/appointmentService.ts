@@ -7,27 +7,41 @@ import type {
 } from "../validators/appointmentValidators.js";
 import { getPatientById } from "./patientService.js";
 
+type RequestingUser = { role: "DOCTOR" | "ADMIN"; doctorId: string | null };
+
+/**
+ * Where-filter that limits a query to the requesting doctor's own rows.
+ * Admins get no filter. A doctor without a linked doctor profile is rejected,
+ * because an empty filter would otherwise mean "all doctors".
+ */
+function ownDoctorFilter(requestingUser: RequestingUser): { doctorId?: string } {
+  if (requestingUser.role !== "DOCTOR") {
+    return {};
+  }
+  if (!requestingUser.doctorId) {
+    throw new AppError(403, "FORBIDDEN", "No doctor profile is linked to this user");
+  }
+  return { doctorId: requestingUser.doctorId };
+}
+
 interface GetAppointmentsParams {
   requestingUser: { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
   date?: string;
 }
 
 export async function getAppointments({ requestingUser, date }: GetAppointmentsParams) {
-  const where: Record<string, unknown> = {};
-
   // Doctor only sees their own appointments; Admin sees all.
-  if (requestingUser.role === "DOCTOR") {
-    where.doctorId = requestingUser.doctorId;
-  }
-
-  if (date) {
-    const start = new Date(`${date}T00:00:00`);
-    const end = new Date(`${date}T23:59:59.999`);
-    where.startTime = { gte: start, lte: end };
-  }
+  const startTimeFilter = date
+    ? {
+        startTime: {
+          gte: new Date(`${date}T00:00:00`),
+          lte: new Date(`${date}T23:59:59.999`),
+        },
+      }
+    : {};
 
   return prisma.appointment.findMany({
-    where,
+    where: { ...ownDoctorFilter(requestingUser), ...startTimeFilter },
     include: {
       patient: { select: { firstName: true, lastName: true } },
       appointmentType: { select: { name: true, duration: true } },
@@ -48,6 +62,13 @@ export async function createAppointment(
   });
   if (!appointmentType) {
     throw new NotFoundError("Appointment type not found");
+  }
+  if (!appointmentType.isActive) {
+    throw new AppError(
+      400,
+      "APPOINTMENT_TYPE_INACTIVE",
+      "This appointment type is no longer in use"
+    );
   }
 
   const startTime = new Date(input.startTime);
@@ -112,17 +133,33 @@ export async function updateAppointment(
 ) {
   const existing = await assertOwnsAppointment(appointmentId, requestingUser);
 
-  const appointmentTypeId = input.appointmentTypeId ?? existing.appointmentTypeId;
+  const newTypeId = input.appointmentTypeId;
+  const typeChanged = newTypeId !== undefined && newTypeId !== existing.appointmentTypeId;
+  const appointmentTypeId = typeChanged ? newTypeId : existing.appointmentTypeId;
   const startTime = input.startTime ? new Date(input.startTime) : existing.startTime;
 
-  const appointmentType = await prisma.appointmentType.findUnique({
-    where: { id: appointmentTypeId },
-  });
-  if (!appointmentType) {
-    throw new NotFoundError("Appointment type not found");
+  // Keep the booked length unless the type changes, so editing an old
+  // appointment is not affected by a later change of the type's duration.
+  let durationMs = existing.endTime.getTime() - existing.startTime.getTime();
+
+  if (typeChanged) {
+    const appointmentType = await prisma.appointmentType.findUnique({
+      where: { id: appointmentTypeId },
+    });
+    if (!appointmentType) {
+      throw new NotFoundError("Appointment type not found");
+    }
+    if (!appointmentType.isActive) {
+      throw new AppError(
+        400,
+        "APPOINTMENT_TYPE_INACTIVE",
+        "This appointment type is no longer in use"
+      );
+    }
+    durationMs = appointmentType.duration * 60 * 1000;
   }
 
-  const endTime = new Date(startTime.getTime() + appointmentType.duration * 60 * 1000);
+  const endTime = new Date(startTime.getTime() + durationMs);
 
   const conflict = await prisma.appointment.findFirst({
     where: {
@@ -193,8 +230,8 @@ export async function getPatientAppointments(
   return prisma.appointment.findMany({
     where: {
       patientId,
-      // Doctor ser bara sina egna besök med patienten; Admin ser alla.
-      ...(requestingUser.role === "DOCTOR" && { doctorId: requestingUser.doctorId }),
+      // Doctors only see their own visits with the patient; admins see all.
+      ...ownDoctorFilter(requestingUser),
     },
     orderBy: { startTime: "desc" },
     select: {

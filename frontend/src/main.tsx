@@ -13,6 +13,8 @@ import CalendarPage from "./pages/CalendarPage";
 import PatientsPage from "./pages/PatientsPage";
 import PatientDetailPage from "./pages/PatientDetailPage";
 import DocumentationPage from "./pages/DocumentationPage";
+import AppointmentTypesPage from "./pages/AppointmentTypesPage";
+import { RequireRole } from "./features/auth/RequireRole";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,9 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/patients" element={<PatientsPage />} />
                 <Route path="/patients/:id" element={<PatientDetailPage />} />
                 <Route path="/documentation/:appointmentId" element={<DocumentationPage />} />
+                <Route element={<RequireRole roles={["ADMIN"]} />}>
+                  <Route path="/admin/appointment-types" element={<AppointmentTypesPage />} />
+                </Route>
               </Route>
             </Route>
 
