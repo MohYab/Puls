@@ -27,9 +27,13 @@ function ownDoctorFilter(requestingUser: RequestingUser): { doctorId?: string } 
 interface GetAppointmentsParams {
   requestingUser: { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
   date?: string;
+  /** Admin only: limit to one doctor. Ignored for doctors, who always see their own. */
+  doctorId?: string;
 }
 
-export async function getAppointments({ requestingUser, date }: GetAppointmentsParams) {
+export async function getAppointments({ requestingUser, date, doctorId }: GetAppointmentsParams) {
+  const doctorFilter =
+    requestingUser.role === "ADMIN" && doctorId ? { doctorId } : ownDoctorFilter(requestingUser);
   // Doctor only sees their own appointments; Admin sees all.
   const startTimeFilter = date
     ? {
@@ -41,7 +45,7 @@ export async function getAppointments({ requestingUser, date }: GetAppointmentsP
     : {};
 
   return prisma.appointment.findMany({
-    where: { ...ownDoctorFilter(requestingUser), ...startTimeFilter },
+    where: { ...doctorFilter, ...startTimeFilter },
     include: {
       patient: { select: { firstName: true, lastName: true } },
       appointmentType: { select: { name: true, duration: true } },

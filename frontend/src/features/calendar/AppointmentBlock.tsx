@@ -10,7 +10,10 @@ interface AppointmentBlockProps {
 
 export function AppointmentBlock({ appointment, onClick }: AppointmentBlockProps) {
   const top = minutesSinceCalendarStart(new Date(appointment.startTime)) * PX_PER_MINUTE;
-  const height = appointment.appointmentType.duration * PX_PER_MINUTE;
+  // Use the booked length, not the type's current duration (an admin may change it later).
+  const durationMinutes =
+    (new Date(appointment.endTime).getTime() - new Date(appointment.startTime).getTime()) / 60000;
+  const height = durationMinutes * PX_PER_MINUTE;
 
   return (
     <button

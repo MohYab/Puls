@@ -10,9 +10,11 @@ import {
 export async function listAppointments(req: Request, res: Response, next: NextFunction) {
   try {
     const date = typeof req.query.date === "string" ? req.query.date : undefined;
+    const doctorId = typeof req.query.doctorId === "string" ? req.query.doctorId : undefined;
     const appointments = await getAppointments({
       requestingUser: req.user!,
       date,
+      doctorId,
     });
     res.json(appointments);
   } catch (err) {

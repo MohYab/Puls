@@ -2,10 +2,20 @@ import { useQuery } from "@tanstack/react-query";
 import { retryUnlessClientError } from "../../utils/queryRetry";
 import { getAppointment, getAppointments } from "./appointmentService";
 
-export function useAppointments(date?: string) {
+interface UseAppointmentsOptions {
+  doctorId?: string;
+  enabled?: boolean;
+}
+
+export function useAppointments(
+  date?: string,
+  { doctorId, enabled = true }: UseAppointmentsOptions = {}
+) {
   return useQuery({
-    queryKey: ["appointments", date],
-    queryFn: () => getAppointments(date),
+    // doctorId must be part of the key, otherwise all doctors would share one cache entry.
+    queryKey: ["appointments", "list", { date, doctorId }],
+    queryFn: () => getAppointments(date, doctorId),
+    enabled,
     retry: retryUnlessClientError,
   });
 }

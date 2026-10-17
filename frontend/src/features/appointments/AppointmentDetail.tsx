@@ -97,6 +97,13 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
         >
           {(field) => (
             <select {...field} {...register("appointmentTypeId")} className={inputClassName}>
+              {/* The booked type may have been deactivated; keep it selectable for this appointment. */}
+              {appointmentTypes &&
+                !appointmentTypes.some((t) => t.id === appointment.appointmentTypeId) && (
+                  <option value={appointment.appointmentTypeId}>
+                    {appointment.appointmentType.name} (inactive)
+                  </option>
+                )}
               {appointmentTypes?.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name} ({t.duration} min)

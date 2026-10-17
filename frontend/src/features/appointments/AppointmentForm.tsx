@@ -18,11 +18,18 @@ import { toDateString } from "../../utils/date";
 
 interface AppointmentFormProps {
   defaultDate: Date;
+  /** Admin only: the doctor selected in the calendar. Doctors always book for themselves. */
+  defaultDoctorId?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function AppointmentForm({ defaultDate, onSuccess, onCancel }: AppointmentFormProps) {
+export function AppointmentForm({
+  defaultDate,
+  defaultDoctorId,
+  onSuccess,
+  onCancel,
+}: AppointmentFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const formId = useId();
@@ -43,7 +50,7 @@ export function AppointmentForm({ defaultDate, onSuccess, onCancel }: Appointmen
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       date: toDateString(defaultDate),
-      doctorId: user?.role === "DOCTOR" ? (user.doctorId ?? "") : "",
+      doctorId: user?.role === "DOCTOR" ? (user.doctorId ?? "") : (defaultDoctorId ?? ""),
     },
   });
 
