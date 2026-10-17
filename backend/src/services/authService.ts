@@ -13,12 +13,12 @@ export async function login(email: string, password: string) {
   });
 
   if (!user) {
-    throw new AppError(401, "INVALID_CREDENTIALS", "Wrong email or password");
+    throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
   }
 
   const passwordMatches = await bcrypt.compare(password, user.passwordHash);
   if (!passwordMatches) {
-    throw new AppError(401, "INVALID_CREDENTIALS", "Wrong email or password");
+    throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
   }
 
   const token = jwt.sign(
