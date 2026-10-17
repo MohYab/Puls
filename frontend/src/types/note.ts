@@ -18,4 +18,14 @@ export interface ClinicalNote {
     startTime: string;
     appointmentType: { name: string };
   };
+
+  // The author, so a doctor reading a shared note can see who wrote it.
+  doctor: { user: { name: string } };
+}
+
+export interface NoteShare {
+  id: string;
+  createdAt: string;
+  consentConfirmedAt: string;
+  doctor: { id: string; user: { name: string } };
 }

@@ -2,12 +2,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../services/apiClient";
 import { retryUnlessClientError } from "../../utils/queryRetry";
 import type { NoteContent } from "../../types/note";
-import { createNote, getNoteByAppointment, getPatientNotes, updateNote } from "./noteService";
+import {
+  createNote,
+  getNoteByAppointment,
+  getNoteShares,
+  getPatientNotes,
+  revokeNoteShare,
+  shareNote,
+  updateNote,
+} from "./noteService";
 
 export const noteKeys = {
   byAppointment: (appointmentId: string | undefined) =>
     ["notes", "byAppointment", appointmentId] as const,
   byPatient: (patientId: string | undefined) => ["notes", "byPatient", patientId] as const,
+  shares: (noteId: string) => ["notes", "shares", noteId] as const,
 };
 
 // Resolves to null when the appointment has no note yet (a normal state, not an error).
@@ -54,5 +63,31 @@ export function useSaveNote(appointmentId: string, existingNoteId: string | unde
       queryClient.setQueryData(noteKeys.byAppointment(appointmentId), note);
       queryClient.invalidateQueries({ queryKey: noteKeys.byPatient(note.patientId) });
     },
+  });
+}
+
+export function useNoteShares(noteId: string) {
+  return useQuery({
+    queryKey: noteKeys.shares(noteId),
+    queryFn: () => getNoteShares(noteId),
+    retry: retryUnlessClientError,
+  });
+}
+
+export function useShareNote(noteId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (doctorId: string) => shareNote(noteId, doctorId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: noteKeys.shares(noteId) }),
+  });
+}
+
+export function useRevokeNoteShare(noteId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (doctorId: string) => revokeNoteShare(noteId, doctorId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: noteKeys.shares(noteId) }),
   });
 }

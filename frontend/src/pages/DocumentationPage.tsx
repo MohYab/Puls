@@ -10,6 +10,7 @@ import { formatDate, formatTime } from "../utils/date";
 import { PreviousNotes } from "../features/notes/PreviousNotes";
 import { useTemplates } from "../features/documentationTemplates/useTemplates";
 import { StateMessage } from "../components/StateMessage";
+import { NoteSharing } from "../features/notes/NoteSharing";
 
 export default function DocumentationPage() {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -127,7 +128,7 @@ export default function DocumentationPage() {
           </Card>
         </div>
 
-        <div className="lg:col-span-2 lg:row-span-2">
+        <div className="flex flex-col gap-6 lg:col-span-2 lg:row-span-2">
           <Card title="Visit note">
             <DocumentationForm
               appointmentId={appointment.id}
@@ -135,6 +136,9 @@ export default function DocumentationPage() {
               templates={templatesQuery.data}
             />
           </Card>
+
+          {/* A note can only be shared once it has been saved. */}
+          {note && <NoteSharing note={note} />}
         </div>
 
         <div className="lg:col-span-1">

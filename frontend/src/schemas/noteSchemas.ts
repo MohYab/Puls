@@ -21,3 +21,13 @@ export const noteFormSchema = z
   });
 
 export type NoteFormValues = z.infer<typeof noteFormSchema>;
+
+export const shareNoteFormSchema = z.object({
+  doctorId: z.string().min(1, "Choose a doctor"),
+  // boolean + refine (not z.literal(true)) so the form can start unchecked.
+  consentConfirmed: z
+    .boolean()
+    .refine((checked) => checked, "Confirm that the patient has agreed to sharing"),
+});
+
+export type ShareNoteFormValues = z.infer<typeof shareNoteFormSchema>;
