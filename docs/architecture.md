@@ -73,8 +73,7 @@ routes/appointments.ts
     validators/       Zod schemas for request bodies
     types/            Shared TypeScript types
     utils/            Helpers (e.g. date/time conflict check)
-    test/             Shared test helpers (login, auth header)
-    *.test.ts         Vitest + Supertest suites (e.g. note permissions)
+    test/             HTTP-level tests (Vitest + Supertest) and shared helpers
   prisma/             schema.prisma, migrations, seed.ts
 ```
 

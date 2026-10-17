@@ -500,7 +500,7 @@ draft.
 
 **Decision:** Backend tests use Vitest and Supertest against the real Express
 app and the seeded PostgreSQL database. The first suite covers clinical note
-access rules (`src/notes.permissions.test.ts`). `createApp()` lives in
+access rules (`src/test/notes.permissions.test.ts`). `createApp()` lives in
 `src/app.ts` so tests can import the app without calling `listen`.
 
 **Why:** Note permissions are the highest-risk rules in the MVP (admin must
@@ -604,3 +604,133 @@ as the drawer's close button.
 
 **Alternative considered:** CSS `order` on mobile. Rejected: it changes the
 visual order but not the Tab or screen reader order.
+
+---
+
+## 34. Appointment types are deactivated, never deleted
+
+**Decision:** `AppointmentType` has `isActive`. Admins create, edit, deactivate
+and activate types. Inactive types are hidden from the booking form and cannot
+be booked (400 `APPOINTMENT_TYPE_INACTIVE`); existing appointments keep them.
+Names are unique case-insensitively (409 `APPOINTMENT_TYPE_EXISTS`).
+
+**Why:** Appointments reference their type. Deleting would either fail on the
+foreign key or break the history. Same principle as soft-cancel (#4).
+
+**Alternative considered:** Hard delete with a check for existing
+appointments. Rejected: a type would become undeletable as soon as it was used,
+so admins would still need a way to retire it.
+
+**Known limitation:** Name uniqueness is checked in the service, not by a
+database index, so two simultaneous creates could both pass. A unique index on
+`lower(name)` would fix it in production.
+
+## 35. The booked length is the truth, not the type's current duration
+
+**Decision:** `updateAppointment` keeps `endTime − startTime` unless the type is
+changed. Calendar blocks are drawn from `endTime − startTime`.
+
+**Why:** Once admins can change a type's duration, recalculating from the type
+would silently change old appointments (editing a comment moved the end time)
+and draw them with the wrong height.
+
+**Alternative considered:** Storing the duration on the appointment. Not
+needed, since `endTime` already holds the same information.
+
+## 36. The role decides, not the request
+
+**Decision:** Filters that depend on the role are built in one helper,
+`ownDoctorFilter`: doctors are always limited to their own rows and admins get
+no filter. Client parameters that would widen access (`includeInactive`,
+`doctorId`) are ignored for doctors. A doctor without a linked doctor profile
+gets 403.
+
+**Why:** Regenerating the Prisma client (TS2322) showed that `doctorId` could be
+`null`. The quick fix (`?? undefined`) would have removed the filter, because
+`undefined` in a Prisma `where` means "no condition", so the doctor would see
+every doctor's appointments. The same gap was hidden in `getAppointments` by
+`where: Record<string, unknown>`, which disables Prisma's type checking.
+
+**Alternative considered:** Returning 403 when a doctor sends `doctorId`.
+Rejected: ignoring it is simpler for the client and gives the same protection.
+
+## 37. Admin calendar shows one doctor at a time
+
+**Decision:** `GET /api/appointments` accepts `doctorId` for admins. The admin
+calendar has a doctor selector with the first doctor (alphabetically)
+preselected; there is no "all doctors" option in the day view. `doctorId` is
+part of the query key.
+
+**Why:** The day view has one column, so showing 28 doctors at once gave
+overlapping blocks (known limitation in week 11). One doctor at a time matches
+how a schedule is managed.
+
+**Alternative considered:** One column per doctor. Rejected for the MVP: much
+more layout work and unreadable with many doctors.
+
+## 38. Sharing notes between doctors, with history
+
+**Decision:** The author of a note can share read access with another doctor
+and revoke it. `NoteShare` stores `noteId`, `doctorId` (recipient),
+`createdByUserId`, `consentConfirmedAt`, `createdAt` and `revokedAt`. Revoking
+sets `revokedAt`; sharing again creates a new row. The read rule is still in
+one place (`readableNotesWhere`: author OR active share), `canReadNote` is
+derived from it, and who may share is decided by `canManageShares`. Recipients
+read on the patient page, never on the documentation page, and can never edit.
+
+**Why:** A colleague taking over a patient needs context, while write access
+must stay with the author. Keeping revoked rows gives a history of who had
+access and when, and `createdByUserId` and `consentConfirmedAt` make a future
+patient login possible without changing the table (the patient could share,
+approve or give consent; only `canManageShares` and possibly a `status` field
+would change).
+
+**Alternative considered:** A unique share per pair that is reactivated
+(loses history), and patient-level consent instead of per note (closer to real
+practice, but depends on decisions not made yet).
+
+**Known limitation:** Consent is confirmed by the doctor with a checkbox, not
+recorded from the patient. There is no access logging as required by the
+Patient Data Act. A duplicate active share is prevented in the service only
+(Prisma cannot express a partial unique index). A shared note shows the
+latest version; there is no content history.
+
+## 39. Role-based routes in the frontend
+
+**Decision:** `RequireRole` is a layout route like `ProtectedRoute`. Admin
+pages are nested under `<RequireRole roles={["ADMIN"]} />`, and admin menu
+items use `roles` in `navItems.ts` (#29).
+
+**Why:** Each new admin page gets the check by being placed in the route tree,
+not by repeating it in the page.
+
+**Note:** This only avoids showing a broken page. The backend enforces the
+same rule with `authorize("ADMIN")`.
+
+## 40. Automated tests in src/test, designed to be repeatable
+
+**Decision:** All HTTP-level tests live in `backend/src/test/` with their
+helpers. Tests are written so they are rejected before anything is written
+(401/403/400/409) or only read. The seed contains the scenarios they need
+(an inactive type, a share from Sara to Johan). One lifecycle test (share,
+read, revoke) writes data and revokes in `finally`.
+
+**Why:** The tests are integration tests through the whole app, not unit tests
+of one file, so they belong together rather than next to a source file.
+Repeatable tests can run against the dev database without a reset between
+runs. Seeding the scenarios avoids tests that create data they cannot delete
+(types and notes have no delete).
+
+**Alternative considered:** A separate test database with a reset before each
+run. Still the better long-term solution; not needed while most tests do not
+write.
+
+## 41. No week view in the MVP calendar
+
+**Decision:** The calendar keeps the day view, now with a doctor filter and a
+"Today" button. A week view is moved to future development.
+
+**Why:** The project brief listed day and week views. With limited time, admin
+features and sharing gave more value, and the day view covers the main
+workflow (today's patients, booking, one doctor at a time). Can be revisited in
+week 14 if time allows, reusing `DayView` per column.

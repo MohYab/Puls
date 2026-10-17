@@ -7,7 +7,7 @@ decisions, what I learned, feedback, scope changes.
 
 ## Week 1 – Pre-study and scope
 
-**Period:** week 36 2026-08-31 to 2026-09-06
+**Period:** week 36 2026-08-24 to 2026-08-30
 
 ### Summary of the week
 
@@ -151,7 +151,7 @@ and P2 (should have), and a clear list of what is out of scope.
 
 ## Week 2 – UX/UI and architecture
 
-**Period:** week 37 2026-09-07 to 2026-09-13
+**Period:** week 36 2026-08-31 to 2026-09-06
 
 ### Summary of the week
 
@@ -301,7 +301,7 @@ that starts in week 3 with the project setup.
 
 ## Week 3–4 – Project setup, database and backend foundation
 
-**Period:** week 38-39 2026-09-14 to 2026-09-27
+**Period:** week 37-38 2026-09-07 to 2026-09-20
 
 ### Summary
 
@@ -490,7 +490,7 @@ TO puls_user`. See docs/decisions.md #11.
 
 ## Week 5–7 – Authentication, frontend foundation and dashboard
 
-**Period:** week 40-42 2026-09-28 to 2026-10-18
+**Period:** week 39-41 2026-09-21 to 2026-10-11
 
 ### Summary
 
@@ -613,7 +613,7 @@ after logging in, fully wired to the backend.
 
 ## Week 8 – Calendar and the appointment booking flow
 
-**Period:** week 43 2026-10-19 to 2026-10-25
+**Period:** week 42 2026-10-12 to 2026-10-18
 
 ### Summary
 
@@ -725,7 +725,7 @@ already known to behave correctly.
 
 ## Week 9–10 – Patients and clinical documentation
 
-**Period:** week 44–45 2026-10-26 to 2026-11-08
+**Period:** week 43,44 2026-10-19 to 2026-11-01
 
 ### Summary
 
@@ -929,7 +929,7 @@ and automated tests remain for weeks 11–13.
 
 ## Week 11 – Documentation templates and UX polish
 
-**Period:** week 46 2026-11-09 to 2026-11-15
+**Period:** week 45 2026-11-02 to 2026-11-08
 
 ### Summary
 
@@ -1124,14 +1124,14 @@ healthcare context.
 
 ### Problems and solutions
 
-| Problem                                            | Cause                                                     | Solution                                                      |
-| -------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------- |
-| Patient page scrolled sideways at 375 px           | Grid column without definition sized to the table's width | `grid-cols-1` (`minmax(0, 1fr)`)                              |
-| Tab left the drawer immediately                    | Close button last in the DOM                              | Moved it first; focus trap                                    |
-| Calendar stuck on 25 October                       | ±24 hours across the DST change                           | `addDays` with `setDate`                                      |
-| Calendar showed an empty day when the API was down | Only `isLoading` handled                                  | `ErrorMessage` with "Try again"                               |
-| Form below all previous notes on mobile            | DOM order followed the desktop columns                    | DOM order = mobile order, `lg:row-span-2` on desktop          |
-| Select popup shifted left                          | Chromium device emulation                                 | None needed; checked in Firefox, real device check in week 13 |
+| Problem                                            | Cause                                  | Solution                                              |
+| -------------------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
+| Patient page scrolled sideways at 375 px           | Grid column sized to the table's width | `grid-cols-1` (`minmax(0, 1fr)`)                      |
+| Tab left the drawer immediately                    | Close button last in the DOM           | Moved it first; focus trap                            |
+| Calendar stuck on 25 October                       | ±24 hours across the DST change        | `addDays` with `setDate`                              |
+| Calendar showed an empty day when the API was down | Only `isLoading` handled               | `ErrorMessage` with "Try again"                       |
+| Form below all previous notes on mobile            | DOM order followed the desktop columns | DOM order = mobile order, `lg:row-span-2` on desktop  |
+| Select popup shifted left                          | Chromium device emulation              | None needed; checked in Firefox (real device week 13) |
 
 ### Scope changes
 
@@ -1154,3 +1154,105 @@ healthcare context.
   behind schedule it moves to future development).
 - Continue automated tests in week 13 (conflicts, validation, more note
   cases); the permission suite is already in place as a foundation.
+
+## Week 12 – Admin features and note sharing
+
+**Period:** week 46 2026-11-09 to 2026-11-15
+
+### Summary
+
+This week gave admins tools to manage the organisation's data: appointment
+types can be created, edited, deactivated and activated again, and the
+calendar shows one doctor at a time instead of overlapping blocks. The admin
+pages are protected by a role-based route and only appear in the admin menu.
+
+Doctors can now share a note with a colleague and revoke it again. Sharing is
+read-only, needs a (simulated) consent confirmation and keeps a history of who
+had access. The design was adjusted before building it so that a future patient
+login could let patients share or give consent without changing the table.
+
+Building the admin features uncovered three hidden problems: a Prisma type
+update showed that a missing `doctorId` could have removed the doctor filter,
+editing an appointment recalculated its end time from the type, and calendar
+blocks used the type's duration. All three were fixed and the new rules are
+covered by automated tests (33 tests in four suites).
+
+### Entry 6: Appointment types and the doctor filter
+
+**What I did**
+
+- Added `isActive` to appointment types and admin endpoints to create, edit
+  and change status, with validation (5–240 minutes in 5-minute steps,
+  case-insensitive unique names).
+- Built the admin page with a table, a form in a dialog and confirmation
+  before deactivating, behind a `RequireRole` route and an admin-only menu item.
+- Added a `doctorId` filter for admins and a doctor selector in the calendar
+  that also preselects the doctor when booking.
+- Kept the booked length when editing appointments and drew calendar blocks
+  from `endTime`.
+
+**What I learned**
+
+- A stricter type after `prisma generate` pointed at a real security gap: the
+  convenient fix would have made it worse.
+- `Record<string, unknown>` as a Prisma `where` type switches off the checks
+  that would have caught the same gap.
+- When data can change over time (a type's duration), store what was booked and
+  use that, not the current setting.
+
+### Entry 7: Sharing notes between doctors
+
+**What I did**
+
+- Added `NoteShare` with history (`revokedAt`, new row when sharing again),
+  `createdByUserId` and `consentConfirmedAt`.
+- Extended `readableNotesWhere` (author OR active share) and derived
+  `canReadNote` from it; added `canManageShares` for who may share.
+- Built the sharing card on the documentation page and a "Shared by …" label
+  without edit link on the patient page.
+- Added a seed scenario (Sara shares with Johan) and Supertest suites for the
+  admin rules and sharing.
+
+**What I learned**
+
+- Having the read rule in one function since week 10 meant sharing changed
+  one function, not every endpoint.
+- Thinking about a possible future feature (patient consent) is worth it before
+  the table exists, but only to keep decisions cheap, not to build them early.
+- Top-level code after `main()` in a script does not wait for `main` to finish.
+
+### Problems and solutions
+
+| Problem                                                    | Cause                                                       | Solution                                                              |
+| ---------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| TS2322 on `doctorId` after `prisma generate`               | A nullable value as filter on a required column             | `ownDoctorFilter` with 403 instead of `?? undefined`                  |
+| Editing an old appointment would change its end time       | `updateAppointment` always used the type's current duration | Keep `endTime − startTime` unless the type changes                    |
+| Blocks drawn with the wrong height after a duration change | Height from `appointmentType.duration`                      | Height from `endTime − startTime`                                     |
+| Appointment with an inactive type could not be edited      | Its type was not among the options                          | Extra "(inactive)" option for the booked type                         |
+| Seed failed with P2025                                     | Sharing scenario ran outside `main()`, before notes existed | `seedNoteShares()` awaited inside `main()`, lookups through relations |
+| `npx prisma` offered to install Prisma 8                   | Command run from the repo root, not `backend/`              | Run Prisma commands in `backend/`                                     |
+
+### Feedback from supervisor
+
+### Scope changes
+
+- Note sharing between doctors (SHOULD) was built, since the checkpoint showed
+  the week was ahead of schedule.
+- The calendar week view was moved to future development (#41).
+- Patient-controlled sharing and consent stay out of scope; the data model
+  leaves room for it (#38).
+- `/admin/users` (COULD) was not built.
+
+### What I would do differently
+
+- Ask for the seed file before giving placement instructions for new seed
+  data, instead of "add it at the end".
+- Type Prisma `where` objects from the start instead of `Record<string, unknown>`.
+
+### Next (week 13)
+
+- Testing and quality: more automated tests where they add value, a shared
+  `useFocusTrap` for `Modal` and the drawer, accessibility pass, check on a real
+  phone, edge cases.
+- Refactoring candidates: one requesting-user type in the backend, booking form
+  using the shared hooks (`useDoctors`, appointment types).

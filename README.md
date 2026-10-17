@@ -8,15 +8,13 @@ Built as a degree project during an internship.
 
 ## Status
 
-Week 11 of 17. The core of the MVP works end to end: a doctor can log in,
+Week 12 of 17. The core of the MVP works end to end: a doctor can log in,
 see the dashboard and calendar, book, edit and cancel appointments
 (with conflict checking), search patients, view a patient's appointment
 history, and write, edit and read visit notes using documentation
 templates. Admins manage bookings but have no access to clinical notes.
 
-Next up: admin features and permissions (week 12), then more testing
-(week 13) and polish (week 14). Automated note permission tests are
-already in place (early start on week 13).
+Next up: testing and quality (week 13), then polish and MVP freeze (week 14).
 
 ### What works so far
 
@@ -31,7 +29,12 @@ already in place (early start on week 13).
 - Consistent loading, empty and error states, and keyboard-accessible dialogs
 - Responsive layout from 375 px: mobile menu (drawer), calendar toolbar and
   pages that stack on small screens
-- Automated backend tests for clinical note access rules (Vitest + Supertest)
+- Admin: manage appointment types (create, edit, deactivate) and view the
+  calendar one doctor at a time
+- Doctors can share a note read-only with a colleague and revoke it
+  (simulated patient consent, history kept)
+- Automated backend tests for note access, sharing and admin rules
+  (Vitest + Supertest, 33 tests)
 
 ## Tech stack
 
@@ -71,9 +74,10 @@ npx prisma db seed   # permission tests use seed users and notes
 npm test             # once; or: npm run test:watch
 ```
 
-Requires `.env` with `DATABASE_URL` and `JWT_SECRET`. The note permission
-suite logs in as the seed users (Erik, Sara, admin) and checks 401/403/200
-access rules.
+Requires `.env` with `DATABASE_URL` and `JWT_SECRET`. The suites in
+`backend/src/test/` log in as the seed users and check access rules for notes,
+note sharing and admin endpoints. They can be run repeatedly without
+reseeding.
 
 ### Frontend
 

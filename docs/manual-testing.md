@@ -2,12 +2,16 @@
 
 Requires the backend running (`npm run dev` in `backend/`) and `jq` installed.
 
-**Automated coverage:** Clinical note access rules (author can read, admin
-and other doctor get 403, no token gets 401, shared patient lists only own
-notes) are covered by `backend/src/notes.permissions.test.ts`. Run them
-with `npm test` in `backend/` after seeding. The curl tables below remain
-the checklist for cases that are not automated yet (create/edit validation,
-templates, UI).
+**Automated coverage:** `npm test` in `backend/` runs the Vitest + Supertest
+suites in `backend/src/test/` against the seeded database:
+
+- `notes.permissions.test.ts`: note read/edit rules (author, other doctor, admin)
+- `appointmentTypes.permissions.test.ts`: admin-only type endpoints, inactive
+  types, the doctor filter
+- `noteSharing.permissions.test.ts`: sharing rules and the share/revoke lifecycle
+
+Seed first (`npx prisma db seed`). The curl tables below cover the remaining
+cases (successful create/edit) and the UI checklists.
 
 ## Seed users
 
@@ -38,6 +42,8 @@ Core scenarios used in the tests below:
 - Folke (Erik, 3 days ago) and Eva (Johan, yesterday) have completed appointments without notes
 - Bo has a no-show, Gunilla and Hans have cancelled appointments
 - Folke has no email, Jonas and Ingrid have no phone
+- Sara has shared her note about Anna with Johan (Johan has no appointments with Anna)
+- "Group education" is an inactive appointment type
 
 ## Login
 
@@ -371,3 +377,85 @@ documentation, and with the "New appointment" dialog open.
 popup in the booking dialog can appear shifted to the left. It works in
 Firefox and on real devices the native picker is used. Check on a real phone
 before the demo (week 13).
+
+## Appointment types (admin, week 12)
+
+Use a `login` helper to get tokens in one line:
+
+```bash
+API=http://localhost:3001/api
+login() { curl -s -X POST $API/auth/login -H "Content-Type: application/json" \
+  -d "{\"email\":\"$1\",\"password\":\"password123\"}" | jq -r '.token'; }
+ADMIN=$(login admin@puls.test); ERIK=$(login erik@puls.test)
+```
+
+| #   | Request                                                       | Expected                             |
+| --- | ------------------------------------------------------------- | ------------------------------------ |
+| 1   | `GET /appointment-types` as doctor                            | 200, only active types               |
+| 2   | `?includeInactive=true` as doctor / as admin                  | only active / also "Group education" |
+| 3   | `POST` as admin `{"name":"Phone consultation","duration":15}` | 201                                  |
+| 4   | same name in lower case                                       | 409 `APPOINTMENT_TYPE_EXISTS`        |
+| 5   | `duration: 7` / `name: ""`                                    | 400 `VALIDATION_ERROR`               |
+| 6   | `POST` as doctor                                              | 403 `FORBIDDEN`                      |
+| 7   | `PUT /:id` with a new duration                                | 200                                  |
+| 8   | `PATCH /:id/status` `{"isActive":false}`                      | 200; hidden for doctors              |
+| 9   | book with the inactive type                                   | 400 `APPOINTMENT_TYPE_INACTIVE`      |
+| 10  | `PATCH /does-not-exist/status`                                | 404                                  |
+
+Created types stay until the next seed.
+
+## Doctor filter (week 12)
+
+| #   | Request                                   | Expected                        |
+| --- | ----------------------------------------- | ------------------------------- |
+| 1   | `GET /appointments?date=<today>` as admin | appointments of several doctors |
+| 2   | add `&doctorId=<Erik>` as admin           | only Erik's                     |
+| 3   | `&doctorId=<Sara>` as Erik                | only Erik's (filter ignored)    |
+| 4   | `&doctorId=does-not-exist` as admin       | 200, empty list                 |
+
+## Note sharing (week 12)
+
+Covered by `noteSharing.permissions.test.ts`. Manual commands for the cases that
+change data:
+
+```bash
+SARA=$(login sara@puls.test)
+ERIK_DOC=$(curl -s $API/auth/me -H "Authorization: Bearer $ERIK" | jq -r '.user.doctorId')
+ANNA=$(curl -s "$API/patients?search=anna%20andersson" -H "Authorization: Bearer $ADMIN" | jq -r '.[0].id')
+SARA_NOTE=$(curl -s $API/patients/$ANNA/notes -H "Authorization: Bearer $SARA" | jq -r '.[0].id')
+
+# Share with Erik (201), Erik now sees 2 notes for Anna
+curl -s -o /dev/null -w "%{http_code}\n" -X POST $API/notes/$SARA_NOTE/shares \
+  -H "Authorization: Bearer $SARA" -H "Content-Type: application/json" \
+  -d "{\"doctorId\":\"$ERIK_DOC\",\"consentConfirmed\":true}"
+
+# Revoke (204), Erik sees 1 note again
+curl -s -o /dev/null -w "%{http_code}\n" -X DELETE $API/notes/$SARA_NOTE/shares/$ERIK_DOC \
+  -H "Authorization: Bearer $SARA"
+```
+
+Reseed before `npm test` if a share to Erik is left active.
+
+## UI checklist: admin and sharing (week 12)
+
+**Admin**
+
+- Menu shows "Appointment types" for admin only; a doctor opening
+  `/admin/appointment-types` sees "No access" and no admin requests are sent
+- Create, edit (duplicate name shown under the name field), deactivate (with
+  confirmation) and activate types; inactive types are grey and missing from
+  the booking form
+- Calendar: doctor selector with the first doctor preselected; switching doctor
+  switches the day; "New appointment" preselects the doctor
+- Changing a type's duration does not change the height of booked blocks
+- Editing an appointment whose type is inactive shows "(inactive)" and saves
+
+**Sharing**
+
+- Sharing card appears on the documentation page only for a saved note
+- Doctor list excludes yourself and doctors who already have access
+- Share without the consent box: field error, no request
+- Share: doctor appears under "Shared with"; Revoke asks for confirmation
+- Recipient: patient page shows the note with "Shared by …" and no
+  "Open documentation" link; after revoke it is gone (after reload)
+- Admin still sees "Clinical notes are only visible to doctors."
