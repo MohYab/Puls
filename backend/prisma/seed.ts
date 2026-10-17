@@ -47,6 +47,7 @@ function at(daysFromToday: number, hour: number, minute = 0): Date {
 
 // Children before parents because of foreign keys. Development databases only.
 async function resetDatabase() {
+  await prisma.noteShare.deleteMany();
   await prisma.clinicalNote.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.documentationTemplate.deleteMany();
@@ -338,6 +339,17 @@ async function main() {
     }),
   ]);
 
+  // Inactive type: shows how a type that is no longer offered looks for admin,
+  // and lets the tests check that doctors never see inactive types.
+  await prisma.appointmentType.create({
+    data: {
+      name: "Group education",
+      duration: 60,
+      description: "Group sessions, no longer offered",
+      isActive: false,
+    },
+  });
+
   // --- Core patients used in the scenarios below (dummy data, some without contact info) ---
   const [anna, bo, carin, david, eva, folke, gunilla, hans, ingrid, jonas, karin, lars] =
     await Promise.all([
@@ -515,6 +527,32 @@ async function main() {
   );
 }
 
+// Sharing scenario: Sara has shared her note about Anna with Johan.
+// Johan has no appointments with Anna, so the shared note is his only access.
+// Looked up through relations, so it does not depend on variable names or
+// pick the wrong patient if two patients share a name.
+async function seedNoteShares() {
+  const saraNoteForAnna = await prisma.clinicalNote.findFirstOrThrow({
+    where: {
+      doctor: { user: { email: "sara@puls.test" } },
+      patient: { firstName: "Anna", lastName: "Andersson" },
+    },
+    select: { id: true, doctor: { select: { userId: true } } },
+  });
+  const johanDoctor = await prisma.doctor.findFirstOrThrow({
+    where: { user: { email: "johan@puls.test" } },
+  });
+
+  await prisma.noteShare.create({
+    data: {
+      noteId: saraNoteForAnna.id,
+      doctorId: johanDoctor.id,
+      createdByUserId: saraNoteForAnna.doctor.userId,
+      consentConfirmedAt: new Date(),
+    },
+  });
+}
+
 main()
   .catch((e) => {
     console.error(e);
@@ -522,4 +560,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await seedNoteShares();
   });

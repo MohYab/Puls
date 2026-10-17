@@ -31,7 +31,8 @@ model User {
   role         Role
   createdAt    DateTime @default(now())
 
-  doctor Doctor?
+  doctor            Doctor?
+  createdNoteShares NoteShare[]
 
   @@map("users")
 }
@@ -44,6 +45,7 @@ model Doctor {
   user         User           @relation(fields: [userId], references: [id])
   appointments Appointment[]
   notes        ClinicalNote[]
+  noteShares   NoteShare[]
 
   @@map("doctors")
 }
@@ -110,6 +112,7 @@ model ClinicalNote {
   patient     Patient                @relation(fields: [patientId], references: [id])
   doctor      Doctor                 @relation(fields: [doctorId], references: [id])
   template    DocumentationTemplate? @relation(fields: [templateId], references: [id])
+  shares      NoteShare[]
 
   @@map("clinical_notes")
 }
@@ -123,4 +126,24 @@ model DocumentationTemplate {
   notes ClinicalNote[]
 
   @@map("documentation_templates")
+}
+
+// A doctor's read access to another doctor's note. Revoking sets revokedAt
+// instead of deleting, and sharing again creates a new row, so the full
+// history of who had access and when is kept.
+model NoteShare {
+  id                 String    @id @default(cuid())
+  noteId             String
+  doctorId           String // recipient
+  createdByUserId    String // today always the author; later possibly the patient
+  consentConfirmedAt DateTime // simulated consent in the MVP
+  createdAt          DateTime  @default(now())
+  revokedAt          DateTime? // null = active
+
+  note      ClinicalNote @relation(fields: [noteId], references: [id])
+  doctor    Doctor       @relation(fields: [doctorId], references: [id])
+  createdBy User         @relation(fields: [createdByUserId], references: [id])
+
+  @@index([noteId, doctorId])
+  @@map("note_shares")
 }

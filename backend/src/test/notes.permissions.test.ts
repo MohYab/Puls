@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
-import { createApp } from "./app.js";
-import { auth, loginAs } from "./test/helpers.js";
+import { createApp } from "../app.js";
+import { auth, loginAs } from "./helpers.js";
 
 /**
  * Note access rules against seed data (see docs/manual-testing.md).
@@ -46,9 +46,7 @@ describe("Clinical note permissions", () => {
     expect(patients.body.length, "Anna Andersson must exist in seed").toBeGreaterThan(0);
     annaId = patients.body[0].id;
 
-    const erikNotes = await request(app)
-      .get(`/api/patients/${annaId}/notes`)
-      .set(auth(erikToken));
+    const erikNotes = await request(app).get(`/api/patients/${annaId}/notes`).set(auth(erikToken));
     expect(erikNotes.status).toBe(200);
     expect(erikNotes.body.length, "Erik needs a note for Anna in seed").toBeGreaterThan(0);
 
@@ -84,9 +82,7 @@ describe("Clinical note permissions", () => {
   });
 
   it("blocks admin from listing a patient's notes", async () => {
-    const res = await request(app)
-      .get(`/api/patients/${annaId}/notes`)
-      .set(auth(adminToken));
+    const res = await request(app).get(`/api/patients/${annaId}/notes`).set(auth(adminToken));
 
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe("FORBIDDEN");

@@ -41,3 +41,13 @@ export const createNoteSchema = z
 
 export type NoteContentInput = z.infer<typeof noteContentSchema>;
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+
+export const shareNoteSchema = z.object({
+  doctorId: z.string().min(1, "Choose a doctor"),
+  // Simulated consent: the author confirms that the patient has agreed.
+  consentConfirmed: z.literal(true, {
+    message: "Confirm that the patient has agreed to sharing",
+  }),
+});
+
+export type ShareNoteInput = z.infer<typeof shareNoteSchema>;
