@@ -1,5 +1,7 @@
 # ER diagram – Puls
 
+Reflects `backend/prisma/schema.prisma` as of week 12.
+
 ```mermaid
 erDiagram
     USER ||--o| DOCTOR : "is a"
@@ -9,21 +11,24 @@ erDiagram
     APPOINTMENT ||--o| CLINICAL_NOTE : "documented by"
     PATIENT ||--o{ CLINICAL_NOTE : "has"
     DOCTOR ||--o{ CLINICAL_NOTE : "writes"
-    DOCUMENTATION_TEMPLATE ||--o{ CLINICAL_NOTE : "used by"
+    DOCUMENTATION_TEMPLATE |o--o{ CLINICAL_NOTE : "used by"
+    CLINICAL_NOTE ||--o{ NOTE_SHARE : "shared through"
+    DOCTOR ||--o{ NOTE_SHARE : "receives"
+    USER ||--o{ NOTE_SHARE : "creates"
 
     USER {
         string id PK
         string name
-        string email
+        string email UK
         string passwordHash
-        string role
+        string role "DOCTOR or ADMIN"
         datetime createdAt
     }
 
     DOCTOR {
         string id PK
-        string userId FK
-        string specialization
+        string userId FK, UK
+        string specialization "optional"
     }
 
     PATIENT {
@@ -31,8 +36,8 @@ erDiagram
         string firstName
         string lastName
         date dateOfBirth
-        string phone
-        string email
+        string phone "optional"
+        string email "optional"
         datetime createdAt
     }
 
@@ -42,26 +47,27 @@ erDiagram
         string doctorId FK
         string appointmentTypeId FK
         datetime startTime
-        datetime endTime
+        datetime endTime "booked length is kept"
         string status
-        string bookingComment
+        string bookingComment "optional"
         datetime createdAt
         datetime updatedAt
     }
 
     APPOINTMENT_TYPE {
         string id PK
-        string name
-        int duration
-        string description
+        string name "unique, case-insensitive (service)"
+        int duration "minutes, 5-240"
+        string description "optional"
+        boolean isActive "inactive = not bookable"
     }
 
     CLINICAL_NOTE {
         string id PK
-        string appointmentId FK
+        string appointmentId FK, UK
         string patientId FK
-        string doctorId FK
-        string templateId FK
+        string doctorId FK "author"
+        string templateId FK "optional"
         json content
         datetime createdAt
         datetime updatedAt
@@ -70,8 +76,18 @@ erDiagram
     DOCUMENTATION_TEMPLATE {
         string id PK
         string name
-        string description
+        string description "optional"
         json templateContent
+    }
+
+    NOTE_SHARE {
+        string id PK
+        string noteId FK
+        string doctorId FK "recipient"
+        string createdByUserId FK
+        datetime consentConfirmedAt
+        datetime createdAt
+        datetime revokedAt "null = active"
     }
 ```
 
@@ -80,10 +96,22 @@ erDiagram
 - `USER ||--o| DOCTOR`: one-to-one, optional. Only users with role Doctor have
   a Doctor row. Admin users have no Doctor row.
 - `APPOINTMENT ||--o| CLINICAL_NOTE`: one-to-one, optional. One note per
-  appointment in the MVP (`appointmentId` is unique on `CLINICAL_NOTE`).
+  appointment (`appointmentId` is unique on `CLINICAL_NOTE`).
+- `DOCUMENTATION_TEMPLATE |o--o{ CLINICAL_NOTE`: a note has zero or one
+  template. The template is chosen when the note is created and cannot be
+  changed afterwards.
 - `CLINICAL_NOTE.content` and `DOCUMENTATION_TEMPLATE.templateContent` are
   stored as JSON rather than separate tables, to keep templates simple.
 - `APPOINTMENT.status` is an enum: SCHEDULED, CONFIRMED, COMPLETED, CANCELLED,
   NO_SHOW.
-- Cancelling an appointment is a status change, not a delete — history is
-  always kept.
+- Nothing that carries history is deleted:
+  - Cancelling an appointment is a status change (`CANCELLED`).
+  - Retiring an appointment type sets `isActive = false`.
+  - Revoking a note share sets `revokedAt`; sharing again creates a new row.
+- `NOTE_SHARE` gives a doctor read access to another doctor's note. The
+  recipient (`doctorId`) and the creator (`createdByUserId`, a user) are
+  separate so that a future patient login could create shares without
+  changing the table. There is no unique index on `(noteId, doctorId)`: only
+  one active share per pair is allowed, and that is checked in the service.
+- `APPOINTMENT.endTime` is stored, not calculated, so changing a type's
+  duration does not change booked appointments.
