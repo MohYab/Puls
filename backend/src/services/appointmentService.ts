@@ -1,13 +1,25 @@
 import { prisma } from "../utils/prisma.js";
 import { AppError, NotFoundError, ValidationError } from "../utils/errors.js";
-import type { CreateAppointmentInput } from "../validators/appointmentValidators.js";
 import type {
+  CreateAppointmentInput,
   UpdateAppointmentInput,
   UpdateStatusInput,
 } from "../validators/appointmentValidators.js";
+import {
+  canChangeStatus,
+  isFinalStatus,
+  requiresStartedAppointment,
+  statusLabel,
+} from "../utils/appointmentStatus.js";
 import { getPatientById } from "./patientService.js";
 
-type RequestingUser = { role: "DOCTOR" | "ADMIN"; doctorId: string | null };
+type RequestingUser = { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
+
+// Shape of an appointment in lists and details.
+const appointmentInclude = {
+  patient: { select: { firstName: true, lastName: true } },
+  appointmentType: { select: { name: true, duration: true } },
+} as const;
 
 /**
  * Where-filter that limits a query to the requesting doctor's own rows.
@@ -24,8 +36,46 @@ function ownDoctorFilter(requestingUser: RequestingUser): { doctorId?: string } 
   return { doctorId: requestingUser.doctorId };
 }
 
+// One conflict rule for booking, editing and restoring a cancelled appointment.
+async function assertNoConflict(
+  doctorId: string,
+  startTime: Date,
+  endTime: Date,
+  excludeAppointmentId?: string
+) {
+  const conflict = await prisma.appointment.findFirst({
+    where: {
+      doctorId,
+      status: { not: "CANCELLED" },
+      startTime: { lt: endTime },
+      endTime: { gt: startTime },
+      ...(excludeAppointmentId && { id: { not: excludeAppointmentId } }),
+    },
+  });
+  if (conflict) {
+    throw new AppError(
+      409,
+      "APPOINTMENT_CONFLICT",
+      "This time conflicts with an existing appointment for this doctor"
+    );
+  }
+}
+
+async function assertOwnsAppointment(appointmentId: string, requestingUser: RequestingUser) {
+  const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
+  if (!appointment) {
+    throw new NotFoundError("Appointment not found");
+  }
+  if (requestingUser.role === "DOCTOR" && appointment.doctorId !== requestingUser.doctorId) {
+    throw new AppError(403, "FORBIDDEN", "You do not have access to this appointment");
+  }
+  return appointment;
+}
+
+// --- Queries -----------------------------------------------------------------
+
 interface GetAppointmentsParams {
-  requestingUser: { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
+  requestingUser: RequestingUser;
   date?: string;
   /** Admin only: limit to one doctor. Ignored for doctors, who always see their own. */
   doctorId?: string;
@@ -34,7 +84,7 @@ interface GetAppointmentsParams {
 export async function getAppointments({ requestingUser, date, doctorId }: GetAppointmentsParams) {
   const doctorFilter =
     requestingUser.role === "ADMIN" && doctorId ? { doctorId } : ownDoctorFilter(requestingUser);
-  // Doctor only sees their own appointments; Admin sees all.
+
   const startTimeFilter = date
     ? {
         startTime: {
@@ -46,20 +96,51 @@ export async function getAppointments({ requestingUser, date, doctorId }: GetApp
 
   return prisma.appointment.findMany({
     where: { ...doctorFilter, ...startTimeFilter },
-    include: {
-      patient: { select: { firstName: true, lastName: true } },
-      appointmentType: { select: { name: true, duration: true } },
-    },
+    include: appointmentInclude,
     orderBy: { startTime: "asc" },
   });
 }
 
+export async function getAppointmentById(appointmentId: string, requestingUser: RequestingUser) {
+  const appointment = await assertOwnsAppointment(appointmentId, requestingUser);
+  return prisma.appointment.findUnique({
+    where: { id: appointment.id },
+    include: appointmentInclude,
+  });
+}
+
+export async function getPatientAppointments(patientId: string, requestingUser: RequestingUser) {
+  await getPatientById(patientId); // 404 if the patient does not exist
+
+  return prisma.appointment.findMany({
+    where: {
+      patientId,
+      // Doctors only see their own visits with the patient; admins see all.
+      ...ownDoctorFilter(requestingUser),
+    },
+    orderBy: { startTime: "desc" },
+    select: {
+      id: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+      doctor: { select: { id: true, user: { select: { name: true } } } },
+      appointmentType: { select: { id: true, name: true } },
+    },
+  });
+}
+
+// --- Booking and editing ------------------------------------------------------
+
 export async function createAppointment(
   input: CreateAppointmentInput,
-  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
+  requestingUser: RequestingUser
 ) {
-  // Doctors can only book for themselves; Admins can book for any doctor.
-  const doctorId = requestingUser.role === "DOCTOR" ? requestingUser.doctorId! : input.doctorId;
+  // Doctors can only book for themselves; admins can book for any doctor.
+  const doctorId = requestingUser.role === "DOCTOR" ? requestingUser.doctorId : input.doctorId;
+  if (!doctorId) {
+    throw new AppError(403, "FORBIDDEN", "No doctor profile is linked to this user");
+  }
 
   // Unknown ids in the body are invalid input (400), like templateId and
   // note sharing. Checked here so the database never sees a broken reference.
@@ -89,26 +170,9 @@ export async function createAppointment(
   if (startTime < new Date()) {
     throw new AppError(400, "VALIDATION_ERROR", "Cannot book an appointment in the past");
   }
-
   const endTime = new Date(startTime.getTime() + appointmentType.duration * 60 * 1000);
 
-  // Conflict check: any non-cancelled appointment for this doctor that overlaps.
-  const conflict = await prisma.appointment.findFirst({
-    where: {
-      doctorId,
-      status: { not: "CANCELLED" },
-      startTime: { lt: endTime },
-      endTime: { gt: startTime },
-    },
-  });
-
-  if (conflict) {
-    throw new AppError(
-      409,
-      "APPOINTMENT_CONFLICT",
-      "This time conflicts with an existing appointment for this doctor"
-    );
-  }
+  await assertNoConflict(doctorId, startTime, endTime);
 
   return prisma.appointment.create({
     data: {
@@ -119,33 +183,26 @@ export async function createAppointment(
       endTime,
       bookingComment: input.bookingComment,
     },
-    include: {
-      patient: { select: { firstName: true, lastName: true } },
-      appointmentType: { select: { name: true, duration: true } },
-    },
+    include: appointmentInclude,
   });
-}
-
-async function assertOwnsAppointment(
-  appointmentId: string,
-  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
-) {
-  const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
-  if (!appointment) {
-    throw new NotFoundError("Appointment not found");
-  }
-  if (requestingUser.role === "DOCTOR" && appointment.doctorId !== requestingUser.doctorId) {
-    throw new AppError(403, "FORBIDDEN", "You do not have access to this appointment");
-  }
-  return appointment;
 }
 
 export async function updateAppointment(
   appointmentId: string,
   input: UpdateAppointmentInput,
-  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
+  requestingUser: RequestingUser
 ) {
   const existing = await assertOwnsAppointment(appointmentId, requestingUser);
+
+  // A final status locks the appointment, also for admins. An admin first
+  // corrects the status (logged), then the appointment can be edited again.
+  if (isFinalStatus(existing.status)) {
+    throw new AppError(
+      409,
+      "APPOINTMENT_LOCKED",
+      `This appointment is ${statusLabel(existing.status)} and cannot be edited`
+    );
+  }
 
   const newTypeId = input.appointmentTypeId;
   const typeChanged = newTypeId !== undefined && newTypeId !== existing.appointmentTypeId;
@@ -174,87 +231,88 @@ export async function updateAppointment(
   }
 
   const endTime = new Date(startTime.getTime() + durationMs);
-
-  const conflict = await prisma.appointment.findFirst({
-    where: {
-      id: { not: appointmentId },
-      doctorId: existing.doctorId,
-      status: { not: "CANCELLED" },
-      startTime: { lt: endTime },
-      endTime: { gt: startTime },
-    },
-  });
-
-  if (conflict) {
-    throw new AppError(
-      409,
-      "APPOINTMENT_CONFLICT",
-      "This time conflicts with an existing appointment for this doctor"
-    );
-  }
+  await assertNoConflict(existing.doctorId, startTime, endTime, appointmentId);
 
   return prisma.appointment.update({
     where: { id: appointmentId },
     data: { appointmentTypeId, startTime, endTime, bookingComment: input.bookingComment },
-    include: {
-      patient: { select: { firstName: true, lastName: true } },
-      appointmentType: { select: { name: true, duration: true } },
-    },
+    include: appointmentInclude,
   });
 }
+
+// --- Status ----------------------------------------------------------------
 
 export async function updateAppointmentStatus(
   appointmentId: string,
   input: UpdateStatusInput,
-  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
+  requestingUser: RequestingUser
 ) {
-  await assertOwnsAppointment(appointmentId, requestingUser);
+  const existing = await assertOwnsAppointment(appointmentId, requestingUser);
+  const from = existing.status;
+  const to = input.status;
+  const isCorrection = isFinalStatus(from);
 
-  return prisma.appointment.update({
-    where: { id: appointmentId },
-    data: { status: input.status },
-    include: {
-      patient: { select: { firstName: true, lastName: true } },
-      appointmentType: { select: { name: true, duration: true } },
-    },
-  });
-}
+  if (from === to) {
+    throw new AppError(
+      409,
+      "INVALID_STATUS_TRANSITION",
+      `The appointment is already ${statusLabel(to)}`
+    );
+  }
 
-export async function getAppointmentById(
-  appointmentId: string,
-  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
-) {
-  const appointment = await assertOwnsAppointment(appointmentId, requestingUser);
-  return prisma.appointment.findUnique({
-    where: { id: appointment.id },
-    include: {
-      patient: { select: { firstName: true, lastName: true } },
-      appointmentType: { select: { name: true, duration: true } },
-    },
-  });
-}
+  if (!canChangeStatus(from, to, requestingUser.role)) {
+    const message = isCorrection
+      ? `This appointment is ${statusLabel(from)} and can no longer be changed. Contact an administrator to correct it`
+      : `An appointment cannot go from ${statusLabel(from)} to ${statusLabel(to)}`;
+    throw new AppError(409, "INVALID_STATUS_TRANSITION", message);
+  }
 
-export async function getPatientAppointments(
-  patientId: string,
-  requestingUser: { role: "DOCTOR" | "ADMIN"; doctorId: string | null }
-) {
-  // 404 om patienten saknas, istället för en tom lista
-  await getPatientById(patientId);
+  // Safeguards. A correction must not create new errors.
+  if (isCorrection && !input.reason) {
+    throw new ValidationError("A reason is required when correcting a final status");
+  }
+  if (requiresStartedAppointment(to) && existing.startTime > new Date()) {
+    throw new AppError(
+      409,
+      "INVALID_STATUS_TRANSITION",
+      `An appointment cannot be marked ${statusLabel(to)} before it has started`
+    );
+  }
+  if (to === "CANCELLED") {
+    const note = await prisma.clinicalNote.findUnique({
+      where: { appointmentId },
+      select: { id: true },
+    });
+    if (note) {
+      throw new AppError(
+        409,
+        "INVALID_STATUS_TRANSITION",
+        "An appointment with a clinical note cannot be cancelled"
+      );
+    }
+  }
+  // Restoring a cancelled appointment takes the time slot back.
+  if (from === "CANCELLED") {
+    await assertNoConflict(existing.doctorId, existing.startTime, existing.endTime, appointmentId);
+  }
 
-  return prisma.appointment.findMany({
-    where: {
-      patientId,
-      // Doctors only see their own visits with the patient; admins see all.
-      ...ownDoctorFilter(requestingUser),
-    },
-    orderBy: { startTime: "desc" },
-    select: {
-      id: true,
-      startTime: true,
-      endTime: true,
-      status: true,
-      doctor: { select: { id: true, user: { select: { name: true } } } },
-      appointmentType: { select: { id: true, name: true } },
-    },
-  });
+  // The change and its history entry are saved together, or not at all.
+  const [updated] = await prisma.$transaction([
+    prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { status: to },
+      include: appointmentInclude,
+    }),
+    prisma.appointmentStatusChange.create({
+      data: {
+        appointmentId,
+        fromStatus: from,
+        toStatus: to,
+        changedByUserId: requestingUser.userId,
+        reason: input.reason || null,
+      },
+    }),
+  ]);
+
+  return updated;
 }

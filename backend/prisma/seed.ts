@@ -48,6 +48,7 @@ function at(daysFromToday: number, hour: number, minute = 0): Date {
 // Children before parents because of foreign keys. Development databases only.
 async function resetDatabase() {
   await prisma.noteShare.deleteMany();
+  await prisma.appointmentStatusChange.deleteMany();
   await prisma.clinicalNote.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.documentationTemplate.deleteMany();

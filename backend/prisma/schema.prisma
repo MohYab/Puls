@@ -33,6 +33,7 @@ model User {
 
   doctor            Doctor?
   createdNoteShares NoteShare[]
+  statusChanges     AppointmentStatusChange[]
 
   @@map("users")
 }
@@ -93,6 +94,7 @@ model Appointment {
   doctor          Doctor          @relation(fields: [doctorId], references: [id])
   appointmentType AppointmentType @relation(fields: [appointmentTypeId], references: [id])
   note            ClinicalNote?
+  statusChanges   AppointmentStatusChange[]
 
   @@index([doctorId, startTime])
   @@map("appointments")
@@ -146,4 +148,22 @@ model NoteShare {
 
   @@index([noteId, doctorId])
   @@map("note_shares")
+}
+
+// Every status change of an appointment, including admin corrections.
+// Nothing is updated or deleted here: the table is the history.
+model AppointmentStatusChange {
+  id              String            @id @default(cuid())
+  appointmentId   String
+  fromStatus      AppointmentStatus
+  toStatus        AppointmentStatus
+  changedByUserId String
+  reason          String? // required when an admin corrects a final status
+  createdAt       DateTime          @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  changedBy   User        @relation(fields: [changedByUserId], references: [id])
+
+  @@index([appointmentId, createdAt])
+  @@map("appointment_status_changes")
 }
