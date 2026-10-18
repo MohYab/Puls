@@ -9,7 +9,7 @@ import { ApiError } from "../../services/apiClient";
 import { inputClassName } from "../../components/formStyles";
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, sessionExpired } = useAuth();
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -38,6 +38,14 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex w-full flex-col gap-4">
+      {sessionExpired && (
+        <p
+          role="status"
+          className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+        >
+          Your session has expired. Please log in again.
+        </p>
+      )}
       <div>
         <label htmlFor="email" className="mb-1 block text-sm font-medium">
           Email

@@ -1,14 +1,16 @@
 import { useCallback, useRef, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
 import { Sidebar } from "./Sidebar";
 import { MobileNavDrawer } from "./MobileNavDrawer";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 const MOBILE_NAV_ID = "mobile-nav";
 
 export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -72,7 +74,10 @@ export function AppLayout() {
         </header>
 
         <main className="flex-1 p-4 md:p-6">
-          <Outlet />
+          {/* key: a new page gets a fresh boundary, so navigating away clears the error. */}
+          <ErrorBoundary key={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

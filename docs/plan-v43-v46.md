@@ -27,8 +27,8 @@ Status: Todo / In progress / Done / Moved
 | 6   | Change appointment status in the UI (Confirmed, Completed, No-show)                    | SHOULD | Done   |
 | 7   | Completed and cancelled appointments cannot be edited or cancelled (UI and API)        | SHOULD | Done   |
 | 8   | Booking only within opening hours 07–17 (UI and API); outside hours is invisible today | SHOULD | Todo   |
-| 9   | Global 401 → log out and redirect to `/login`                                          | SHOULD | Todo   |
-| 10  | `ErrorBoundary` around the page content (a render error gives a white page today)      | SHOULD | Todo   |
+| 9   | Global 401 → log out and redirect to `/login`                                          | SHOULD | Done   |
+| 10  | `ErrorBoundary` around the page content (a render error gives a white page today)      | SHOULD | Done   |
 | 11  | Test: same login error for unknown email and wrong password                            | SHOULD | Todo   |
 
 ## Phase 2 – Security and clean-up (v.43)

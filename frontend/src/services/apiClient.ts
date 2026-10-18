@@ -1,5 +1,7 @@
-const API_BASE_URL = "http://localhost:3001/api";
+import { notifyUnauthorized } from "./authEvents";
 
+const API_BASE_URL = "http://localhost:3001/api";
+const LOGIN_PATH = "/auth/login";
 interface ApiErrorBody {
   error: { code: string; message: string };
 }
@@ -28,6 +30,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (!res.ok) {
+    // A token was sent but rejected: the session has expired or is invalid.
+    // A failed login (wrong password) is also 401, but must only show an error.
+    if (res.status === 401 && token && path !== LOGIN_PATH) {
+      notifyUnauthorized();
+    }
+
     const body: ApiErrorBody = await res.json().catch(() => ({
       error: { code: "UNKNOWN_ERROR", message: "Something went wrong" },
     }));
