@@ -40,7 +40,7 @@ Status: Todo / In progress / Done / Moved
 | 14  | One shared `RequestingUser` type; one `include` constant in `appointmentService` | SHOULD | Todo   |
 | 15  | Swedish sorting of patients (`Intl.Collator("sv")`): Å, Ä, Ö after Z             | SHOULD | Todo   |
 | 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Todo   |
-| 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Todo   |
+| 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done   |
 
 ## Phase 3 – Redesign (v.44, branch `feature/redesign`)
 

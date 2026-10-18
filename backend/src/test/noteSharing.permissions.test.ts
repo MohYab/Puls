@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../app.js";
-import { auth, loginAs } from "./helpers.js";
+import { auth, loginAs, requireValue } from "./helpers.js";
 
 /**
  * Sharing of clinical notes between doctors.
@@ -24,13 +24,6 @@ interface NoteRow {
 
 interface ShareRow {
   doctor: { id: string; user: { name: string } };
-}
-
-function requireValue<T>(value: T | null | undefined, message: string): T {
-  if (value === null || value === undefined) {
-    throw new Error(message);
-  }
-  return value;
 }
 
 describe("Sharing clinical notes between doctors", () => {

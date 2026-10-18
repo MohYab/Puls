@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../app.js";
-import { auth, loginAs } from "./helpers.js";
+import { auth, loginAs, requireValue } from "./helpers.js";
 
 /**
  * Admin rules for appointment types and the calendar doctor filter.
@@ -23,13 +23,6 @@ interface AppointmentTypeRow {
 
 interface AppointmentRow {
   doctorId: string;
-}
-
-function requireValue<T>(value: T | null | undefined, message: string): T {
-  if (value === null || value === undefined) {
-    throw new Error(message);
-  }
-  return value;
 }
 
 describe("Appointment type admin rules and the doctor filter", () => {

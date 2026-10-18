@@ -4,9 +4,7 @@ import type { Express } from "express";
 const SEED_PASSWORD = "password123";
 
 export async function loginAs(app: Express, email: string) {
-  const res = await request(app)
-    .post("/api/auth/login")
-    .send({ email, password: SEED_PASSWORD });
+  const res = await request(app).post("/api/auth/login").send({ email, password: SEED_PASSWORD });
 
   if (res.status !== 200 || !res.body.token) {
     throw new Error(
@@ -29,4 +27,13 @@ export async function loginAs(app: Express, email: string) {
 
 export function auth(token: string) {
   return { Authorization: `Bearer ${token}` };
+}
+
+// Fails the test setup with a clear message when seed data is missing,
+// instead of a later "cannot read properties of undefined".
+export function requireValue<T>(value: T | null | undefined, message: string): T {
+  if (value === null || value === undefined) {
+    throw new Error(message);
+  }
+  return value;
 }

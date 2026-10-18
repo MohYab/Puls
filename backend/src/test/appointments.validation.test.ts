@@ -1,19 +1,12 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../app.js";
-import { auth, loginAs } from "./helpers.js";
+import { auth, loginAs, requireValue } from "./helpers.js";
 
 /**
  * Booking with ids that do not exist. Every request is rejected before
  * anything is written, so the suite can run repeatedly.
  */
-
-function requireValue<T>(value: T | null | undefined, message: string): T {
-  if (value === null || value === undefined) {
-    throw new Error(message);
-  }
-  return value;
-}
 
 describe("Booking with unknown ids", () => {
   const app = createApp();
@@ -43,15 +36,12 @@ describe("Booking with unknown ids", () => {
   });
 
   it("rejects an unknown patient", async () => {
-    const res = await request(app)
-      .post("/api/appointments")
-      .set(auth(erikToken))
-      .send({
-        patientId: "does-not-exist",
-        doctorId: erikDoctorId,
-        appointmentTypeId,
-        startTime: nextWeek,
-      });
+    const res = await request(app).post("/api/appointments").set(auth(erikToken)).send({
+      patientId: "does-not-exist",
+      doctorId: erikDoctorId,
+      appointmentTypeId,
+      startTime: nextWeek,
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
@@ -69,15 +59,12 @@ describe("Booking with unknown ids", () => {
   });
 
   it("rejects an unknown appointment type", async () => {
-    const res = await request(app)
-      .post("/api/appointments")
-      .set(auth(erikToken))
-      .send({
-        patientId,
-        doctorId: erikDoctorId,
-        appointmentTypeId: "does-not-exist",
-        startTime: nextWeek,
-      });
+    const res = await request(app).post("/api/appointments").set(auth(erikToken)).send({
+      patientId,
+      doctorId: erikDoctorId,
+      appointmentTypeId: "does-not-exist",
+      startTime: nextWeek,
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.error.message).toBe("Appointment type not found");
