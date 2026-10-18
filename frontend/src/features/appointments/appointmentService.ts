@@ -1,5 +1,5 @@
 import { apiClient } from "../../services/apiClient";
-import type { Appointment } from "../../types/appointment";
+import type { Appointment, AppointmentStatus } from "../../types/appointment";
 
 export function getAppointments(date?: string, doctorId?: string) {
   const params = new URLSearchParams();
@@ -29,8 +29,9 @@ export function updateAppointment(id: string, payload: UpdateAppointmentPayload)
   return apiClient.put<Appointment>(`/appointments/${id}`, payload);
 }
 
-export function cancelAppointment(id: string) {
-  return apiClient.patch<Appointment>(`/appointments/${id}/status`, { status: "CANCELLED" });
+// reason is required by the API when an admin corrects a final status.
+export function updateAppointmentStatus(id: string, status: AppointmentStatus, reason?: string) {
+  return apiClient.patch<Appointment>(`/appointments/${id}/status`, { status, reason });
 }
 
 export function getAppointment(id: string) {

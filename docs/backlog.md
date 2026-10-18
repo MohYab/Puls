@@ -22,6 +22,7 @@ Priority: P1 = must have, P2 = should have, P3 = out of scope (future).
 | US-14 | Admin        | see appointments across doctors           | I can manage the schedule             | P2   | Done (week 12)  |
 | US-15 | Admin        | manage appointment types                  | the organization has fixed categories | P2   | Done (week 12)  |
 | US-16 | Doctor       | share a note with another doctor          | a colleague has context for a visit   | P2   | Done (week 12)  |
+| US-17 | Doctor/Admin | change the status of an appointment       | the schedule shows what happened      | P2   | Done (v.43)     |
 
 ¹ Day view only. The week view was moved to future development (decisions #41).
 ² 404 for an unknown patient or doctor is planned for week 13 (see acceptance criteria).

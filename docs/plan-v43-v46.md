@@ -24,8 +24,8 @@ Status: Todo / In progress / Done / Moved
 | --- | -------------------------------------------------------------------------------------- | ------ | ------ |
 | 4   | Global border colour (Tailwind v4 defaults to `currentColor`, all borders look black)  | MUST   | Done   |
 | 5   | 400 for an unknown patient or doctor when booking (was a database error, 500)          | MUST   | Done   |
-| 6   | Change appointment status in the UI (Confirmed, Completed, No-show)                    | SHOULD | Todo   |
-| 7   | Completed and cancelled appointments cannot be edited or cancelled (UI and API)        | SHOULD | Todo   |
+| 6   | Change appointment status in the UI (Confirmed, Completed, No-show)                    | SHOULD | Done   |
+| 7   | Completed and cancelled appointments cannot be edited or cancelled (UI and API)        | SHOULD | Done   |
 | 8   | Booking only within opening hours 07–17 (UI and API); outside hours is invisible today | SHOULD | Todo   |
 | 9   | Global 401 → log out and redirect to `/login`                                          | SHOULD | Todo   |
 | 10  | `ErrorBoundary` around the page content (a render error gives a white page today)      | SHOULD | Todo   |
@@ -33,14 +33,14 @@ Status: Todo / In progress / Done / Moved
 
 ## Phase 2 – Security and clean-up (v.43)
 
-| #   | Task                                                                             | Class  | Status |
-| --- | -------------------------------------------------------------------------------- | ------ | ------ |
-| 12  | Rate limit on `/auth/login` and `helmet`                                         | SHOULD | Todo   |
-| 13  | Remove `try/catch` in controllers (Express 5 forwards async errors itself)       | SHOULD | Todo   |
-| 14  | One shared `RequestingUser` type; one `include` constant in `appointmentService` | SHOULD | Todo   |
-| 15  | Swedish sorting of patients (`Intl.Collator("sv")`): Å, Ä, Ö after Z             | SHOULD | Todo   |
-| 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Todo   |
-| 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done   |
+| #   | Task                                                                             | Class  | Status      |
+| --- | -------------------------------------------------------------------------------- | ------ | ----------- |
+| 12  | Rate limit on `/auth/login` and `helmet`                                         | SHOULD | Todo        |
+| 13  | Remove `try/catch` in controllers (Express 5 forwards async errors itself)       | SHOULD | Todo        |
+| 14  | One shared `RequestingUser` type; one `include` constant in `appointmentService` | SHOULD | In progress |
+| 15  | Swedish sorting of patients (`Intl.Collator("sv")`): Å, Ä, Ö after Z             | SHOULD | Todo        |
+| 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Todo        |
+| 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done        |
 
 ## Phase 3 – Redesign (v.44, branch `feature/redesign`)
 

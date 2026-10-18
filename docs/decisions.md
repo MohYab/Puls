@@ -754,3 +754,41 @@ whole API is easier to use and to explain. The acceptance criterion for US-05
 Rejected: the client asked for an existing URL, so "not found" describes the
 wrong thing. 422 Unprocessable Content would also fit, but the API already
 uses 400 for all validation errors.
+
+---
+
+## 43. Appointment status rules, locked appointments and admin corrections
+
+**Decision:** Status changes follow a fixed workflow (Scheduled → Confirmed;
+Scheduled/Confirmed → Completed, No-show, Cancelled). Completed, No-show and
+Cancelled are final: the appointment can no longer be edited (409
+`APPOINTMENT_LOCKED`) and doctors cannot change the status again (409
+`INVALID_STATUS_TRANSITION`). Completed and No-show require that the
+appointment has started. Admins can correct a final status to another status,
+with a reason of at least 10 characters. Safeguards: no cancelling an
+appointment that has a clinical note, and restoring a cancelled appointment
+runs the conflict check. Every status change is written to
+`AppointmentStatusChange` (from, to, who, when, reason) in the same transaction
+as the change. The rules are in `utils/appointmentStatus.ts` in the backend;
+the frontend has a mirror that only decides which buttons to show.
+
+**Why:** Status changes are part of the requirements, and a schedule is only
+useful if it shows what actually happened. A final status protects the
+history from accidental edits. The supervisor-style question "what if someone
+clicks the wrong button?" showed that a strict lock would make mistakes
+permanent, so corrections were allowed for admins, but only with a reason and a
+history entry. In healthcare, corrections must be traceable.
+
+**Alternative considered:**
+
+- Final means final for everyone. Rejected: a mistaken "No-show" would stay
+  wrong in the patient's history.
+- Doctors may correct their own appointments. Rejected: a clear separation
+  (doctors document, admins correct) is easier to explain and audit.
+- A separate `RESCHEDULED` status. Rejected: editing the time already moves the
+  same appointment; a separate status would need links between appointments.
+
+**Known limitation:** The history only covers status changes, not time changes
+(planned as COULD). Seeded appointments have no history; it starts when the app
+is used. Two simultaneous status changes on the same appointment are not
+prevented by locking.

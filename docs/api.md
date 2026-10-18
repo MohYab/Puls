@@ -9,20 +9,22 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 { "error": { "code": "VALIDATION_ERROR", "message": "startTime is required" } }
 ```
 
-| Code                      | HTTP status | Meaning                                               |
-| ------------------------- | ----------- | ----------------------------------------------------- |
-| VALIDATION_ERROR          | 400         | Invalid request body or parameters                    |
-| APPOINTMENT_TYPE_INACTIVE | 400         | The appointment type is no longer in use              |
-| UNAUTHORIZED              | 401         | Missing, invalid or expired token                     |
-| INVALID_CREDENTIALS       | 401         | Wrong email or password on login (does not say which) |
-| FORBIDDEN                 | 403         | Logged in, but not allowed (role or ownership)        |
-| NOT_FOUND                 | 404         | The resource does not exist                           |
-| APPOINTMENT_CONFLICT      | 409         | The doctor already has an appointment at that time    |
-| APPOINTMENT_CANCELLED     | 409         | A cancelled appointment cannot be documented          |
-| NOTE_EXISTS               | 409         | The appointment already has a note                    |
-| APPOINTMENT_TYPE_EXISTS   | 409         | An appointment type with that name already exists     |
-| NOTE_ALREADY_SHARED       | 409         | The note is already shared with this doctor           |
-| INTERNAL_ERROR            | 500         | Unexpected server error                               |
+| Code                      | HTTP status | Meaning                                                   |
+| ------------------------- | ----------- | --------------------------------------------------------- |
+| VALIDATION_ERROR          | 400         | Invalid request body or parameters                        |
+| APPOINTMENT_TYPE_INACTIVE | 400         | The appointment type is no longer in use                  |
+| UNAUTHORIZED              | 401         | Missing, invalid or expired token                         |
+| INVALID_CREDENTIALS       | 401         | Wrong email or password on login (does not say which)     |
+| FORBIDDEN                 | 403         | Logged in, but not allowed (role or ownership)            |
+| NOT_FOUND                 | 404         | The resource does not exist                               |
+| APPOINTMENT_CONFLICT      | 409         | The doctor already has an appointment at that time        |
+| APPOINTMENT_CANCELLED     | 409         | A cancelled appointment cannot be documented              |
+| NOTE_EXISTS               | 409         | The appointment already has a note                        |
+| APPOINTMENT_TYPE_EXISTS   | 409         | An appointment type with that name already exists         |
+| NOTE_ALREADY_SHARED       | 409         | The note is already shared with this doctor               |
+| INVALID_STATUS_TRANSITION | 409         | The status change is not allowed (see Appointment status) |
+| APPOINTMENT_LOCKED        | 409         | The appointment has a final status and cannot be edited   |
+| INTERNAL_ERROR            | 500         | Unexpected server error                                   |
 
 ## Auth
 
@@ -33,13 +35,13 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 
 ## Appointments
 
-| Method | Path                          | Role | Notes                                                                                     |
-| ------ | ----------------------------- | ---- | ----------------------------------------------------------------------------------------- |
-| GET    | /appointments?date=&doctorId= | any  | Doctor sees own only. Admin sees all, or one doctor with `doctorId` (ignored for doctors) |
-| GET    | /appointments/:id             | any  | 404 if not found, 403 if doctor doesn't own it                                            |
-| POST   | /appointments                 | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict |
-| PUT    | /appointments/:id             | any  | Only owner doctor or admin; booked length is kept unless the type changes                 |
-| PATCH  | /appointments/:id/status      | any  | Body: `{ status }`                                                                        |
+| Method | Path                          | Role | Notes                                                                                                                  |
+| ------ | ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------- |
+| GET    | /appointments?date=&doctorId= | any  | Doctor sees own only. Admin sees all, or one doctor with `doctorId` (ignored for doctors)                              |
+| GET    | /appointments/:id             | any  | 404 if not found, 403 if doctor doesn't own it                                                                         |
+| POST   | /appointments                 | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
+| PUT    | /appointments/:id             | any  | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
+| PATCH  | /appointments/:id/status      | any  | Body: `{ status, reason? }`; see Appointment status                                                                    |
 
 On `PUT`, `APPOINTMENT_TYPE_INACTIVE` is only returned when the type is
 changed. Editing the time of an appointment whose type was deactivated later
@@ -49,6 +51,31 @@ is allowed.
 doctor, appointment type, documentation template, share recipient) gives
 400 `VALIDATION_ERROR`. 404 is used only when the resource in the URL does
 not exist.
+
+## Appointment status
+
+| From                          | Allowed to           | Condition                   |
+| ----------------------------- | -------------------- | --------------------------- |
+| SCHEDULED                     | CONFIRMED, CANCELLED | –                           |
+| SCHEDULED, CONFIRMED          | COMPLETED, NO_SHOW   | The appointment has started |
+| CONFIRMED                     | CANCELLED            | –                           |
+| COMPLETED, NO_SHOW, CANCELLED | – (final)            | Admin correction only       |
+
+**Admin correction:** an admin can change a final status to any other status.
+`reason` (10–300 characters) is required. Safeguards:
+
+- COMPLETED and NO_SHOW still require that the appointment has started.
+- CANCELLED is not allowed when the appointment has a clinical note (also for
+  normal cancellations).
+- Restoring a CANCELLED appointment runs the conflict check (409
+  `APPOINTMENT_CONFLICT`).
+
+Every status change is saved in the appointment's status history (from, to,
+who, when, reason). There is no endpoint to read the history yet.
+
+Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason),
+403 `FORBIDDEN` (doctor and someone else's appointment), 404 `NOT_FOUND`,
+409 `INVALID_STATUS_TRANSITION`, 409 `APPOINTMENT_CONFLICT`.
 
 ## Patients
 

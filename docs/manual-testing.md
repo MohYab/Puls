@@ -459,3 +459,55 @@ Reseed before `npm test` if a share to Erik is left active.
 - Recipient: patient page shows the note with "Shared by …" and no
   "Open documentation" link; after revoke it is gone (after reload)
 - Admin still sees "Clinical notes are only visible to doctors."
+
+## Appointment status (week 12)
+
+Covered by `appointmentStatus.test.ts` for the rejected cases. Manual commands
+for the allowed changes:
+
+```bash
+API=http://localhost:3001/api
+login() { curl -s -X POST $API/auth/login -H "Content-Type: application/json" \
+  -d "{\"email\":\"$1\",\"password\":\"password123\"}" | jq -r '.token'; }
+ERIK=$(login erik@puls.test); ADMIN=$(login admin@puls.test)
+patch() { curl -s -X PATCH $API/appointments/$1/status -H "Authorization: Bearer $2" \
+  -H "Content-Type: application/json" -d "$3" | jq -c '{status, error}'; }
+FUTURE=$(curl -s $API/appointments -H "Authorization: Bearer $ERIK" \
+  | jq -r '[.[] | select(.status=="SCHEDULED" and .startTime > (now|todate))][0].id')
+FOLKE=$(curl -s "$API/patients?search=folke" -H "Authorization: Bearer $ERIK" | jq -r '.[0].id')
+FOLKE_APPT=$(curl -s $API/patients/$FOLKE/appointments -H "Authorization: Bearer $ERIK" \
+  | jq -r '[.[] | select(.status=="COMPLETED")][0].id')
+```
+
+| #   | Command                                                                         | Expected                       |
+| --- | ------------------------------------------------------------------------------- | ------------------------------ |
+| 1   | `patch $FUTURE $ERIK '{"status":"CONFIRMED"}'`                                  | CONFIRMED                      |
+| 2   | `patch $FUTURE $ERIK '{"status":"COMPLETED"}'`                                  | 409 "before it has started"    |
+| 3   | `patch $FOLKE_APPT $ERIK '{"status":"SCHEDULED"}'`                              | 409 "Contact an administrator" |
+| 4   | `patch $FOLKE_APPT $ADMIN '{"status":"NO_SHOW","reason":"."}'`                  | 400 (reason too short)         |
+| 5   | `patch $FOLKE_APPT $ADMIN '{"status":"NO_SHOW","reason":"Test correction"}'`    | NO_SHOW                        |
+| 6   | `patch $FUTURE $ERIK '{"status":"CANCELLED"}'`                                  | CANCELLED                      |
+| 7   | `patch $FUTURE $ADMIN '{"status":"SCHEDULED","reason":"Cancelled by mistake"}'` | SCHEDULED                      |
+
+History:
+
+```bash
+psql -h localhost -U puls_user -d puls_dev -c "SELECT \"fromStatus\", \"toStatus\", reason FROM appointment_status_changes ORDER BY \"createdAt\";"
+```
+
+One row per successful change, none for rejected ones. Reseed afterwards.
+
+## UI checklist: appointment status (week 12, continued)
+
+- Future scheduled appointment: "Confirm" and "Cancel appointment"; no
+  "Mark as completed" or "Mark as no-show"
+- Started appointment: also "Mark as completed" and "Mark as no-show"
+- "Confirm" saves directly; completed, no-show and cancel ask first and say
+  the status cannot be changed afterwards
+- Final status (doctor): "This appointment is … and can no longer be changed.
+  Contact an administrator to correct it." No Edit; Documentation still shown
+  except for cancelled appointments
+- Admin on a final status: "Correct status" with new status and reason
+  (at least 10 characters); the list hides Completed and No-show before the
+  start time
+- Cancelling an appointment with a note shows the error in the dialog

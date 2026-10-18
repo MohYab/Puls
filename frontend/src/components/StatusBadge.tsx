@@ -1,4 +1,5 @@
 import type { AppointmentStatus } from "../types/appointment";
+import { STATUS_LABELS } from "../utils/appointmentStatus";
 
 const statusStyles: Record<AppointmentStatus, string> = {
   SCHEDULED: "bg-blue-100 text-blue-800",
@@ -8,18 +9,10 @@ const statusStyles: Record<AppointmentStatus, string> = {
   NO_SHOW: "bg-yellow-100 text-yellow-800",
 };
 
-const statusLabels: Record<AppointmentStatus, string> = {
-  SCHEDULED: "Scheduled",
-  CONFIRMED: "Confirmed",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-  NO_SHOW: "No-show",
-};
-
 export function StatusBadge({ status }: { status: AppointmentStatus }) {
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusStyles[status]}`}>
-      {statusLabels[status]}
+      {STATUS_LABELS[status]}
     </span>
   );
 }

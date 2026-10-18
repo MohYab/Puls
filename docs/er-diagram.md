@@ -15,6 +15,8 @@ erDiagram
     CLINICAL_NOTE ||--o{ NOTE_SHARE : "shared through"
     DOCTOR ||--o{ NOTE_SHARE : "receives"
     USER ||--o{ NOTE_SHARE : "creates"
+    APPOINTMENT ||--o{ APPOINTMENT_STATUS_CHANGE : "history"
+    USER ||--o{ APPOINTMENT_STATUS_CHANGE : "changes"
 
     USER {
         string id PK
@@ -89,6 +91,15 @@ erDiagram
         datetime createdAt
         datetime revokedAt "null = active"
     }
+        APPOINTMENT_STATUS_CHANGE {
+        string id PK
+        string appointmentId FK
+        string fromStatus
+        string toStatus
+        string changedByUserId FK
+        string reason "required for admin corrections"
+        datetime createdAt
+    }
 ```
 
 ## Notes
@@ -108,6 +119,8 @@ erDiagram
   - Cancelling an appointment is a status change (`CANCELLED`).
   - Retiring an appointment type sets `isActive = false`.
   - Revoking a note share sets `revokedAt`; sharing again creates a new row.
+  - Every status change is written to `APPOINTMENT_STATUS_CHANGE`; corrections
+    by an admin need a reason. The table is only appended to.
 - `NOTE_SHARE` gives a doctor read access to another doctor's note. The
   recipient (`doctorId`) and the creator (`createdByUserId`, a user) are
   separate so that a future patient login could create shares without

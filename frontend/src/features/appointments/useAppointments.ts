@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { retryUnlessClientError } from "../../utils/queryRetry";
-import { getAppointment, getAppointments } from "./appointmentService";
+import { getAppointment, getAppointments, updateAppointmentStatus } from "./appointmentService";
+import type { AppointmentStatus } from "../../types/appointment";
 
 interface UseAppointmentsOptions {
   doctorId?: string;
@@ -26,5 +27,16 @@ export function useAppointment(id: string | undefined) {
     queryFn: () => getAppointment(id!),
     enabled: !!id,
     retry: retryUnlessClientError,
+  });
+}
+
+export function useUpdateAppointmentStatus(appointmentId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ status, reason }: { status: AppointmentStatus; reason?: string }) =>
+      updateAppointmentStatus(appointmentId, status, reason),
+    // Calendar, dashboard and the detail query all start with "appointments".
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["appointments"] }),
   });
 }

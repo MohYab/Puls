@@ -4,16 +4,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { FormField } from "../../components/FormField";
 import { inputClassName } from "../../components/formStyles";
 import { StatusBadge } from "../../components/StatusBadge";
-import { formatDate, formatTime, toDateString } from "../../utils/date";
-import { useAuth } from "../auth/useAuth";
-import { updateAppointment, cancelAppointment } from "./appointmentService";
-import { getAppointmentTypes } from "../appointmentTypes/appointmentTypeService";
 import { ApiError } from "../../services/apiClient";
 import type { Appointment } from "../../types/appointment";
+import { STATUS_PHRASES, isFinalStatus } from "../../utils/appointmentStatus";
+import { formatTime, toDateString } from "../../utils/date";
+import { getAppointmentTypes } from "../appointmentTypes/appointmentTypeService";
+import { useAuth } from "../auth/useAuth";
+import { AppointmentStatusActions } from "./AppointmentStatusActions";
+import { CorrectStatusDialog } from "./CorrectStatusDialog";
+import { updateAppointment } from "./appointmentService";
 
 const editSchema = z.object({
   appointmentTypeId: z.string().min(1, "Appointment type is required"),
@@ -31,9 +33,15 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
   const { user } = useAuth();
   const formId = useId();
   const [isEditing, setIsEditing] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCorrection, setShowCorrection] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  const isDoctor = user?.role === "DOCTOR";
+  const isAdmin = user?.role === "ADMIN";
+  const isLocked = isFinalStatus(appointment.status);
+  // Unchanged rule: everything except cancelled appointments can be documented.
+  const canDocument = isDoctor && appointment.status !== "CANCELLED";
 
   const { data: appointmentTypes } = useQuery({
     queryKey: ["appointmentTypes"],
@@ -69,22 +77,9 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
     },
   });
 
-  const cancelMutation = useMutation({
-    mutationFn: () => cancelAppointment(appointment.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      onClose();
-    },
-  });
-
   function onSubmit(values: EditValues) {
     setServerError(null);
     updateMutation.mutate(values);
-  }
-
-  function closeCancelConfirm() {
-    setShowCancelConfirm(false);
-    cancelMutation.reset(); // clear a previous error
   }
 
   if (isEditing) {
@@ -136,14 +131,14 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="px-4 py-2 text-sm border rounded"
+            className="rounded border px-4 py-2 text-sm"
           >
             Back
           </button>
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:opacity-50"
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
           >
             {updateMutation.isPending ? "Saving..." : "Save changes"}
           </button>
@@ -166,50 +161,51 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
         </div>
       </div>
 
-      {appointment.status !== "CANCELLED" && (
-        <div className="flex items-center justify-end gap-2 pt-2 border-t">
-          {user?.role === "DOCTOR" && (
+      <div className="flex flex-col gap-3 border-t pt-4">
+        {isLocked ? (
+          <p className="text-sm text-gray-600">
+            This appointment is {STATUS_PHRASES[appointment.status]} and can no longer be changed.
+            {isDoctor && " Contact an administrator to correct it."}
+          </p>
+        ) : (
+          <AppointmentStatusActions appointment={appointment} onDone={onClose} />
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {canDocument && (
             <Link
               to={`/documentation/${appointment.id}`}
-              className="mr-auto px-4 py-2 text-sm border rounded"
+              className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
             >
               Documentation
             </Link>
           )}
-          <button
-            type="button"
-            onClick={() => setShowCancelConfirm(true)}
-            className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded"
-          >
-            Cancel appointment
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded"
-          >
-            Edit
-          </button>
+          {isLocked && isAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowCorrection(true)}
+              className="ml-auto rounded border px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              Correct status
+            </button>
+          )}
+          {!isLocked && (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="ml-auto rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+            >
+              Edit
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
-      {showCancelConfirm && (
-        <ConfirmDialog
-          title="Cancel appointment"
-          message={`Cancel the appointment with ${appointment.patient.firstName} ${appointment.patient.lastName} on ${formatDate(appointment.startTime)} at ${formatTime(appointment.startTime)}? The time will be free for other bookings.`}
-          confirmLabel="Cancel appointment"
-          cancelLabel="Keep appointment"
-          pendingLabel="Cancelling..."
-          isPending={cancelMutation.isPending}
-          error={
-            cancelMutation.isError
-              ? cancelMutation.error instanceof ApiError
-                ? cancelMutation.error.message
-                : "Could not cancel the appointment."
-              : null
-          }
-          onConfirm={() => cancelMutation.mutate()}
-          onCancel={closeCancelConfirm}
+      {showCorrection && (
+        <CorrectStatusDialog
+          appointment={appointment}
+          onClose={() => setShowCorrection(false)}
+          onDone={onClose}
         />
       )}
     </div>

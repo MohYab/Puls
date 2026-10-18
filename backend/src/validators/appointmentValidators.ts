@@ -19,7 +19,12 @@ export const updateAppointmentSchema = z.object({
 export const updateStatusSchema = z.object({
   status: z.enum(["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"]),
   // Required (checked in the service) when an admin corrects a final status.
-  reason: z.string().trim().max(300, "Reason can be at most 300 characters").optional(),
+  reason: z
+    .string()
+    .trim()
+    .min(10, "At least 10 characters")
+    .max(300, "At most 300 characters")
+    .optional(),
 });
 
 export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
