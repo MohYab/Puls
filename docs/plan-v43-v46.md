@@ -14,15 +14,15 @@ Status: Todo / In progress / Done / Moved
 
 | #   | Task                                                                        | Class | Status |
 | --- | --------------------------------------------------------------------------- | ----- | ------ |
-| 1   | Merge finished work to `main` via a pull request                            | MUST  | Todo   |
-| 2   | Screenshots of all pages in the current design (`docs/screenshots/before/`) | MUST  | Todo   |
-| 3   | Supervisor meeting 2 with demo, notes in `supervisor-meeting-2.md`          | MUST  | Todo   |
+| 1   | Merge finished work to `main` via a pull request                            | MUST  | Done   |
+| 2   | Screenshots of all pages in the current design (`docs/screenshots/before/`) | MUST  | Done   |
+| 3   | Supervisor meeting                                                          | MUST  | Todo   |
 
 ## Phase 1 – Bugs and gaps (v.43)
 
 | #   | Task                                                                                   | Class  | Status |
 | --- | -------------------------------------------------------------------------------------- | ------ | ------ |
-| 4   | Global border colour (Tailwind v4 defaults to `currentColor`, all borders look black)  | MUST   | Todo   |
+| 4   | Global border colour (Tailwind v4 defaults to `currentColor`, all borders look black)  | MUST   | Done   |
 | 5   | 404 for an unknown patient or doctor when booking (today a database error, 500)        | MUST   | Todo   |
 | 6   | Change appointment status in the UI (Confirmed, Completed, No-show)                    | SHOULD | Todo   |
 | 7   | Completed and cancelled appointments cannot be edited or cancelled (UI and API)        | SHOULD | Todo   |

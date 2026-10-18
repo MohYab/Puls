@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+/*
+  Tailwind v4 changed the default border colour from gray-200 to currentColor,
+  which made every border as dark as the text. Restore a light default for
+  decorative borders, and a darker one for form controls and buttons so their
+  outline keeps at least 3:1 contrast (WCAG 1.4.11).
+  Utility classes such as border-red-300 still override these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    border-color: var(--color-gray-500, currentColor);
+  }
+}
