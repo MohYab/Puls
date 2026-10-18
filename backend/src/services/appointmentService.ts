@@ -1,5 +1,5 @@
 import { prisma } from "../utils/prisma.js";
-import { AppError, NotFoundError } from "../utils/errors.js";
+import { AppError, NotFoundError, ValidationError } from "../utils/errors.js";
 import type { CreateAppointmentInput } from "../validators/appointmentValidators.js";
 import type {
   UpdateAppointmentInput,
@@ -61,11 +61,21 @@ export async function createAppointment(
   // Doctors can only book for themselves; Admins can book for any doctor.
   const doctorId = requestingUser.role === "DOCTOR" ? requestingUser.doctorId! : input.doctorId;
 
-  const appointmentType = await prisma.appointmentType.findUnique({
-    where: { id: input.appointmentTypeId },
-  });
+  // Unknown ids in the body are invalid input (400), like templateId and
+  // note sharing. Checked here so the database never sees a broken reference.
+  const [patient, doctor, appointmentType] = await Promise.all([
+    prisma.patient.findUnique({ where: { id: input.patientId }, select: { id: true } }),
+    prisma.doctor.findUnique({ where: { id: doctorId }, select: { id: true } }),
+    prisma.appointmentType.findUnique({ where: { id: input.appointmentTypeId } }),
+  ]);
+  if (!patient) {
+    throw new ValidationError("Patient not found");
+  }
+  if (!doctor) {
+    throw new ValidationError("Doctor not found");
+  }
   if (!appointmentType) {
-    throw new NotFoundError("Appointment type not found");
+    throw new ValidationError("Appointment type not found");
   }
   if (!appointmentType.isActive) {
     throw new AppError(
@@ -151,7 +161,7 @@ export async function updateAppointment(
       where: { id: appointmentTypeId },
     });
     if (!appointmentType) {
-      throw new NotFoundError("Appointment type not found");
+      throw new ValidationError("Appointment type not found");
     }
     if (!appointmentType.isActive) {
       throw new AppError(

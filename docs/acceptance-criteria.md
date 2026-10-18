@@ -46,11 +46,8 @@ Each story is done when all criteria below are met.
 - A successful booking is saved in the database with status SCHEDULED.
 - The user sees a confirmation and the calendar updates without a manual reload.
 
-**Error states:** validation errors, time conflict (409), inactive type (400),
-patient/doctor/type not found (404), server error (500), session expired (401).
-
-> Open: an unknown patient or doctor currently gives a database error instead
-> of 404. Planned fix in week 13.
+**Error states:** validation errors, unknown patient/doctor/type (400), time
+conflict (409), inactive type (400), server error (500), session expired (401).
 
 ---
 

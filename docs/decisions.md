@@ -734,3 +734,23 @@ write.
 features and sharing gave more value, and the day view covers the main
 workflow (today's patients, booking, one doctor at a time). Can be revisited in
 week 14 if time allows, reusing `DayView` per column.
+
+---
+
+## 42. Unknown ids in the request body give 400, not 404
+
+**Decision:** When an id in the request body does not exist (patient, doctor,
+appointment type, documentation template, share recipient), the API returns
+400 `VALIDATION_ERROR` with a message naming what was not found. 404 is only
+used when the resource in the URL does not exist.
+
+**Why:** Booking with an unknown patient or doctor reached the database and
+gave a foreign key error (500). Templates (week 11) and note sharing (week 12)
+already used 400, while an unknown appointment type gave 404. One rule for the
+whole API is easier to use and to explain. The acceptance criterion for US-05
+(written in week 1 with 404) was updated.
+
+**Alternative considered:** 404 for all, as in the original criterion.
+Rejected: the client asked for an existing URL, so "not found" describes the
+wrong thing. 422 Unprocessable Content would also fit, but the API already
+uses 400 for all validation errors.

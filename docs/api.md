@@ -37,13 +37,18 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 | ------ | ----------------------------- | ---- | ----------------------------------------------------------------------------------------- |
 | GET    | /appointments?date=&doctorId= | any  | Doctor sees own only. Admin sees all, or one doctor with `doctorId` (ignored for doctors) |
 | GET    | /appointments/:id             | any  | 404 if not found, 403 if doctor doesn't own it                                            |
-| POST   | /appointments                 | any  | Body validated; 409 on conflict; 400 `APPOINTMENT_TYPE_INACTIVE`                          |
+| POST   | /appointments                 | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict |
 | PUT    | /appointments/:id             | any  | Only owner doctor or admin; booked length is kept unless the type changes                 |
 | PATCH  | /appointments/:id/status      | any  | Body: `{ status }`                                                                        |
 
 On `PUT`, `APPOINTMENT_TYPE_INACTIVE` is only returned when the type is
 changed. Editing the time of an appointment whose type was deactivated later
 is allowed.
+
+**Unknown ids:** an id in the request body that does not exist (patient,
+doctor, appointment type, documentation template, share recipient) gives
+400 `VALIDATION_ERROR`. 404 is used only when the resource in the URL does
+not exist.
 
 ## Patients
 

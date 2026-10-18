@@ -23,7 +23,7 @@ Status: Todo / In progress / Done / Moved
 | #   | Task                                                                                   | Class  | Status |
 | --- | -------------------------------------------------------------------------------------- | ------ | ------ |
 | 4   | Global border colour (Tailwind v4 defaults to `currentColor`, all borders look black)  | MUST   | Done   |
-| 5   | 404 for an unknown patient or doctor when booking (today a database error, 500)        | MUST   | Todo   |
+| 5   | 400 for an unknown patient or doctor when booking (was a database error, 500)          | MUST   | Done   |
 | 6   | Change appointment status in the UI (Confirmed, Completed, No-show)                    | SHOULD | Todo   |
 | 7   | Completed and cancelled appointments cannot be edited or cancelled (UI and API)        | SHOULD | Todo   |
 | 8   | Booking only within opening hours 07–17 (UI and API); outside hours is invisible today | SHOULD | Todo   |
