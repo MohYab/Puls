@@ -1,13 +1,10 @@
 import "express";
+import type { RequestingUser } from "./requestingUser.js";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        userId: string;
-        role: "DOCTOR" | "ADMIN";
-        doctorId: string | null;
-      };
+      user?: RequestingUser;
     }
   }
 }

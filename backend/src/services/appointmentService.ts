@@ -14,7 +14,7 @@ import {
 import { getPatientById } from "./patientService.js";
 import { OPENING_HOURS_LABEL, isWithinOpeningHours } from "../utils/openingHours.js";
 
-type RequestingUser = { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
+import type { RequestingUser } from "../types/requestingUser.js";
 
 // Shape of an appointment in lists and details.
 const appointmentInclude = {

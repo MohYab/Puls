@@ -1,6 +1,6 @@
+import type { Role } from "../types/requestingUser.js";
 // Same values as the AppointmentStatus enum in schema.prisma.
 export type AppointmentStatus = "SCHEDULED" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
-type Role = "DOCTOR" | "ADMIN";
 
 const FINAL_STATUSES: readonly AppointmentStatus[] = ["COMPLETED", "NO_SHOW", "CANCELLED"];
 

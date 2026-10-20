@@ -851,3 +851,18 @@ reach the error handler.
 
 **Alternative considered:** An `asyncHandler` wrapper, the common Express 4
 solution. Not needed with Express 5.
+
+---
+
+## 47. Swedish order for patients, sorted in Node
+
+**Decision:** The patient list is sorted with `Intl.Collator("sv")` after the
+query (last name, then first name), so Å, Ä and Ö come after Z.
+
+**Why:** PostgreSQL sorted Å as A and Ö as O, which is wrong for a Swedish
+clinic and depends on how the database was installed. Without pagination
+(73 patients), sorting in Node gives the same Swedish order on every machine.
+
+**Alternative considered:** A Swedish collation on the columns (a handwritten
+migration, depends on ICU support in the database). Needed if the list gets
+pagination, because then the database must sort.

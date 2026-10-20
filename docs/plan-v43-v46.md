@@ -33,14 +33,14 @@ Status: Todo / In progress / Done / Moved
 
 ## Phase 2 – Security and clean-up (v.43)
 
-| #   | Task                                                                             | Class  | Status      |
-| --- | -------------------------------------------------------------------------------- | ------ | ----------- |
-| 12  | Rate limit on `/auth/login` and `helmet`                                         | SHOULD | Done        |
-| 13  | Remove `try/catch` in controllers (Express 5 forwards async errors itself)       | SHOULD | Done        |
-| 14  | One shared `RequestingUser` type; one `include` constant in `appointmentService` | SHOULD | In progress |
-| 15  | Swedish sorting of patients (`Intl.Collator("sv")`): Å, Ä, Ö after Z             | SHOULD | Todo        |
-| 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Todo        |
-| 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done        |
+| #   | Task                                                                             | Class  | Status |
+| --- | -------------------------------------------------------------------------------- | ------ | ------ |
+| 12  | Rate limit on `/auth/login` and `helmet`                                         | SHOULD | Done   |
+| 13  | Remove `try/catch` in controllers (Express 5 forwards async errors itself)       | SHOULD | Done   |
+| 14  | One shared `RequestingUser` type; one `include` constant in `appointmentService` | SHOULD | Done   |
+| 15  | Swedish sorting of patients (`Intl.Collator("sv")`): Å, Ä, Ö after Z             | SHOULD | Done   |
+| 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Todo   |
+| 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done   |
 
 ## Phase 3 – Redesign (v.44, branch `feature/redesign`)
 

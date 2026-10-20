@@ -1,5 +1,6 @@
 import request from "supertest";
 import type { Express } from "express";
+import { Role } from "../types/requestingUser";
 
 const SEED_PASSWORD = "password123";
 
@@ -20,7 +21,7 @@ export async function loginAs(app: Express, email: string) {
       id: string;
       name: string;
       email: string;
-      role: "DOCTOR" | "ADMIN";
+      role: Role;
       doctorId: string | null;
     },
   };

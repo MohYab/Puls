@@ -7,11 +7,7 @@ import type {
 } from "../validators/noteValidators.js";
 import { getPatientById } from "./patientService.js";
 
-interface RequestingUser {
-  userId: string;
-  role: "DOCTOR" | "ADMIN";
-  doctorId: string | null;
-}
+import type { RequestingUser } from "../types/requestingUser.js";
 
 // Appointment info is included so the patient's note list can show date and type.
 // The author's name lets a recipient see who shared the note.

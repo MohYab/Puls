@@ -1,11 +1,22 @@
 import { NotFoundError } from "../utils/errors.js";
 import { prisma } from "../utils/prisma.js";
 
+// Swedish alphabetical order: A–Z, then Å, Ä, Ö. Done in Node so the order
+// does not depend on how PostgreSQL was installed (its collation).
+const swedish = new Intl.Collator("sv");
+
+function bySwedishName(
+  a: { lastName: string; firstName: string },
+  b: { lastName: string; firstName: string }
+): number {
+  return swedish.compare(a.lastName, b.lastName) || swedish.compare(a.firstName, b.firstName);
+}
+
 export async function getAllPatients(search?: string) {
   // Every word must match the first or the last name, so "anna andersson" finds Anna Andersson.
   const terms = search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
-  return prisma.patient.findMany({
+  const patients = await prisma.patient.findMany({
     where:
       terms.length > 0
         ? {
@@ -17,8 +28,10 @@ export async function getAllPatients(search?: string) {
             })),
           }
         : undefined,
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
+
+  // No pagination (73 patients), so sorting after the query is fine.
+  return patients.sort(bySwedishName);
 }
 
 export async function getPatientById(id: string) {

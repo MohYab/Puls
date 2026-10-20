@@ -302,15 +302,13 @@ curl -s -G http://localhost:3001/api/patients --data-urlencode "search=anna ande
   -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[] | "\(.lastName) \(.firstName)"'
 ```
 
-| Search           | Expected                                              |
-| ---------------- | ----------------------------------------------------- |
-| `anna andersson` | Andersson Anna                                        |
-| `andersson anna` | same result (word order does not matter)              |
-| `ann ande`       | same result (partial words)                           |
-| `zzz`            | empty list                                            |
-| (none)           | all patients; `Bergström Agnes` before `Bergström Bo` |
-
-Note: the order of å, ä and ö depends on the database collation.
+| Search           | Expected                                 |
+| ---------------- | ---------------------------------------- |
+| `anna andersson` | Andersson Anna                           |
+| `andersson anna` | same result (word order does not matter) |
+| `ann ande`       | same result (partial words)              |
+| `zzz`            | empty list                               |
+| (none)           | all patients; Swedish order, Å/Ä/Ö last  |
 
 ## UI checklist: templates and UX polish (week 11)
 

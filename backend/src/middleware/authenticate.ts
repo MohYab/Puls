@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "../utils/errors.js";
+import { Role } from "../types/requestingUser.js";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 interface JwtPayload {
   userId: string;
-  role: "DOCTOR" | "ADMIN";
+  role: Role;
   doctorId: string | null;
 }
 

@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/errors.js";
+import { Role } from "../types/requestingUser.js";
 
-export function authorize(...allowedRoles: Array<"DOCTOR" | "ADMIN">) {
+export function authorize(...allowedRoles: Role[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError(401, "UNAUTHORIZED", "Not authenticated"));
