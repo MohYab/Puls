@@ -29,7 +29,7 @@ Status: Todo / In progress / Done / Moved
 | 8   | Booking only within opening hours 07–17 (UI and API); outside hours is invisible today | SHOULD | Todo   |
 | 9   | Global 401 → log out and redirect to `/login`                                          | SHOULD | Done   |
 | 10  | `ErrorBoundary` around the page content (a render error gives a white page today)      | SHOULD | Done   |
-| 11  | Test: same login error for unknown email and wrong password                            | SHOULD | Todo   |
+| 11  | Test: same login error for unknown email and wrong password                            | SHOULD | Done   |
 
 ## Phase 2 – Security and clean-up (v.43)
 
