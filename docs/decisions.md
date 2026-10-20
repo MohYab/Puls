@@ -811,3 +811,25 @@ UTC), so the check must name the clinic's time zone instead of using local time.
 **Alternative considered:** Let the calendar grow to show any booked time.
 Rejected: opening hours are a real rule for a clinic, and a fixed calendar is
 easier to read. Opening hours per doctor or per weekday are future development.
+
+---
+
+## 45. Login rate limit and secure headers
+
+**Decision:** `helmet` sets secure HTTP headers on all responses. Login is
+limited to 10 failed attempts per IP and 15 minutes (`express-rate-limit`);
+successful logins are not counted. The limit is created inside `createApp()`
+and turned off when `NODE_ENV=test`; a separate test turns it on.
+
+**Why:** Without a limit, a password can be guessed indefinitely. Counting only
+failed attempts protects against guessing without blocking a demo where users
+are switched often. Secure headers and hiding `X-Powered-By` are cheap
+defaults for any API.
+
+**Alternative considered:** Limiting all requests, or locking the account after
+failed attempts. Rejected: a global limit is not needed for a prototype, and
+account lockout lets anyone lock out a known user by guessing.
+
+**Known limitation:** The counter is in memory: reset on restart and not shared
+between servers. Behind a proxy, `trust proxy` must be set or all users share
+one counter.

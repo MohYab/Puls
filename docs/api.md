@@ -24,6 +24,7 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 | NOTE_ALREADY_SHARED       | 409         | The note is already shared with this doctor               |
 | INVALID_STATUS_TRANSITION | 409         | The status change is not allowed (see Appointment status) |
 | APPOINTMENT_LOCKED        | 409         | The appointment has a final status and cannot be edited   |
+| TOO_MANY_REQUESTS         | 429         | Too many failed login attempts (10 per 15 minutes per IP) |
 | INTERNAL_ERROR            | 500         | Unexpected server error                                   |
 
 ## Auth
@@ -32,6 +33,10 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 | ------ | ----------- | ---- | --------------------- | ----------------- |
 | POST   | /auth/login | none | `{ email, password }` | `{ token, user }` |
 | GET    | /auth/me    | any  | –                     | `{ user }`        |
+
+`POST /auth/login` is rate limited: after 10 failed attempts from the same IP
+within 15 minutes, every login attempt gets 429 `TOO_MANY_REQUESTS` until the
+window has passed. Successful logins are not counted.
 
 ## Appointments
 
