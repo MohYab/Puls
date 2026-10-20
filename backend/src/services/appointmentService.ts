@@ -12,6 +12,7 @@ import {
   statusLabel,
 } from "../utils/appointmentStatus.js";
 import { getPatientById } from "./patientService.js";
+import { OPENING_HOURS_LABEL, isWithinOpeningHours } from "../utils/openingHours.js";
 
 type RequestingUser = { userId: string; role: "DOCTOR" | "ADMIN"; doctorId: string | null };
 
@@ -61,6 +62,11 @@ async function assertNoConflict(
   }
 }
 
+function assertWithinOpeningHours(startTime: Date, endTime: Date) {
+  if (!isWithinOpeningHours(startTime, endTime)) {
+    throw new ValidationError(`Appointments must be between ${OPENING_HOURS_LABEL}`);
+  }
+}
 async function assertOwnsAppointment(appointmentId: string, requestingUser: RequestingUser) {
   const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
   if (!appointment) {
@@ -172,6 +178,7 @@ export async function createAppointment(
   }
   const endTime = new Date(startTime.getTime() + appointmentType.duration * 60 * 1000);
 
+  assertWithinOpeningHours(startTime, endTime);
   await assertNoConflict(doctorId, startTime, endTime);
 
   return prisma.appointment.create({
@@ -231,6 +238,7 @@ export async function updateAppointment(
   }
 
   const endTime = new Date(startTime.getTime() + durationMs);
+  assertWithinOpeningHours(startTime, endTime);
   await assertNoConflict(existing.doctorId, startTime, endTime, appointmentId);
 
   return prisma.appointment.update({

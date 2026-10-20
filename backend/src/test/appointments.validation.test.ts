@@ -4,11 +4,11 @@ import { createApp } from "../app.js";
 import { auth, loginAs, requireValue } from "./helpers.js";
 
 /**
- * Booking with ids that do not exist. Every request is rejected before
- * anything is written, so the suite can run repeatedly.
+ * Booking with invalid input: unknown ids and times outside the opening hours.
+ * Every request is rejected before anything is written, so the suite can run
+ * repeatedly.
  */
-
-describe("Booking with unknown ids", () => {
+describe("Booking with invalid input", () => {
   const app = createApp();
 
   let erikToken: string;
@@ -16,7 +16,11 @@ describe("Booking with unknown ids", () => {
   let erikDoctorId: string;
   let patientId: string;
   let appointmentTypeId: string;
+  let appointmentTypeDuration: number;
   const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  // A fixed winter date, so the offset to Swedish time is always +01:00.
+  const clinicTime = (hhmm: string) => new Date(`2030-01-15T${hhmm}:00+01:00`).toISOString();
 
   beforeAll(async () => {
     const [erik, admin] = await Promise.all([
@@ -32,41 +36,85 @@ describe("Booking with unknown ids", () => {
       request(app).get("/api/appointment-types").set(auth(adminToken)),
     ]);
     patientId = requireValue(patients.body[0]?.id as string | undefined, "Anna must exist in seed");
-    appointmentTypeId = requireValue(types.body[0]?.id as string | undefined, "Seed needs a type");
+
+    const type = requireValue(
+      (types.body as { id: string; duration: number }[])[0],
+      "Seed needs an active appointment type"
+    );
+    appointmentTypeId = type.id;
+    appointmentTypeDuration = type.duration;
   });
 
-  it("rejects an unknown patient", async () => {
-    const res = await request(app).post("/api/appointments").set(auth(erikToken)).send({
-      patientId: "does-not-exist",
-      doctorId: erikDoctorId,
-      appointmentTypeId,
-      startTime: nextWeek,
+  const book = (token: string, body: object) =>
+    request(app).post("/api/appointments").set(auth(token)).send(body);
+
+  describe("unknown ids", () => {
+    it("rejects an unknown patient", async () => {
+      const res = await book(erikToken, {
+        patientId: "does-not-exist",
+        doctorId: erikDoctorId,
+        appointmentTypeId,
+        startTime: nextWeek,
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+      expect(res.body.error.message).toBe("Patient not found");
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error.code).toBe("VALIDATION_ERROR");
-    expect(res.body.error.message).toBe("Patient not found");
-  });
+    it("rejects an unknown doctor (admin chooses the doctor)", async () => {
+      const res = await book(adminToken, {
+        patientId,
+        doctorId: "does-not-exist",
+        appointmentTypeId,
+        startTime: nextWeek,
+      });
 
-  it("rejects an unknown doctor (admin chooses the doctor)", async () => {
-    const res = await request(app)
-      .post("/api/appointments")
-      .set(auth(adminToken))
-      .send({ patientId, doctorId: "does-not-exist", appointmentTypeId, startTime: nextWeek });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error.message).toBe("Doctor not found");
-  });
-
-  it("rejects an unknown appointment type", async () => {
-    const res = await request(app).post("/api/appointments").set(auth(erikToken)).send({
-      patientId,
-      doctorId: erikDoctorId,
-      appointmentTypeId: "does-not-exist",
-      startTime: nextWeek,
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toBe("Doctor not found");
     });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error.message).toBe("Appointment type not found");
+    it("rejects an unknown appointment type", async () => {
+      const res = await book(erikToken, {
+        patientId,
+        doctorId: erikDoctorId,
+        appointmentTypeId: "does-not-exist",
+        startTime: nextWeek,
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toBe("Appointment type not found");
+    });
+  });
+
+  describe("opening hours (07:00–17:00, Swedish time)", () => {
+    it("rejects an appointment that starts before opening", async () => {
+      const res = await book(erikToken, {
+        patientId,
+        doctorId: erikDoctorId,
+        appointmentTypeId,
+        startTime: clinicTime("06:30"),
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toContain("between 07:00 and 17:00");
+    });
+
+    it("rejects an appointment that would end after closing", async () => {
+      // Starts 5 minutes too late for the type's duration, so it ends at 17:05.
+      const startMinutes = 17 * 60 - appointmentTypeDuration + 5;
+      const hh = String(Math.floor(startMinutes / 60)).padStart(2, "0");
+      const mm = String(startMinutes % 60).padStart(2, "0");
+
+      const res = await book(erikToken, {
+        patientId,
+        doctorId: erikDoctorId,
+        appointmentTypeId,
+        startTime: clinicTime(`${hh}:${mm}`),
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toContain("between 07:00 and 17:00");
+    });
   });
 });

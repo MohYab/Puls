@@ -52,6 +52,10 @@ doctor, appointment type, documentation template, share recipient) gives
 400 `VALIDATION_ERROR`. 404 is used only when the resource in the URL does
 not exist.
 
+**Opening hours:** an appointment must start at or after 07:00 and end at or
+before 17:00 Swedish time (`Europe/Stockholm`), on the same day. Otherwise
+400 `VALIDATION_ERROR`. The check uses the clinic's time zone, not the server's.
+
 ## Appointment status
 
 | From                          | Allowed to           | Condition                   |

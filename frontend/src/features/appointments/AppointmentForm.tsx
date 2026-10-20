@@ -15,6 +15,7 @@ import { createAppointment } from "./appointmentService";
 import { useAuth } from "../auth/useAuth";
 import { ApiError } from "../../services/apiClient";
 import { toDateString } from "../../utils/date";
+import { OPENING_TIME, CLOSING_TIME } from "../../config/openingHours";
 
 interface AppointmentFormProps {
   defaultDate: Date;
@@ -131,7 +132,15 @@ export function AppointmentForm({
         </FormField>
         <FormField id={`${formId}-time`} label="Time" error={errors.time?.message}>
           {(field) => (
-            <input type="time" {...field} {...register("time")} className={inputClassName} />
+            <input
+              type="time"
+              min={OPENING_TIME}
+              max={CLOSING_TIME}
+              step={300}
+              {...field}
+              {...register("time")}
+              className={inputClassName}
+            />
           )}
         </FormField>
       </div>

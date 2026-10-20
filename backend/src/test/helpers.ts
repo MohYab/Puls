@@ -7,9 +7,10 @@ export async function loginAs(app: Express, email: string) {
   const res = await request(app).post("/api/auth/login").send({ email, password: SEED_PASSWORD });
 
   if (res.status !== 200 || !res.body.token) {
+    const reason = res.body?.error?.message ?? "no error message";
     throw new Error(
-      `Login failed for ${email} (status ${res.status}). ` +
-        "Is the database seeded? Run: npx prisma db seed"
+      `Login failed for ${email} (status ${res.status}: ${reason}). ` +
+        "Is PostgreSQL running (pg_isready -h localhost) and the database seeded (npx prisma db seed)?"
     );
   }
 

@@ -40,6 +40,8 @@ Each story is done when all criteria below are met.
 - End time is calculated automatically from the appointment type's duration.
 - All required fields are validated (Zod) with clear messages.
 - Booking in the past is not allowed.
+- Appointments must be within the opening hours (07:00–17:00, Swedish time),
+  so every booking is visible in the calendar.
 - If the doctor already has an overlapping appointment, the booking is
   rejected (409) with a clear message.
 - Cancelled appointments do not block a time slot.

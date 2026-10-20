@@ -111,15 +111,16 @@ README for all seed users and scenarios.
 
 ## Troubleshooting
 
-| Error                                               | Cause                                             | Fix                                                                |
-| --------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
-| `role "<your username>" does not exist` (psql)      | psql logs in with your OS user name by default    | `psql -h localhost -U puls_user -d puls_dev`                       |
-| `P1010: User was denied access`                     | `DATABASE_URL` is not loaded or password is wrong | Check `backend/.env`, run commands from `backend/`                 |
-| `P3014` (shadow database)                           | `puls_user` cannot create databases               | `ALTER USER puls_user CREATEDB;` as superuser                      |
-| `permission denied for schema public`               | The database is owned by another user             | Superuser in `puls_dev`: `ALTER SCHEMA public OWNER TO puls_user;` |
-| `Need to install the following packages: prisma@8…` | Command run outside `backend/`                    | Answer `n`, `cd backend`, run again                                |
-| `Prisma only supports Node.js versions 20.19+…`     | Node is too old                                   | Install Node 22 LTS                                                |
-| Cannot find module `../generated/prisma/...`        | Prisma client not generated                       | `npx prisma generate`                                              |
-| `EADDRINUSE: :::3001`                               | Backend already running in another terminal       | Stop the other process or change `PORT`                            |
-| Login works but pages show 401                      | Token from an old seed (IDs changed)              | Log out and log in again                                           |
-| Frontend shows "Failed to fetch"                    | Backend is not running                            | `npm run dev` in `backend/`                                        |
+| Error                                               | Cause                                             | Fix                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `role "<your username>" does not exist` (psql)      | psql logs in with your OS user name by default    | `psql -h localhost -U puls_user -d puls_dev`                                              |
+| `P1010: User was denied access`                     | `DATABASE_URL` is not loaded or password is wrong | Check `backend/.env`, run commands from `backend/`                                        |
+| `P3014` (shadow database)                           | `puls_user` cannot create databases               | `ALTER USER puls_user CREATEDB;` as superuser                                             |
+| `permission denied for schema public`               | The database is owned by another user             | Superuser in `puls_dev`: `ALTER SCHEMA public OWNER TO puls_user;`                        |
+| `Need to install the following packages: prisma@8…` | Command run outside `backend/`                    | Answer `n`, `cd backend`, run again                                                       |
+| `Prisma only supports Node.js versions 20.19+…`     | Node is too old                                   | Install Node 22 LTS                                                                       |
+| Cannot find module `../generated/prisma/...`        | Prisma client not generated                       | `npx prisma generate`                                                                     |
+| `EADDRINUSE: :::3001`                               | Backend already running in another terminal       | Stop the other process or change `PORT`                                                   |
+| Login works but pages show 401                      | Token from an old seed (IDs changed)              | Log out and log in again                                                                  |
+| Frontend shows "Failed to fetch"                    | Backend is not running                            | `npm run dev` in `backend/`                                                               |
+| `ECONNREFUSED`, every login in the tests gives 500  | PostgreSQL is not running (e.g. after a restart)  | `sudo systemctl start postgresql`; `sudo systemctl enable postgresql` to start it on boot |

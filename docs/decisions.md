@@ -792,3 +792,22 @@ history entry. In healthcare, corrections must be traceable.
 (planned as COULD). Seeded appointments have no history; it starts when the app
 is used. Two simultaneous status changes on the same appointment are not
 prevented by locking.
+
+---
+
+## 44. Opening hours are checked in the clinic's time zone
+
+**Decision:** Appointments must start at or after 07:00 and end at or before
+17:00 in `Europe/Stockholm`, on the same day. The backend checks the start and
+the calculated end with `Intl.DateTimeFormat` and an explicit time zone. The
+frontend checks the start time in the form; the calendar shows the same hours
+from the same constant.
+
+**Why:** Bookings outside 07–17 were saved but never shown in the calendar,
+which is worse than rejecting them. Times are stored in UTC (#6), and the
+server's time zone can differ from the clinic's (for example a cloud server in
+UTC), so the check must name the clinic's time zone instead of using local time.
+
+**Alternative considered:** Let the calendar grow to show any booked time.
+Rejected: opening hours are a real rule for a clinic, and a fixed calendar is
+easier to read. Opening hours per doctor or per weekday are future development.

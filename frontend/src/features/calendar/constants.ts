@@ -1,5 +1,8 @@
-export const CALENDAR_START_HOUR = 7;
-export const CALENDAR_END_HOUR = 17;
+import { CLOSING_HOUR, OPENING_HOUR } from "../../config/openingHours";
+
+// The calendar shows exactly the opening hours, so every bookable time is visible.
+export const CALENDAR_START_HOUR = OPENING_HOUR;
+export const CALENDAR_END_HOUR = CLOSING_HOUR;
 export const PX_PER_MINUTE = 1.2;
 export const CALENDAR_HEIGHT = (CALENDAR_END_HOUR - CALENDAR_START_HOUR) * 60 * PX_PER_MINUTE;
 

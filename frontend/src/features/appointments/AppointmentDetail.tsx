@@ -16,11 +16,13 @@ import { useAuth } from "../auth/useAuth";
 import { AppointmentStatusActions } from "./AppointmentStatusActions";
 import { CorrectStatusDialog } from "./CorrectStatusDialog";
 import { updateAppointment } from "./appointmentService";
+import { appointmentTimeSchema } from "../../schemas/appointmentSchemas";
+import { CLOSING_TIME, OPENING_TIME } from "../../config/openingHours";
 
 const editSchema = z.object({
   appointmentTypeId: z.string().min(1, "Appointment type is required"),
   date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
+  time: appointmentTimeSchema,
 });
 type EditValues = z.infer<typeof editSchema>;
 
@@ -116,7 +118,15 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
           </FormField>
           <FormField id={`${formId}-time`} label="Time" error={errors.time?.message}>
             {(field) => (
-              <input type="time" {...field} {...register("time")} className={inputClassName} />
+              <input
+                type="time"
+                min={OPENING_TIME}
+                max={CLOSING_TIME}
+                step={300}
+                {...field}
+                {...register("time")}
+                className={inputClassName}
+              />
             )}
           </FormField>
         </div>
