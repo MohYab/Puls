@@ -29,6 +29,8 @@ flowchart LR
    role), `validate(schema)` (checks request body with Zod).
 3. **Controller** – reads the request, calls a service, sends the response.
    No business logic here.
+   Async errors are forwarded to `errorHandler` by Express 5, so controllers
+   have no try/catch.
 4. **Service** – contains the business logic (e.g. conflict checking) and
    calls Prisma directly. No separate repository layer — Prisma is the data
    access layer.

@@ -1,11 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import { getAllDoctors } from "../services/doctorService.js";
 
-export async function listDoctors(_req: Request, res: Response, next: NextFunction) {
-  try {
-    const doctors = await getAllDoctors();
-    res.json(doctors);
-  } catch (err) {
-    next(err);
-  }
+export async function listDoctors(_req: Request, res: Response) {
+  res.json(await getAllDoctors());
 }

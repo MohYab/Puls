@@ -833,3 +833,21 @@ account lockout lets anyone lock out a known user by guessing.
 **Known limitation:** The counter is in memory: reset on restart and not shared
 between servers. Behind a proxy, `trust proxy` must be set or all users share
 one counter.
+
+---
+
+## 46. No try/catch in controllers (Express 5)
+
+**Decision:** Controllers are plain async functions without try/catch. Express
+5 forwards a rejected promise from a handler to the error middleware, so
+`errorHandler` still receives every `AppError`.
+
+**Why:** The try/catch blocks were needed in Express 4, where a rejected promise
+left the request hanging. With Express 5 (#12) they only repeated the same
+three lines in every handler. Removing them makes each controller show only its
+job: read the request, call the service, send the response. The existing
+test suite, which checks many 400/403/404/409 responses, proves that errors still
+reach the error handler.
+
+**Alternative considered:** An `asyncHandler` wrapper, the common Express 4
+solution. Not needed with Express 5.
