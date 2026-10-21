@@ -6,10 +6,10 @@ import { formatDate, formatTime } from "../../utils/date";
 import { useUpdateAppointmentStatus } from "./useAppointments";
 
 const BUTTON_LABELS: Record<AppointmentStatus, string> = {
-  SCHEDULED: "Scheduled",
+  SCHEDULED: "Mark as scheduled",
   CONFIRMED: "Confirm",
-  COMPLETED: "Completed",
-  NO_SHOW: "No-show",
+  COMPLETED: "Mark as completed",
+  NO_SHOW: "Mark as no-show",
   CANCELLED: "Cancel appointment",
 };
 
