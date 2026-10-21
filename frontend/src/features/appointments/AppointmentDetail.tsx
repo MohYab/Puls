@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { ApiError } from "../../services/apiClient";
 import type { Appointment } from "../../types/appointment";
 import { STATUS_PHRASES, isFinalStatus } from "../../utils/appointmentStatus";
 import { formatTime, toDateString } from "../../utils/date";
-import { getAppointmentTypes } from "../appointmentTypes/appointmentTypeService";
+import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
 import { useAuth } from "../auth/useAuth";
 import { AppointmentStatusActions } from "./AppointmentStatusActions";
 import { CorrectStatusDialog } from "./CorrectStatusDialog";
@@ -45,10 +45,7 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
   // Unchanged rule: everything except cancelled appointments can be documented.
   const canDocument = isDoctor && appointment.status !== "CANCELLED";
 
-  const { data: appointmentTypes } = useQuery({
-    queryKey: ["appointmentTypes"],
-    queryFn: getAppointmentTypes,
-  });
+  const { data: appointmentTypes } = useAppointmentTypes();
 
   const start = new Date(appointment.startTime);
   const {

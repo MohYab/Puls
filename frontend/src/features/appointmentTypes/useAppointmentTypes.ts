@@ -4,14 +4,25 @@ import type { AppointmentTypeInput } from "../../types/appointmentType";
 import {
   createAppointmentType,
   getAllAppointmentTypesIncludingInactive,
+  getAppointmentTypes,
   setAppointmentTypeActive,
   updateAppointmentType,
 } from "./appointmentTypeService";
 
 export const appointmentTypeKeys = {
   all: ["appointmentTypes"] as const,
+  active: ["appointmentTypes", "active"] as const,
   admin: ["appointmentTypes", "admin"] as const,
 };
+
+// Active types only, for booking and editing appointments.
+export function useAppointmentTypes() {
+  return useQuery({
+    queryKey: appointmentTypeKeys.active,
+    queryFn: () => getAppointmentTypes(),
+    retry: retryUnlessClientError,
+  });
+}
 
 export function useAdminAppointmentTypes() {
   return useQuery({

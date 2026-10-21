@@ -11,7 +11,7 @@ function sortByName(doctors: Doctor[]) {
 export function useDoctors(enabled = true) {
   return useQuery({
     queryKey: ["doctors"],
-    queryFn: getDoctors,
+    queryFn: () => getDoctors(),
     select: sortByName,
     enabled,
     retry: retryUnlessClientError,

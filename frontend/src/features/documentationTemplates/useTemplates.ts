@@ -5,7 +5,7 @@ import { getTemplates } from "./templateService";
 export function useTemplates(enabled = true) {
   return useQuery({
     queryKey: ["documentationTemplates"],
-    queryFn: getTemplates,
+    queryFn: () => getTemplates(),
     enabled,
     retry: retryUnlessClientError,
   });

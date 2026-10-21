@@ -1,21 +1,22 @@
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FormField } from "../../components/FormField";
 import { inputClassName } from "../../components/formStyles";
 import {
   appointmentFormSchema,
   type AppointmentFormValues,
 } from "../../schemas/appointmentSchemas";
-import { getPatients } from "../patients/patientService";
-import { getDoctors } from "../doctors/doctorService";
-import { getAppointmentTypes } from "../appointmentTypes/appointmentTypeService";
+
 import { createAppointment } from "./appointmentService";
 import { useAuth } from "../auth/useAuth";
 import { ApiError } from "../../services/apiClient";
 import { toDateString } from "../../utils/date";
 import { OPENING_TIME, CLOSING_TIME } from "../../config/openingHours";
+import { usePatients } from "../patients/usePatients";
+import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
+import { useDoctors } from "../doctors/useDoctors";
 
 interface AppointmentFormProps {
   defaultDate: Date;
@@ -36,12 +37,11 @@ export function AppointmentForm({
   const formId = useId();
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { data: patients } = useQuery({ queryKey: ["patients"], queryFn: () => getPatients() });
-  const { data: doctors } = useQuery({ queryKey: ["doctors"], queryFn: getDoctors });
-  const { data: appointmentTypes } = useQuery({
-    queryKey: ["appointmentTypes"],
-    queryFn: getAppointmentTypes,
-  });
+  const isAdmin = user?.role === "ADMIN";
+  const { data: patients } = usePatients("");
+  // Doctors always book for themselves, so only admins need the list.
+  const { data: doctors } = useDoctors(isAdmin);
+  const { data: appointmentTypes } = useAppointmentTypes();
 
   const {
     register,
@@ -92,7 +92,7 @@ export function AppointmentForm({
         )}
       </FormField>
 
-      {user?.role === "ADMIN" && (
+      {isAdmin && (
         <FormField id={`${formId}-doctor`} label="Doctor" error={errors.doctorId?.message}>
           {(field) => (
             <select {...field} {...register("doctorId")} className={inputClassName}>
