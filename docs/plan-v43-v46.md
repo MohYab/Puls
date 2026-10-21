@@ -72,9 +72,9 @@ Design notes from the screenshot review:
 | --- | ------------------------------------------------------------------------- | ------ | ------ |
 | 27  | Shared `useFocusTrap` for `Modal` and the mobile drawer                   | SHOULD | Todo   |
 | 28  | Accessibility review (keyboard, labels, screen reader)                    | SHOULD | Todo   |
-| 29  | Frontend tests with Vitest and React Testing Library where they add value | SHOULD | Todo   |
+| 29  | Frontend tests with Vitest and React Testing Library where they add value | SHOULD | Done   |
 | 30  | Test on a real phone                                                      | SHOULD | Todo   |
-| 31  | CI with GitHub Actions (lint, build, tests with PostgreSQL)               | SHOULD | Todo   |
+| 31  | CI with GitHub Actions (lint, build, tests with PostgreSQL)               | SHOULD | Done   |
 
 ## Phase 5 – Polish and freeze (v.46)
 

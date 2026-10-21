@@ -866,3 +866,21 @@ clinic and depends on how the database was installed. Without pagination
 **Alternative considered:** A Swedish collation on the columns (a handwritten
 migration, depends on ICU support in the database). Needed if the list gets
 pagination, because then the database must sort.
+
+---
+
+## 48. Continuous integration with GitHub Actions
+
+**Decision:** A workflow runs lint, build and tests for backend and frontend on
+every push and pull request. The backend job uses a PostgreSQL service
+container that is migrated and seeded before the tests. The workflow runs in
+`Europe/Stockholm` and also checks the `queryFn` convention with `grep`.
+
+**Why:** Tests only protect the code if they are run. CI runs them on a clean
+machine every time, which also catches problems that only work on the
+developer's computer (missing files, local settings, time zone) and tests the
+setup guide.
+
+**Alternative considered:** A separate test database locally with a pre-push
+hook. Rejected: it depends on every developer's machine; CI gives one shared
+answer that is visible on GitHub.
