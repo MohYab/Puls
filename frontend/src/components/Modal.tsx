@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface ModalProps {
   title: string;
@@ -13,6 +14,7 @@ const openModals: symbol[] = [];
 export function Modal({ title, onClose, children }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef);
 
   // Keep the latest onClose without re-running the effect (which would steal focus).
   const onCloseRef = useRef(onClose);

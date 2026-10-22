@@ -884,3 +884,22 @@ setup guide.
 **Alternative considered:** A separate test database locally with a pre-push
 hook. Rejected: it depends on every developer's machine; CI gives one shared
 answer that is visible on GitHub.
+
+---
+
+## 49. One focus trap for all dialogs
+
+**Decision:** `useFocusTrap(ref, active)` keeps Tab and Shift+Tab inside a
+dialog and wraps around. It is used by `Modal` (and so by every dialog in the
+app) and by the mobile menu. Only the most recently opened trap handles Tab.
+
+**Why:** `aria-modal="true"` tells screen readers that the rest of the page is
+unavailable; without a trap, keyboard users could still Tab out of the dialog.
+The mobile menu had its own trap (week 12), but only for links and buttons;
+the modals contain forms, so the shared version also covers inputs, selects and
+textareas and skips disabled controls. Dialogs are opened on top of each other
+(for example the status correction on top of the appointment detail), so only
+the topmost may react, the same rule as for Escape.
+
+**Alternative considered:** A library (focus-trap-react). Not needed for one
+hook of about 50 lines that is covered by tests.

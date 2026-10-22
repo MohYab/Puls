@@ -1,8 +1,7 @@
 # Plan v.43–v.46 – Puls
 
-Plan for the time between week 12 (done on October 17, 2026) and the MVP freeze.
-Project week 14 = calendar week 46. About three weeks ahead of the original
-roadmap, so the time is used for quality and design, not new features.
+Plan for the time between week 12 and the MVP freeze. About three weeks ahead of the original
+roadmap, so the time is used for quality and design.
 
 **Order:** secure what exists → fix bugs and gaps → clean up code → redesign →
 quality → polish and freeze. Cleaning up before the redesign makes it easier;
@@ -70,7 +69,7 @@ Design notes from the screenshot review:
 
 | #   | Task                                                                      | Class  | Status |
 | --- | ------------------------------------------------------------------------- | ------ | ------ |
-| 27  | Shared `useFocusTrap` for `Modal` and the mobile drawer                   | SHOULD | Todo   |
+| 27  | Shared `useFocusTrap` for `Modal` and the mobile drawer                   | SHOULD | Done   |
 | 28  | Accessibility review (keyboard, labels, screen reader)                    | SHOULD | Todo   |
 | 29  | Frontend tests with Vitest and React Testing Library where they add value | SHOULD | Done   |
 | 30  | Test on a real phone                                                      | SHOULD | Todo   |

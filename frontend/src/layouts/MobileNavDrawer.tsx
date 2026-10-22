@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import { Sidebar } from "./Sidebar";
 
 // Matches Tailwind's md breakpoint (768px), where the fixed sidebar takes over.
@@ -14,6 +15,7 @@ interface MobileNavDrawerProps {
 export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  useFocusTrap(panelRef, isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -21,22 +23,8 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+            if (event.key === "Escape") {
         onClose();
-        return;
-      }
-      if (event.key !== "Tab" || !panelRef.current) return;
-
-      // Keep Tab and Shift+Tab inside the drawer while it is open.
-      const focusable = panelRef.current.querySelectorAll<HTMLElement>("a[href], button");
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
       }
     }
 
