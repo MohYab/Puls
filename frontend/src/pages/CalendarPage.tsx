@@ -11,8 +11,10 @@ import { Modal } from "../components/Modal";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../components/Feedback";
 import { addDays, isSameDay, toDateString } from "../utils/date";
 import type { Appointment } from "../types/appointment";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function CalendarPage() {
+  usePageTitle("Calendar");
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 

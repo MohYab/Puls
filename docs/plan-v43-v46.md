@@ -43,17 +43,17 @@ Status: Todo / In progress / Done / Moved
 
 ## Phase 3 – Redesign (v.44, branch `feature/redesign`)
 
-| #   | Task                                                                                                  | Class              | Status |
-| --- | ----------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| 18  | Design direction and mockups of dashboard and calendar (after supervisor input on guidelines)         | MUST (before code) | Todo   |
-| 19  | Design tokens with `@theme` (semantic colours, font, radius)                                          | SHOULD             | Todo   |
-| 20  | Base components: `Button`, `Badge`, `Input`, `Card`, `PageHeader`, icons                              | SHOULD             | Todo   |
-| 21  | Searchable select (combobox) for doctors and patients (calendar, booking, sharing)                    | SHOULD             | Todo   |
-| 22  | Role-based dashboard. Admin: "Today at the clinic". Doctor: schedule, next appointment, "To document" | SHOULD             | Todo   |
-| 23  | One date and time format in the whole app, collected in `utils/date.ts`                               | SHOULD             | Todo   |
-| 24  | Appointment detail shows date, doctor and duration                                                    | SHOULD             | Todo   |
-| 25  | Apply the new design page by page, one commit per page                                                | SHOULD             | Todo   |
-| 26  | Colour contrast meets WCAG (e.g. `text-gray-400` time labels)                                         | SHOULD             | Todo   |
+| #   | Task                                                                                                  | Class              | Status      |
+| --- | ----------------------------------------------------------------------------------------------------- | ------------------ | ----------- |
+| 18  | Design direction and mockups of dashboard and calendar (after supervisor input on guidelines)         | MUST (before code) | Todo        |
+| 19  | Design tokens with `@theme` (semantic colours, font, radius)                                          | SHOULD             | Todo        |
+| 20  | Base components: `Button`, `Badge`, `Input`, `Card`, `PageHeader`, icons                              | SHOULD             | Todo        |
+| 21  | Searchable select (combobox) for doctors and patients (calendar, booking, sharing)                    | SHOULD             | Todo        |
+| 22  | Role-based dashboard. Admin: "Today at the clinic". Doctor: schedule, next appointment, "To document" | SHOULD             | Todo        |
+| 23  | One date and time format in the whole app, collected in `utils/date.ts`                               | SHOULD             | Todo        |
+| 24  | Appointment detail shows date, doctor and duration                                                    | SHOULD             | Todo        |
+| 25  | Apply the new design page by page, one commit per page                                                | SHOULD             | Todo        |
+| 26  | Colour contrast meets WCAG (e.g. `text-gray-400` time labels)                                         | SHOULD             | In progress |
 
 **Scope rule:** phase 3 changes appearance only, except #21, #22 and #24.
 Time box: one week.
@@ -70,7 +70,7 @@ Design notes from the screenshot review:
 | #   | Task                                                                      | Class  | Status |
 | --- | ------------------------------------------------------------------------- | ------ | ------ |
 | 27  | Shared `useFocusTrap` for `Modal` and the mobile drawer                   | SHOULD | Done   |
-| 28  | Accessibility review (keyboard, labels, screen reader)                    | SHOULD | Todo   |
+| 28  | Accessibility review (keyboard, labels, screen reader)                    | SHOULD | Done   |
 | 29  | Frontend tests with Vitest and React Testing Library where they add value | SHOULD | Done   |
 | 30  | Test on a real phone                                                      | SHOULD | Todo   |
 | 31  | CI with GitHub Actions (lint, build, tests with PostgreSQL)               | SHOULD | Done   |
@@ -93,7 +93,7 @@ Design notes from the screenshot review:
 - External connection pooling (PgBouncer)
 - Live updates with websockets
 - Dark mode and animations
-- Pages without any styling classes (layout belongs in the page)
+- Pages without any styling classes.
 - `/admin/users`
 
 ## Open decisions

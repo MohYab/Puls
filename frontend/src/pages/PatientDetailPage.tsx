@@ -8,8 +8,10 @@ import { AppointmentHistory } from "../features/patients/AppointmentHistory";
 import { PatientInfoCard } from "../features/patients/PatientInfoCard";
 import { usePatient } from "../features/patients/usePatients";
 import { ApiError } from "../services/apiClient";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function PatientDetailPage() {
+  usePageTitle("Patient");
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { data: patient, isPending, isError, error, refetch } = usePatient(id);

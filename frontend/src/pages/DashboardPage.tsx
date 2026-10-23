@@ -3,8 +3,10 @@ import { useAppointments } from "../features/appointments/useAppointments";
 import { TodaySchedule } from "../features/dashboard/TodaySchedule";
 import { NextAppointment } from "../features/dashboard/NextAppointment";
 import { todayDateString } from "../utils/date";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function DashboardPage() {
+  usePageTitle("Dashboard");
   const {
     data: appointments,
     isLoading,

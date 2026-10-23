@@ -903,3 +903,21 @@ the topmost may react, the same rule as for Escape.
 
 **Alternative considered:** A library (focus-trap-react). Not needed for one
 hook of about 50 lines that is covered by tests.
+
+---
+
+## 50. Accessibility review: tools plus a manual check
+
+**Decision:** Every page was checked with Lighthouse, axe DevTools and the
+keyboard. Fixed: a `main` landmark on the login page, contrast of the calendar
+time labels (gray-400 → gray-600), a page title per route
+(`usePageTitle`, "Calendar – Puls") and a "Skip to main content" link.
+Page titles never contain patient names.
+
+**Why:** The tools found the missing landmark and the contrast. The constant
+title and the missing skip link were found by reviewing the code: tools can
+check that a title exists, not that it changes. Patient names are left out of
+titles because titles appear in browser history, tabs and shared screens.
+
+**Alternative considered:** Relying on the tools alone (Lighthouse already
+gave 95–100). Rejected: automated tools find only part of the problems.

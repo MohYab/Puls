@@ -11,8 +11,10 @@ import { PreviousNotes } from "../features/notes/PreviousNotes";
 import { useTemplates } from "../features/documentationTemplates/useTemplates";
 import { StateMessage } from "../components/StateMessage";
 import { NoteSharing } from "../features/notes/NoteSharing";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function DocumentationPage() {
+  usePageTitle("Documentation");
   const { appointmentId } = useParams<{ appointmentId: string }>();
   const { user } = useAuth();
   const isDoctor = user?.role === "DOCTOR";

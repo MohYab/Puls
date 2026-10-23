@@ -25,7 +25,7 @@ export function DayView({ appointments, onAppointmentClick }: DayViewProps) {
           <div
             key={hour}
             style={{ height: 60 * PX_PER_MINUTE }}
-            className="text-xs text-gray-400 text-right pr-2 pt-1 border-b"
+            className="text-xs text-gray-600 text-right pr-2 pt-1 border-b"
           >
             {String(hour).padStart(2, "0")}:00
           </div>

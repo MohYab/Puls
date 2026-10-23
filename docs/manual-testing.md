@@ -509,3 +509,17 @@ One row per successful change, none for rejected ones. Reseed afterwards.
   (at least 10 characters); the list hides Completed and No-show before the
   start time
 - Cancelling an appointment with a note shows the error in the dialog
+
+## Accessibility check (v.43)
+
+Run Lighthouse (Accessibility) and axe DevTools on every page, with dialogs
+open where relevant, then go through the main flow with the keyboard only.
+
+| Page            | Lighthouse before            | after |
+| --------------- | ---------------------------- | ----- |
+| Login           | 96 (no `main` landmark)      | 100   |
+| Calendar        | 95 (contrast of time labels) | 100   |
+| All other pages | 100                          | 100   |
+
+Keyboard: first Tab shows "Skip to main content"; dialogs keep Tab inside and
+return focus on close; the tab title changes per page.

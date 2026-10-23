@@ -5,8 +5,10 @@ import { inputClassName } from "../components/formStyles";
 import { usePatients } from "../features/patients/usePatients";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { formatBirthDate } from "../utils/date";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 export default function PatientsPage() {
+  usePageTitle("Patients");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search.trim(), 300);
 

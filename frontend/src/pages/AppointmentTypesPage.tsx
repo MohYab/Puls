@@ -8,10 +8,12 @@ import {
   useSetAppointmentTypeActive,
 } from "../features/appointmentTypes/useAppointmentTypes";
 import type { AppointmentType } from "../types/appointmentType";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 type FormTarget = AppointmentType | "new" | null;
 
 export default function AppointmentTypesPage() {
+  usePageTitle("Appointment types");
   const { data: types, isPending, isError, error, refetch } = useAdminAppointmentTypes();
   const setActive = useSetAppointmentTypeActive();
   const [formTarget, setFormTarget] = useState<FormTarget>(null);
