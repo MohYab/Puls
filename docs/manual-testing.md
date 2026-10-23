@@ -523,3 +523,26 @@ open where relevant, then go through the main flow with the keyboard only.
 
 Keyboard: first Tab shows "Skip to main content"; dialogs keep Tab inside and
 return focus on close; the tab title changes per page.
+
+## Real device check (v.43)
+
+Tested on a real phone over the local network (`VITE_API_URL`, see
+`docs/setup.md`), as a complement to DevTools device mode.
+
+- **Device:** <model>, <browser and version>
+- **Date:** 2026-10-23
+
+| Area                                                          | Result |
+| ------------------------------------------------------------- | ------ |
+| Login, autofill                                               | OK     |
+| Mobile menu                                                   | OK     |
+| No horizontal scrolling on any page                           | OK     |
+| Calendar: day navigation, status change, dialogs              | OK     |
+| Booking form: native pickers for patient, type, date and time | OK     |
+| On-screen keyboard does not hide Save or the text being typed | OK     |
+| Documentation: order and text fields                          | OK     |
+| Admin: appointment types table and form                       | OK     |
+
+The select popup that was misplaced in Chromium's device mode (week 12)
+works correctly on the real device, which confirms it was an emulation
+artifact.

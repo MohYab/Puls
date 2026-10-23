@@ -15,7 +15,7 @@ Status: Todo / In progress / Done / Moved
 | --- | --------------------------------------------------------------------------- | ----- | ------ |
 | 1   | Merge finished work to `main` via a pull request                            | MUST  | Done   |
 | 2   | Screenshots of all pages in the current design (`docs/screenshots/before/`) | MUST  | Done   |
-| 3   | Supervisor meeting                                                          | MUST  | Todo   |
+| 3   | Supervisor meeting                                                          | MUST  | Done   |
 
 ## Phase 1 – Bugs and gaps (v.43)
 
@@ -25,7 +25,7 @@ Status: Todo / In progress / Done / Moved
 | 5   | 400 for an unknown patient or doctor when booking (was a database error, 500)          | MUST   | Done   |
 | 6   | Change appointment status in the UI (Confirmed, Completed, No-show)                    | SHOULD | Done   |
 | 7   | Completed and cancelled appointments cannot be edited or cancelled (UI and API)        | SHOULD | Done   |
-| 8   | Booking only within opening hours 07–17 (UI and API); outside hours is invisible today | SHOULD | Todo   |
+| 8   | Booking only within opening hours 07–17 (UI and API); outside hours is invisible today | SHOULD | Done   |
 | 9   | Global 401 → log out and redirect to `/login`                                          | SHOULD | Done   |
 | 10  | `ErrorBoundary` around the page content (a render error gives a white page today)      | SHOULD | Done   |
 | 11  | Test: same login error for unknown email and wrong password                            | SHOULD | Done   |
@@ -38,7 +38,7 @@ Status: Todo / In progress / Done / Moved
 | 13  | Remove `try/catch` in controllers (Express 5 forwards async errors itself)       | SHOULD | Done   |
 | 14  | One shared `RequestingUser` type; one `include` constant in `appointmentService` | SHOULD | Done   |
 | 15  | Swedish sorting of patients (`Intl.Collator("sv")`): Å, Ä, Ö after Z             | SHOULD | Done   |
-| 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Todo   |
+| 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Done   |
 | 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done   |
 
 ## Phase 3 – Redesign (v.44, branch `feature/redesign`)
