@@ -72,7 +72,7 @@ Design notes from the screenshot review:
 | 27  | Shared `useFocusTrap` for `Modal` and the mobile drawer                   | SHOULD | Done   |
 | 28  | Accessibility review (keyboard, labels, screen reader)                    | SHOULD | Done   |
 | 29  | Frontend tests with Vitest and React Testing Library where they add value | SHOULD | Done   |
-| 30  | Test on a real phone                                                      | SHOULD | Todo   |
+| 30  | Test on a real phone                                                      | SHOULD | Done   |
 | 31  | CI with GitHub Actions (lint, build, tests with PostgreSQL)               | SHOULD | Done   |
 
 ## Phase 5 – Polish and freeze (v.46)
@@ -85,6 +85,8 @@ Design notes from the screenshot review:
 | 35  | Docs: project log, decisions, README, ER diagram, api.md                           | MUST            | Todo   |
 | 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video | MUST            | Todo   |
 | 37  | **MVP freeze**: no new features after v.46                                         | MUST            | Todo   |
+
+- `VITE_API_URL` from #33 is Done.
 
 ## Out of scope (future development in the report)
 

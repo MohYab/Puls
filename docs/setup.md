@@ -109,6 +109,19 @@ README for all seed users and scenarios.
   `npx prisma generate`, then restart `npm run dev`.
 - After pulling changes to `package.json`: `npm install` in that folder.
 
+## Testing on a phone
+
+1. Find the computer's IP on the local network:
+   `ip route get 1.1.1.1 | awk '{for (i = 1; i <= NF; i++) if ($i == "src") print $(i + 1)}'`
+   (or look for a `192.168.…` or `10.…` address in `ip -4 -brief addr show`).
+   `hostname -I` is not available on every distribution.
+2. Create `frontend/.env.local` with `VITE_API_URL=http://<ip>:3001/api`
+3. Start the backend as usual and the frontend with `npm run dev -- --host`
+4. Open `http://<ip>:5173` on a phone on the same Wi-Fi
+
+If the phone cannot reach the page, the computer's firewall is probably
+blocking ports 5173 and 3001. Delete `.env.local` afterwards.
+
 ## Troubleshooting
 
 | Error                                               | Cause                                             | Fix                                                                                       |

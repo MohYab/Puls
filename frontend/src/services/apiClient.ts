@@ -1,6 +1,12 @@
 import { notifyUnauthorized } from "./authEvents";
 
-const API_BASE_URL = "http://localhost:3001/api";
+// Set VITE_API_URL in frontend/.env.local to use another backend (for example
+// the computer's IP address when testing on a phone, or a deployed API).
+// A trailing slash is removed so paths like "/patients" join correctly.
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:3001/api").replace(
+  /\/$/,
+  ""
+);
 const LOGIN_PATH = "/auth/login";
 interface ApiErrorBody {
   error: { code: string; message: string };
