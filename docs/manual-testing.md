@@ -529,7 +529,7 @@ return focus on close; the tab title changes per page.
 Tested on a real phone over the local network (`VITE_API_URL`, see
 `docs/setup.md`), as a complement to DevTools device mode.
 
-- **Device:** <model>, <browser and version>
+- **Device:** Fairphone 6 (/e/OS), Firefox
 - **Date:** 2026-10-23
 
 | Area                                                          | Result |

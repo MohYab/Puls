@@ -1249,10 +1249,156 @@ covered by automated tests (33 tests in four suites).
   data, instead of "add it at the end".
 - Type Prisma `where` objects from the start instead of `Record<string, unknown>`.
 
-### Next (week 13)
+## Week 12 (continued) – Quality, security and tests
 
-- Testing and quality: more automated tests where they add value, a shared
-  `useFocusTrap` for `Modal` and the drawer, accessibility pass, check on a real
-  phone, edge cases.
-- Refactoring candidates: one requesting-user type in the backend, booking form
-  using the shared hooks (`useDoctors`, appointment types).
+**Period:** October 18–23, 2026 (calendar week 43)
+
+### Summary
+
+With the planned features done about three weeks early, this period was spent
+on quality instead of new features, following a written plan
+(`docs/plan-v43-v46.md`). Finished work was merged to `main` through a pull
+request, screenshots of the current design were saved before a planned
+redesign, and setup instructions for a new computer were written.
+
+A review of screenshots and the requirements found several gaps, which were
+fixed: all borders were black because of a Tailwind v4 change, booking with an
+unknown patient gave a database error, appointments could not change status in
+the UI, completed appointments could still be edited, and bookings outside
+opening hours were saved but never shown. Status changes now follow fixed
+rules; admins can correct a final status with a reason, and every change is
+kept in a history. Security was improved with a login rate limit, secure
+headers, automatic logout on an expired session and clearing cached data on
+logout.
+
+The backend was cleaned up (no try/catch in controllers, one shared user type,
+Swedish sorting), the frontend got its first tests (unit and component tests),
+and a CI workflow now runs lint, build and all tests on every push. An
+accessibility review with Lighthouse, axe and the keyboard, and a test on a
+real phone, completed the quality phase.
+
+### Entry 8: Plan, merge and documentation for others
+
+**What I did**
+
+- Wrote `docs/plan-v43-v46.md` with phases and a status column, and merged the
+  work from weeks 8–12 to `main` through a pull request.
+- Took screenshots of every page before the redesign.
+- Wrote `docs/setup.md` (setup on a new computer and troubleshooting),
+  and updated the README.
+- Updated the backlog with a status column, acceptance criteria for US-15 and
+  US-16, the ER diagram, and a "Changes since week 1" section in the project
+  brief instead of rewriting the original plan.
+
+**What I learned**
+
+- Planning documents are worth keeping unchanged: the difference between plan
+  and result is useful material for the report.
+- A setup guide needs to be tested on another machine; `hostname -I` in my
+  guide did not exist on my own distribution.
+
+### Entry 9: Bugs and gaps
+
+**What I did**
+
+- Restored a light default border colour (Tailwind v4 uses `currentColor`),
+  with a darker colour for form controls for contrast.
+- Made unknown ids in a request body return 400 everywhere (decisions #42).
+- Added status changes in the UI with fixed rules, locked final statuses, admin
+  corrections with a reason and a status history in the same transaction
+  (decisions #43).
+- Restricted bookings to opening hours, checked in the clinic's time zone
+  (decisions #44).
+- Logged users out automatically on 401, cleared the query cache on logout,
+  and added an error boundary.
+
+**What I learned**
+
+- The user need (correcting mistakes) and traceability can both be met: allow
+  corrections, but require a reason and log them. A strict lock would have
+  made mistakes permanent.
+- A minimum length matters: the first version accepted "." as a reason.
+- Times stored in UTC must be checked against the clinic's time zone, not the
+  server's.
+
+### Entry 10: Security and clean-up
+
+**What I did**
+
+- Added a rate limit on failed logins and secure headers with helmet
+  (decisions #45), and a test that both login error branches give the same
+  response.
+- Removed try/catch from every controller, since Express 5 forwards async
+  errors (decisions #46), about 100 lines less.
+- Replaced four copies of the requesting-user type with one, and sorted
+  patients in Swedish order with `Intl.Collator` (decisions #47).
+- Moved the booking form to the shared hooks and made `queryFn` always call the
+  service through an arrow function.
+
+**What I learned**
+
+- Counting only failed logins protects against guessing without blocking a
+  demo where users are switched often.
+
+### Entry 11: Tests, CI, accessibility and a real device
+
+**What I did**
+
+- Set up Vitest and React Testing Library in the frontend: unit tests for
+  dates, status rules, opening hours and the menu, and component tests for the
+  status actions, the login form and the focus trap.
+- Added a GitHub Actions workflow that lints, builds and tests both projects,
+  with a PostgreSQL container for the backend tests (decisions #48).
+- Replaced the mobile menu's own focus trap with a shared `useFocusTrap` used
+  by every dialog (decisions #49).
+- Ran Lighthouse, axe and a keyboard review; added a `main` landmark, better
+  contrast, page titles and a skip link (decisions #50).
+- Made the API URL configurable (`VITE_API_URL`) and tested the app on a
+  Fairphone 6 (/e/OS) with Firefox over the local network.
+
+**What I learned**
+
+- A test only proves something if it can fail. I checked this by temporarily
+  breaking the code the test protects.
+- A component test that finds buttons by their name noticed that the status
+  button labels had changed without anyone deciding it.
+- CI found on its first run that the frontend could not be built on a clean
+  machine: the test packages, scripts and config had disappeared from the
+  committed files, but still worked locally from `node_modules`.
+- Automated accessibility tools found two problems; the review of the code
+  found two more (a constant page title, no skip link).
+
+### Problems and solutions
+
+| Problem                                       | Cause                                                            | Solution                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| All borders black                             | Tailwind v4 default border colour is `currentColor`              | Base layer default (gray-200, gray-500 for controls)         |
+| Booking with unknown patient gave 500         | Ids in the body were not checked                                 | Check before writing; 400 for unknown ids (#42)              |
+| "." accepted as a correction reason           | Only "not empty" was required                                    | Minimum 10 characters in both layers                         |
+| Every backend test failed with `ECONNREFUSED` | PostgreSQL had not started after a restart                       | Start and enable the service; better hint in the test helper |
+| Frontend tests: "Found multiple elements"     | No automatic cleanup without Vitest globals                      | `cleanup()` in `afterEach` in the setup file                 |
+| CI: "Cannot find module 'vitest'"             | Test dependencies, scripts and config not in the committed files | Declared them again; read `git status` before every commit   |
+| Editor: unknown option `erasableSyntaxOnly`   | The editor used an older built-in TypeScript                     | Use the workspace TypeScript (`.vscode/settings.json`)       |
+| `hostname -I` not found                       | Not available on every Linux distribution                        | Use `ip route get` in the setup guide                        |
+
+### Feedback from supervisor
+
+### Scope changes
+
+- A written plan for v.43–v.46 replaced the remaining roadmap weeks, since the
+  features were done early.
+- Added: admin corrections of a final status with a history (after deciding
+  that a strict lock would make mistakes permanent).
+- Moved to future development: logging time changes (COULD), a reason for
+  cancellation, and a separate `RESCHEDULED` status (rejected).
+- The redesign waits for the supervisor meeting.
+
+### What I would do differently
+
+- Run `git status` and read the list before every commit; it would have caught
+  the missing test setup before CI did.
+- Check that a new test can fail as soon as I write it, not afterwards.
+
+### Next
+
+- Polish and MVP freeze.
