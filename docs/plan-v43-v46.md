@@ -41,6 +41,25 @@ Status: Todo / In progress / Done / Moved
 | 16  | Booking form uses `useDoctors` and a shared hook for appointment types           | SHOULD | Done   |
 | 17  | Move `requireValue` to `test/helpers.ts`                                         | COULD  | Done   |
 
+## Phase 2b – Patient, doctor and account management (v.44)
+
+Found missing after phase 4: patients and doctors could only come from the
+seed, and users could not change their own details or password.
+
+| #    | Task                                                                                                                                | Class         | Status |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------ |
+| 2b.1 | Backend: create and edit patients (doctors and admins); deactivate and reactivate (admin), future appointments cancelled and logged | MUST / SHOULD | Done   |
+| 2b.2 | Frontend: patient form (create, edit) and deactivation on the patient page                                                          | MUST / SHOULD | Done   |
+| 2b.3 | Backend: create, edit, deactivate and reactivate doctors (admin); inactive users cannot log in or use a token                       | SHOULD / MUST | Todo   |
+| 2b.4 | Frontend: `/admin/doctors`                                                                                                          | SHOULD        | Todo   |
+| 2b.5 | My account (`/account`): name, work phone, specialization, change password                                                          | MUST / SHOULD | Todo   |
+| 2b.6 | Tests and docs                                                                                                                      | MUST          | Todo   |
+| 2b.7 | Clinic settings (admin): name, address, phone, shown in the app; opening hours as a setting only if time allows                     | COULD         | Todo   |
+
+**Rule:** nothing is deleted. Doctors and patients are deactivated; clinical
+records are kept (Patient Data Act). Removing journal content requires an
+application to IVO and is outside the system.
+
 ## Phase 3 – Redesign (v.44, branch `feature/redesign`)
 
 | #   | Task                                                                                                  | Class              | Status      |
@@ -64,6 +83,10 @@ Design notes from the screenshot review:
 - The patient list has much empty space; consider age and last visit columns.
 - The mobile menu lacks the user name and "Log out".
 - The booking button says "Save"; "Book appointment" says what happens.
+
+**Time box (moved to v.45 because of phase 2b):** if time runs out, finish
+design tokens, base components and the most used pages (login, dashboard,
+calendar, documentation); other pages keep the current design.
 
 ## Phase 4 – Quality (v.45)
 
@@ -97,6 +120,12 @@ Design notes from the screenshot review:
 - Dark mode and animations
 - Pages without any styling classes.
 - `/admin/users`
+- Deleting doctors or patients (deactivated instead; journals must be kept)
+- A patient's own request to delete data (would be a request, not a deletion)
+- More than one role per user
+- Login with e-identification (e.g. SITHS)
+- Collecting staff home addresses (not needed: data minimisation)
+- More than one clinic in the same installation (multi-tenancy)
 
 ## Open decisions
 

@@ -1,5 +1,6 @@
 import { Card } from "../../components/Card";
-import { formatBirthDate } from "../../utils/date";
+import { formatBirthDate, formatDate } from "../../utils/date";
+import { PATIENT_DEACTIVATION_LABELS } from "./patientLabels";
 import type { PatientDetail } from "../../types/patient";
 
 export function PatientInfoCard({ patient }: { patient: PatientDetail }) {
@@ -19,6 +20,18 @@ export function PatientInfoCard({ patient }: { patient: PatientDetail }) {
 
         <dt className="text-gray-500">Email</dt>
         <dd className="break-all text-gray-900">{patient.email ?? "–"}</dd>
+
+        {!patient.isActive && (
+          <>
+            <dt className="text-gray-500">Status</dt>
+            <dd className="text-gray-900">
+              Inactive
+              {patient.deactivationReason &&
+                ` (${PATIENT_DEACTIVATION_LABELS[patient.deactivationReason].toLowerCase()})`}
+              {patient.deactivatedAt && ` since ${formatDate(patient.deactivatedAt)}`}
+            </dd>
+          </>
+        )}
       </dl>
     </Card>
   );
