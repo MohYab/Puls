@@ -204,9 +204,15 @@ export async function shareNote(noteId: string, input: ShareNoteInput, user: Req
     throw new ValidationError("You cannot share a note with yourself");
   }
 
-  const recipient = await prisma.doctor.findUnique({ where: { id: input.doctorId } });
+  const recipient = await prisma.doctor.findUnique({
+    where: { id: input.doctorId },
+    select: { user: { select: { isActive: true } } },
+  });
   if (!recipient) {
     throw new ValidationError("Doctor not found");
+  }
+  if (!recipient.user.isActive) {
+    throw new ValidationError("This doctor is no longer active");
   }
 
   const activeShare = await prisma.noteShare.findFirst({

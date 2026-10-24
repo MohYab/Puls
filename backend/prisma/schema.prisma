@@ -36,6 +36,11 @@ model User {
   passwordHash String
   role         Role
   createdAt    DateTime @default(now())
+  phone        String? // work phone, edited on "My account"
+
+  // Users are never deleted: their notes and history must keep an author.
+  isActive      Boolean   @default(true)
+  deactivatedAt DateTime?
 
   doctor            Doctor?
   createdNoteShares NoteShare[]

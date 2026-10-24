@@ -574,5 +574,18 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    // An inactive doctor (has left the clinic): cannot log in or be booked.
+    // No appointments, so the other scenarios are not affected. Used by the tests.
+    await prisma.user.create({
+      data: {
+        name: "Dr. Karl Bergman",
+        email: "karl.bergman@puls.test",
+        passwordHash: await bcrypt.hash("password123", 10),
+        role: "DOCTOR",
+        isActive: false,
+        deactivatedAt: new Date(),
+        doctor: { create: { specialization: "General practice" } },
+      },
+    });
     await seedNoteShares();
   });

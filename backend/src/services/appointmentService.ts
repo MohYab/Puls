@@ -152,7 +152,10 @@ export async function createAppointment(
   // note sharing. Checked here so the database never sees a broken reference.
   const [patient, doctor, appointmentType] = await Promise.all([
     prisma.patient.findUnique({ where: { id: input.patientId }, select: { isActive: true } }),
-    prisma.doctor.findUnique({ where: { id: doctorId }, select: { id: true } }),
+    prisma.doctor.findUnique({
+      where: { id: doctorId },
+      select: { user: { select: { isActive: true } } },
+    }),
     prisma.appointmentType.findUnique({ where: { id: input.appointmentTypeId } }),
   ]);
   if (!patient) {
@@ -163,6 +166,13 @@ export async function createAppointment(
   }
   if (!doctor) {
     throw new ValidationError("Doctor not found");
+  }
+  if (!doctor.user.isActive) {
+    throw new AppError(
+      400,
+      "DOCTOR_INACTIVE",
+      "This doctor is no longer active and cannot be booked"
+    );
   }
   if (!appointmentType) {
     throw new ValidationError("Appointment type not found");

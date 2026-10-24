@@ -8,11 +8,13 @@ const JWT_EXPIRES_IN = "8h";
 
 export async function login(email: string, password: string) {
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: email.trim().toLowerCase() },
     include: { doctor: true },
   });
 
-  if (!user) {
+  // An inactive account gets the same answer as a wrong password, so the API
+  // does not reveal which accounts exist.
+  if (!user || !user.isActive) {
     throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
   }
 
