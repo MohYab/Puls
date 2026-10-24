@@ -151,12 +151,15 @@ export async function createAppointment(
   // Unknown ids in the body are invalid input (400), like templateId and
   // note sharing. Checked here so the database never sees a broken reference.
   const [patient, doctor, appointmentType] = await Promise.all([
-    prisma.patient.findUnique({ where: { id: input.patientId }, select: { id: true } }),
+    prisma.patient.findUnique({ where: { id: input.patientId }, select: { isActive: true } }),
     prisma.doctor.findUnique({ where: { id: doctorId }, select: { id: true } }),
     prisma.appointmentType.findUnique({ where: { id: input.appointmentTypeId } }),
   ]);
   if (!patient) {
     throw new ValidationError("Patient not found");
+  }
+  if (!patient.isActive) {
+    throw new AppError(400, "PATIENT_INACTIVE", "This patient is inactive and cannot be booked");
   }
   if (!doctor) {
     throw new ValidationError("Doctor not found");

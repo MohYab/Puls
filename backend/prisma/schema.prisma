@@ -23,6 +23,12 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+enum PatientDeactivationReason {
+  DECEASED
+  MOVED
+  OTHER
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -57,8 +63,13 @@ model Patient {
   lastName    String
   dateOfBirth DateTime
   phone       String?
-  email       String?
+    email       String?
   createdAt   DateTime @default(now())
+
+  // Patients are never deleted: their records must be kept (Patient Data Act).
+  isActive           Boolean                    @default(true)
+  deactivatedAt      DateTime?
+  deactivationReason PatientDeactivationReason?
 
   appointments Appointment[]
   notes        ClinicalNote[]

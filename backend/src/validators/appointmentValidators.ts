@@ -4,7 +4,8 @@ export const createAppointmentSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
   doctorId: z.string().min(1, "Doctor is required"),
   appointmentTypeId: z.string().min(1, "Appointment type is required"),
-  startTime: z.string().datetime({ message: "Invalid start time" }),
+  // ISO 8601 with Z or an offset, e.g. 2026-10-24T08:00:00.000Z or 2026-10-24T10:00:00+02:00.
+  startTime: z.iso.datetime({ offset: true, message: "Invalid start time" }),
   bookingComment: z.string().optional(),
 });
 
@@ -12,7 +13,7 @@ export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 
 export const updateAppointmentSchema = z.object({
   appointmentTypeId: z.string().min(1).optional(),
-  startTime: z.string().datetime().optional(),
+  startTime: z.iso.datetime({ offset: true, message: "Invalid start time" }).optional(),
   bookingComment: z.string().optional(),
 });
 

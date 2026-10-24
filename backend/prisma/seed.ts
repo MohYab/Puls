@@ -379,6 +379,19 @@ async function main() {
     })),
   });
 
+  // An inactive (deceased) patient: hidden from the patient list by default
+  // and not bookable. Used by the tests.
+  await prisma.patient.create({
+    data: {
+      firstName: "Elsa",
+      lastName: "Nordqvist",
+      dateOfBirth: new Date("1931-05-02T00:00:00.000Z"),
+      isActive: false,
+      deactivatedAt: new Date(),
+      deactivationReason: "DECEASED",
+    },
+  });
+
   // --- Documentation templates ---
   // Field keys, not labels: the frontend takes the labels from its own NOTE_FIELDS list.
   const sections = ["reasonForVisit", "observation", "assessment", "plan"];

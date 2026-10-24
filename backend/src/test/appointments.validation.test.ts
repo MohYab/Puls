@@ -85,6 +85,20 @@ describe("Booking with invalid input", () => {
       expect(res.status).toBe(400);
       expect(res.body.error.message).toBe("Appointment type not found");
     });
+
+    it("accepts a start time with a time zone offset", async () => {
+      // An unknown patient makes the request stop after validation, so nothing
+      // is written. The message shows that the time format itself was accepted.
+      const res = await book(erikToken, {
+        patientId: "does-not-exist",
+        doctorId: erikDoctorId,
+        appointmentTypeId,
+        startTime: "2030-01-15T10:00:00+01:00",
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toBe("Patient not found");
+    });
   });
 
   describe("opening hours (07:00–17:00, Swedish time)", () => {
