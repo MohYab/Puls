@@ -44,6 +44,8 @@ Core scenarios used in the tests below:
 - Folke has no email, Jonas and Ingrid have no phone
 - Sara has shared her note about Anna with Johan (Johan has no appointments with Anna)
 - "Group education" is an inactive appointment type
+- Elsa Nordqvist is an inactive (deceased) patient; Dr. Karl Bergman is an
+  inactive doctor (`karl.bergman@puls.test`, cannot log in)
 
 ## Login
 
@@ -546,3 +548,47 @@ Tested on a real phone over the local network (`VITE_API_URL`, see
 The select popup that was misplaced in Chromium's device mode (week 12)
 works correctly on the real device, which confirms it was an emulation
 artifact.
+
+## Patients, doctors and accounts (phase 2b)
+
+Rejected cases are covered by `patients.management.test.ts`,
+`doctors.management.test.ts` and `account.test.ts`. Commands for the changes
+that write data (reseed afterwards):
+
+```bash
+API=http://localhost:3001/api
+login() { curl -s -X POST $API/auth/login -H "Content-Type: application/json" \
+  -d "{\"email\":\"$1\",\"password\":\"${2:-password123}\"}" | jq -r '.token'; }
+ERIK=$(login erik@puls.test); ADMIN=$(login admin@puls.test)
+TYPE=$(curl -s $API/appointment-types -H "Authorization: Bearer $ERIK" | jq -r '.[0].id')
+```
+
+| #   | Action                                             | Expected                                                              |
+| --- | -------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | Erik creates a patient (`POST /patients`)          | 201                                                                   |
+| 2   | Erik books the patient tomorrow 10:00              | 201                                                                   |
+| 3   | Admin deactivates the patient (`MOVED`)            | `cancelledAppointments: 1`; history row "Patient deactivated (moved)" |
+| 4   | Booking the patient again                          | 400 `PATIENT_INACTIVE`                                                |
+| 5   | Admin reactivates the patient                      | `isActive: true`; the booking stays cancelled                         |
+| 6   | Admin creates a doctor with email in mixed case    | 201; email stored in lower case                                       |
+| 7   | The new doctor logs in (any case in the email)     | token                                                                 |
+| 8   | Admin deactivates the new doctor                   | `isActive: false`                                                     |
+| 9   | The new doctor's token on `/auth/me` / login again | 401 "no longer active" / login fails                                  |
+| 10  | Admin reactivates the doctor                       | login works again                                                     |
+| 11  | Erik changes his password on My account            | 204; new password works, old does not                                 |
+
+## UI checklist: patients, doctors and My account (phase 2b)
+
+- Patients: "+ New patient" for both roles opens the form and goes to the new
+  patient; a duplicate shows an error in the form; "Show inactive patients"
+  shows Elsa marked "Inactive"; the booking form never lists inactive patients
+- Patient page: "Edit" for both roles; admin only: "Deactivate" (reason
+  required, result shows how many appointments were cancelled) and "Reactivate"
+- Doctors (admin): list with status; create with start password; a taken
+  email shows at the field; deactivating a doctor with future appointments
+  explains where to find them; an inactive doctor is gone from the calendar and
+  booking form
+- A deactivated doctor who is logged in is logged out on the next action
+- My account: the name in the header links there; saving the name updates the
+  header; a wrong current password shows at the field without logging out;
+  admins have no specialization field

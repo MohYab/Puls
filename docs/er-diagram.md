@@ -25,6 +25,9 @@ erDiagram
         string passwordHash
         string role "DOCTOR or ADMIN"
         datetime createdAt
+        string phone "optional, work phone"
+        boolean isActive "inactive = cannot log in"
+        datetime deactivatedAt "optional"
     }
 
     DOCTOR {
@@ -41,6 +44,9 @@ erDiagram
         string phone "optional"
         string email "optional"
         datetime createdAt
+        boolean isActive "inactive = not bookable"
+        datetime deactivatedAt "optional"
+        string deactivationReason "DECEASED, MOVED or OTHER"
     }
 
     APPOINTMENT {
@@ -121,6 +127,8 @@ erDiagram
   - Revoking a note share sets `revokedAt`; sharing again creates a new row.
   - Every status change is written to `APPOINTMENT_STATUS_CHANGE`; corrections
     by an admin need a reason. The table is only appended to.
+  - Patients and doctors are deactivated (`isActive = false`); their
+    appointments, notes and history are kept.
 - `NOTE_SHARE` gives a doctor read access to another doctor's note. The
   recipient (`doctorId`) and the creator (`createdByUserId`, a user) are
   separate so that a future patient login could create shares without

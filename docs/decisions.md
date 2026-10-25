@@ -921,3 +921,69 @@ titles because titles appear in browser history, tabs and shared screens.
 
 **Alternative considered:** Relying on the tools alone (Lighthouse already
 gave 95–100). Rejected: automated tools find only part of the problems.
+
+---
+
+## 51. Patients and doctors are deactivated, never deleted
+
+**Decision:** Patients and doctors have `isActive`. Inactive patients are hidden
+from the patient list by default and cannot be booked; their future
+appointments are cancelled and logged when they are deactivated (except
+appointments with a clinical note). Inactive doctors cannot log in or be
+booked; a doctor with future appointments cannot be deactivated until they are
+moved or cancelled.
+
+**Why:** A doctor is referenced as author of notes, on appointments, shares and
+the status history; deleting would either fail on the foreign keys or remove
+clinical records. Under the Patient Data Act, patient records must normally be
+kept (generally ten years), and a patient cannot delete their own record; only
+the Health and Social Care Inspectorate (IVO) can decide on destroying it after
+an application. A future "delete my data" function could therefore only send a
+request. A deceased patient's record must also be kept.
+
+**Alternative considered:** Hard delete with cascading deletes, or anonymising.
+Rejected: both remove or change clinical records.
+
+**Known limitation:** Without a personal identity number (deliberately not
+stored), duplicates are detected only by name and date of birth.
+
+## 52. The user's role and status are read from the database on every request
+
+**Decision:** `authenticate` verifies the token and then reads the user's role,
+status and doctor id from the database. Inactive or missing users get 401.
+Login gives an inactive account the same error as a wrong password.
+
+**Why:** A token is valid for 8 hours. Without the check, a deactivated doctor
+could keep reading clinical notes until the token expired. One extra query per
+request is a reasonable cost for access to patient records.
+
+**Alternative considered:** Short-lived tokens with refresh tokens, or a token
+denylist. Both are more complex than one query for a prototype.
+
+## 53. Who manages patients, doctors and accounts
+
+**Decision:** Doctors and admins create and edit patients; only admins
+deactivate them (it affects every doctor's bookings). Admins manage doctors and
+set a start password. Users edit their own name, work phone, specialization
+(doctors) and password on "My account"; email is changed by an admin only. One
+role per user. Staff home addresses are not collected.
+
+**Why:** Small private clinics are a target group, where a doctor often
+registers new patients. Email is the login identity, so letting users change it
+themselves would let someone with access to an account take it over. Data that
+the app does not use is not collected (data minimisation).
+
+**Alternative considered:** Only admins create patients (closer to large
+clinics); several roles per user (needed when a doctor is also the
+administrator). Left for future development.
+
+## 54. Password change does not answer 401
+
+**Decision:** A wrong current password gives 400 `INVALID_CURRENT_PASSWORD`.
+
+**Why:** The frontend logs out on every 401 (an expired session, #9). A user who
+mistypes their current password is still logged in and should only see an
+error at the field.
+
+**Known limitation:** Other sessions stay valid after a password change until
+their tokens expire; that would need a token version checked in `authenticate`.

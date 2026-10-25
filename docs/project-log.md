@@ -1368,6 +1368,30 @@ real phone, completed the quality phase.
 - Automated accessibility tools found two problems; the review of the code
   found two more (a constant page title, no skip link).
 
+### Entry 12: Patient, doctor and account management
+
+**What I did**
+
+- Noticed that patients and doctors could only come from the seed and that
+  users could not change their password, and added a phase 2b before the
+  redesign.
+- Patients: create and edit (doctors and admins), deactivate and reactivate
+  (admins) with automatic, logged cancellation of future appointments.
+- Doctors: create with a start password, edit, deactivate and reactivate;
+  inactive users are locked out immediately, even with a valid token.
+- My account: name, work phone, specialization and password change.
+- Tests for the rejected cases and docs (decisions #51–#54).
+
+**What I learned**
+
+- In healthcare almost nothing is deleted. Patient records must be kept, and
+  only IVO can decide to destroy them, so patients and doctors are deactivated.
+- A decision in one layer can break another: a 401 for a wrong current password
+  would have logged the user out, because the frontend treats 401 as an expired
+  session.
+- Tests that change seed users cannot run in parallel with the other test
+  files, so those changes are tested manually.
+
 ### Problems and solutions
 
 | Problem                                       | Cause                                                            | Solution                                                     |
@@ -1380,6 +1404,8 @@ real phone, completed the quality phase.
 | CI: "Cannot find module 'vitest'"             | Test dependencies, scripts and config not in the committed files | Declared them again; read `git status` before every commit   |
 | Editor: unknown option `erasableSyntaxOnly`   | The editor used an older built-in TypeScript                     | Use the workspace TypeScript (`.vscode/settings.json`)       |
 | `hostname -I` not found                       | Not available on every Linux distribution                        | Use `ip route get` in the setup guide                        |
+| Booking from curl gave 400                    | `date --iso-8601` sends `+02:00`, the API only accepted `Z`      | The API accepts offsets; show the full response with `jq`    |
+| Two different 400s looked the same            | Only the status code was printed                                 | Print the error body                                         |
 
 ### Feedback from supervisor
 
@@ -1392,6 +1418,8 @@ real phone, completed the quality phase.
 - Moved to future development: logging time changes (COULD), a reason for
   cancellation, and a separate `RESCHEDULED` status (rejected).
 - The redesign waits for the supervisor meeting.
+- Added phase 2b (patients, doctors, My account) before the redesign.
+- Clinic settings (name, address, phone) added as COULD (2b.7).
 
 ### What I would do differently
 

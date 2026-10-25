@@ -41,11 +41,15 @@ See [docs/plan-v43-v46.md](docs/plan-v43-v46.md).
   notes per patient (doctors only)
 - Doctors can share a note read-only with a colleague and revoke it
   (simulated patient consent, history kept)
+- Doctors and admins register and edit patients; admins deactivate patients
+  (records are kept, future appointments are cancelled)
 
 **Administration**
 
 - Manage appointment types: create, edit, deactivate and activate (types are
   never deleted)
+- Manage doctors: create with a start password, edit, deactivate and activate
+  (doctors are never deleted)
 
 **Quality and security**
 
@@ -57,6 +61,8 @@ See [docs/plan-v43-v46.md](docs/plan-v43-v46.md).
   an error boundary
 - Responsive layout from 375 px with a mobile menu
 - Automated backend and frontend tests, run on every push (CI)
+- "My account" for every user: name, work phone, specialization and password
+- Deactivated users are locked out immediately, even with a valid session
 
 ## Tech stack
 
@@ -114,6 +120,7 @@ All users have the password `password123`.
 | johan@puls.test            | DOCTOR | Dr. Johan Ekström                               |
 | admin@puls.test            | ADMIN  | No access to clinical notes                     |
 | `<first>.<last>@puls.test` | DOCTOR | 25 more doctors, e.g. `maja.svensson@puls.test` |
+| karl.bergman@puls.test     | DOCTOR | Inactive: cannot log in (test scenario)         |
 
 The seed data contains 28 doctors, 73 patients, about 135 appointments
 relative to today and about 33 notes, plus scenarios used in the tests (for

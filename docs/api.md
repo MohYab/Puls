@@ -13,6 +13,9 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 | ------------------------- | ----------- | --------------------------------------------------------- |
 | VALIDATION_ERROR          | 400         | Invalid request body or parameters                        |
 | APPOINTMENT_TYPE_INACTIVE | 400         | The appointment type is no longer in use                  |
+| PATIENT_INACTIVE          | 400         | The patient is inactive and cannot be booked              |
+| DOCTOR_INACTIVE           | 400         | The doctor is inactive and cannot be booked               |
+| INVALID_CURRENT_PASSWORD  | 400         | Wrong current password when changing password (not 401)   |
 | UNAUTHORIZED              | 401         | Missing, invalid or expired token                         |
 | INVALID_CREDENTIALS       | 401         | Wrong email or password on login (does not say which)     |
 | FORBIDDEN                 | 403         | Logged in, but not allowed (role or ownership)            |
@@ -24,6 +27,11 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 | NOTE_ALREADY_SHARED       | 409         | The note is already shared with this doctor               |
 | INVALID_STATUS_TRANSITION | 409         | The status change is not allowed (see Appointment status) |
 | APPOINTMENT_LOCKED        | 409         | The appointment has a final status and cannot be edited   |
+| PATIENT_EXISTS            | 409         | A patient with the same name and date of birth exists     |
+| PATIENT_STATUS_UNCHANGED  | 409         | The patient already has that status                       |
+| DOCTOR_STATUS_UNCHANGED   | 409         | The doctor already has that status                        |
+| DOCTOR_HAS_APPOINTMENTS   | 409         | The doctor has future appointments (move or cancel first) |
+| EMAIL_IN_USE              | 409         | Another user already has this email address               |
 | TOO_MANY_REQUESTS         | 429         | Too many failed login attempts (10 per 15 minutes per IP) |
 | INTERNAL_ERROR            | 500         | Unexpected server error                                   |
 
@@ -37,6 +45,9 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 `POST /auth/login` is rate limited: after 10 failed attempts from the same IP
 within 15 minutes, every login attempt gets 429 `TOO_MANY_REQUESTS` until the
 window has passed. Successful logins are not counted.
+Every authenticated request reads the user's role and status from the database,
+so a deactivated user is locked out immediately (401 "Your account is no longer
+active"), even with a token that has not expired.
 
 ## Appointments
 
@@ -59,7 +70,12 @@ not exist.
 
 **Opening hours:** an appointment must start at or after 07:00 and end at or
 before 17:00 Swedish time (`Europe/Stockholm`), on the same day. Otherwise
-400 `VALIDATION_ERROR`. The check uses the clinic's time zone, not the server's.
+400 `VALIDATION_ERROR`.
+**Times:** `startTime` is ISO 8601 with `Z` or an offset, e.g.
+`2026-10-24T08:00:00.000Z` or `2026-10-24T10:00:00+02:00`. Times are stored in
+UTC.
+Booking an inactive patient or doctor gives 400 `PATIENT_INACTIVE` or
+`DOCTOR_INACTIVE`.
 
 ## Appointment status
 
@@ -88,12 +104,54 @@ Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason),
 
 ## Patients
 
-| Method | Path                       | Role   | Notes                                                                                                 |
-| ------ | -------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| GET    | /patients?search=          | any    | Every word must match the first or last name (case-insensitive); sorted by last name, then first name |
-| GET    | /patients/:id              | any    |                                                                                                       |
-| GET    | /patients/:id/appointments | any    | Doctor sees own appointments with the patient; admin sees all                                         |
-| GET    | /patients/:id/notes        | DOCTOR | 403 for admin; own notes and notes shared with the doctor, newest visit first                         |
+| Method | Path                               | Role   | Notes                                                                                                                      |
+| ------ | ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /patients?search=&includeInactive= | any    | Active patients by default; `includeInactive=true` also returns inactive ones. Match the first or last name; Swedish order |
+| POST   | /patients                          | any    | Create. 201; 409 `PATIENT_EXISTS`                                                                                          |
+| GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                             |
+| PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                              |
+| PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                       |
+| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient; admin sees all                                                              |
+| GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                             |
+
+Body for POST and PUT:
+
+```json
+{
+  "firstName": "Anna",
+  "lastName": "Andersson",
+  "dateOfBirth": "1985-03-12",
+  "phone": "",
+  "email": ""
+}
+```
+
+- Names: required, max 60 characters. `dateOfBirth`: `YYYY-MM-DD`, from 1900 to today.
+- `phone` and `email` are optional; an empty string means "not given".
+- A patient with the same first name, last name and date of birth (case-insensitive)
+  gives 409 `PATIENT_EXISTS`. No personal identity number is stored.
+
+**Deactivate and reactivate (admin):**
+
+```json
+{ "isActive": false, "reason": "DECEASED" }   // or "MOVED", "OTHER"
+{ "isActive": true }
+```
+
+Patients are never deleted. Deactivation cancels future scheduled and confirmed
+appointments in the same transaction and writes each cancellation to the status
+history; appointments that have a clinical note are left unchanged. Response:
+
+```json
+{
+  "patient": { "...": "..." },
+  "cancelledAppointments": 2,
+  "appointmentsKeptWithNote": 0
+}
+```
+
+Reactivation does not restore cancelled appointments. Errors: 400, 403, 404,
+409 `PATIENT_STATUS_UNCHANGED`.
 
 ## Appointment types
 
@@ -208,9 +266,39 @@ Errors: 400 `VALIDATION_ERROR` (no consent, sharing with yourself, unknown
 doctor), 403 `FORBIDDEN` (not the author, or admin), 404 `NOT_FOUND` (note, or
 no active share when revoking), 409 `NOTE_ALREADY_SHARED`.
 
-## Doctors and templates
+## Doctors
+
+| Method | Path                      | Role  | Notes                                                                |
+| ------ | ------------------------- | ----- | -------------------------------------------------------------------- |
+| GET    | /doctors?includeInactive= | any   | Active doctors, by name. `includeInactive=true` works for admin only |
+| POST   | /doctors                  | ADMIN | Create user and doctor profile with a start password. 201            |
+| PUT    | /doctors/:id              | ADMIN | Name, email, specialization. 200                                     |
+| PATCH  | /doctors/:id/status       | ADMIN | Body `{ "isActive": boolean }`. 200                                  |
+
+POST body: `{ "name", "email", "specialization", "password" }` (password 10–72
+characters). Emails are stored in lower case; a taken email gives 409
+`EMAIL_IN_USE`. The response never contains a password hash.
+
+Doctors are never deleted. A doctor with future scheduled or confirmed
+appointments cannot be deactivated (409 `DOCTOR_HAS_APPOINTMENTS`). An inactive
+doctor cannot log in (same error as a wrong password), is locked out of existing
+sessions immediately, cannot be booked and cannot receive shared notes. Their
+notes and appointments are kept.
+
+## Account (the logged-in user)
+
+| Method | Path              | Role | Notes                                                              |
+| ------ | ----------------- | ---- | ------------------------------------------------------------------ |
+| GET    | /account          | any  | `{ id, name, email, phone, role, specialization }`                 |
+| PUT    | /account          | any  | `{ name, phone, specialization }`; specialization only for doctors |
+| PUT    | /account/password | any  | `{ currentPassword, newPassword }`. 204                            |
+
+Email is not editable here; it is the login identity and is changed by an admin.
+A wrong current password gives 400 `INVALID_CURRENT_PASSWORD`, not 401, because
+the frontend treats every 401 as an expired session.
+
+## Templates
 
 | Method | Path                     | Role   | Notes                                              |
 | ------ | ------------------------ | ------ | -------------------------------------------------- |
-| GET    | /doctors                 | any    |                                                    |
 | GET    | /documentation-templates | DOCTOR | Template list with `sections` (see Clinical notes) |

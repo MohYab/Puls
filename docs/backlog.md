@@ -23,6 +23,10 @@ Priority: P1 = must have, P2 = should have, P3 = out of scope (future).
 | US-15 | Admin        | manage appointment types                  | the organization has fixed categories | P2   | Done (week 12)  |
 | US-16 | Doctor       | share a note with another doctor          | a colleague has context for a visit   | P2   | Done (week 12)  |
 | US-17 | Doctor/Admin | change the status of an appointment       | the schedule shows what happened      | P2   | Done (v.43)     |
+| US-18 | Doctor/Admin | register and edit patients                | new patients can be booked            | P1   | Done (v.43)     |
+| US-19 | Admin        | deactivate patients and doctors           | records are kept but not used         | P2   | Done (v.43)     |
+| US-20 | Admin        | add doctors                               | new staff can use the system          | P2   | Done (v.43)     |
+| US-21 | Doctor/Admin | change my details and password            | my account stays correct and secure   | P1   | Done (v.43)     |
 
 ¹ Day view only. The week view was moved to future development (decisions #41).
 ² 404 for an unknown patient or doctor is planned for week 13 (see acceptance criteria).
@@ -35,6 +39,9 @@ Priority: P1 = must have, P2 = should have, P3 = out of scope (future).
 | Warning for unsaved changes            | `useBlocker` requires a data router            | #27      |
 | Patient login and patient consent      | Needs strong identification and access logging | #18, #38 |
 | Admin user management (`/admin/users`) | COULD, not needed for the demo                 | –        |
+| Deleting patients or doctors           | Records must be kept; deactivated instead      | #51      |
+| More than one role per user            | Not needed for the MVP                         | #53      |
+| More than one clinic per installation  | Multi-tenancy affects every query              | –        |
 
 ## Future development
 
