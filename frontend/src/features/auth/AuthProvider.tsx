@@ -39,12 +39,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     endSession(false);
   }
 
+  // Keeps the name in the header and in localStorage in step with My account.
+  function updateUser(changes: Partial<Pick<User, "name">>) {
+    if (!user) return;
+    const next = { ...user, ...changes };
+    localStorage.setItem("user", JSON.stringify(next));
+    setUser(next);
+  }
+
   // The API client reports a rejected token; ProtectedRoute then redirects
   // to /login because user is null.
   useEffect(() => onUnauthorized(() => endSession(true)), [endSession]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, sessionExpired, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, sessionExpired, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

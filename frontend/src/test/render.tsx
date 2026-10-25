@@ -44,6 +44,7 @@ export function renderWithProviders(
     sessionExpired,
     login,
     logout: () => {},
+    updateUser: () => {},
   };
 
   function Providers({ children }: { children: ReactNode }) {

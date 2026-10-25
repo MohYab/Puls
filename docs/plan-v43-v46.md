@@ -52,8 +52,8 @@ seed, and users could not change their own details or password.
 | 2b.2 | Frontend: patient form (create, edit) and deactivation on the patient page                                                          | MUST / SHOULD | Done   |
 | 2b.3 | Backend: create, edit, deactivate and reactivate doctors (admin); inactive users cannot log in or use a token                       | SHOULD / MUST | Done   |
 | 2b.4 | Frontend: `/admin/doctors`                                                                                                          | SHOULD        | Done   |
-| 2b.5 | My account (`/account`): name, work phone, specialization, change password                                                          | MUST / SHOULD | Todo   |
-| 2b.6 | Tests and docs                                                                                                                      | MUST          | Todo   |
+| 2b.5 | My account (`/account`): name, work phone, specialization, change password                                                          | MUST / SHOULD | Done   |
+| 2b.6 | Tests and docs                                                                                                                      | MUST          | Done   |
 | 2b.7 | Clinic settings (admin): name, address, phone, shown in the app; opening hours as a setting only if time allows                     | COULD         | Todo   |
 
 **Rule:** nothing is deleted. Doctors and patients are deactivated; clinical

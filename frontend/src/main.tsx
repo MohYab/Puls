@@ -16,6 +16,7 @@ import DocumentationPage from "./pages/DocumentationPage";
 import AppointmentTypesPage from "./pages/AppointmentTypesPage";
 import DoctorsPage from "./pages/DoctorsPage";
 import { RequireRole } from "./features/auth/RequireRole";
+import AccountPage from "./pages/AccountPage";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/patients" element={<PatientsPage />} />
                 <Route path="/patients/:id" element={<PatientDetailPage />} />
                 <Route path="/documentation/:appointmentId" element={<DocumentationPage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route element={<RequireRole roles={["ADMIN"]} />}>
                   <Route path="/admin/doctors" element={<DoctorsPage />} />
                   <Route path="/admin/appointment-types" element={<AppointmentTypesPage />} />

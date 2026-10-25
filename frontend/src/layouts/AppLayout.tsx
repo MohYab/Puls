@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
 import { Sidebar } from "./Sidebar";
 import { MobileNavDrawer } from "./MobileNavDrawer";
@@ -69,7 +69,9 @@ export function AppLayout() {
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden text-sm sm:inline">{user?.name}</span>
+            <Link to="/account" className="hidden text-sm hover:underline sm:inline">
+              {user?.name}
+            </Link>
             <button
               type="button"
               onClick={handleLogout}

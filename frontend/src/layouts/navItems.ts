@@ -15,6 +15,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: "/patients", label: "Patients" },
   { to: "/admin/doctors", label: "Doctors", roles: ["ADMIN"] },
   { to: "/admin/appointment-types", label: "Appointment types", roles: ["ADMIN"] },
+  { to: "/account", label: "My account" },
 ];
 
 export function navItemsForRole(role: UserRole | undefined): NavItem[] {
