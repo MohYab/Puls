@@ -183,3 +183,18 @@ model AppointmentStatusChange {
   @@index([appointmentId, createdAt])
   @@map("appointment_status_changes")
 }
+
+// The clinic's own details. One installation = one clinic, so there is only
+// ever one row (id 1), written with upsert.
+model ClinicSettings {
+  id          Int      @id @default(1)
+  name        String
+  addressLine String?
+  postalCode  String?
+  city        String?
+  phone       String?
+  email       String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("clinic_settings")
+}

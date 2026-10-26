@@ -302,3 +302,13 @@ the frontend treats every 401 as an expired session.
 | Method | Path                     | Role   | Notes                                              |
 | ------ | ------------------------ | ------ | -------------------------------------------------- |
 | GET    | /documentation-templates | DOCTOR | Template list with `sections` (see Clinical notes) |
+
+## Clinic
+
+| Method | Path    | Role  | Notes                                                       |
+| ------ | ------- | ----- | ----------------------------------------------------------- |
+| GET    | /clinic | none  | Public: shown on the login page. Name, address, phone, email |
+| PUT    | /clinic | ADMIN | `{ name, addressLine, postalCode, city, phone, email }`      |
+
+One clinic per installation; the details are stored in one row. Optional fields
+accept an empty string. `postalCode` must look like `123 45`.

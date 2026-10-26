@@ -987,3 +987,21 @@ error at the field.
 
 **Known limitation:** Other sessions stay valid after a password change until
 their tokens expire; that would need a token version checked in `authenticate`.
+
+---
+
+## 55. Clinic settings in one row, readable without login
+
+**Decision:** The clinic's name, address, phone and email are stored in one
+row (`ClinicSettings`, id 1, saved with upsert) and edited by an admin.
+`GET /api/clinic` needs no login; the name is shown in the menu and on the
+login page.
+
+**Why:** The address belongs to the clinic, not to each doctor; storing it per
+user would repeat it and let copies differ. One installation serves one clinic
+(multi-tenancy is out of scope). The login page needs the name before anyone
+is logged in, and a clinic's name and address are public.
+
+**Alternative considered:** Opening hours as a setting too. Left as future
+development: the calendar and the booking validation would then read the hours
+from the API instead of a constant.

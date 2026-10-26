@@ -106,6 +106,16 @@ erDiagram
         string reason "required for admin corrections"
         datetime createdAt
     }
+        CLINIC_SETTINGS {
+        int id PK "always 1"
+        string name
+        string addressLine "optional"
+        string postalCode "optional"
+        string city "optional"
+        string phone "optional"
+        string email "optional"
+        datetime updatedAt
+    }
 ```
 
 ## Notes

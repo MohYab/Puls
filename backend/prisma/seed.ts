@@ -540,11 +540,25 @@ async function main() {
     `Seed data created: ${doctors} doctors, ${patients} patients, ${appointments} appointments, ${notes} notes.`
   );
 }
+  // Fictional clinic details. upsert, so running the seed again resets them.
+  const clinic = {
+    name: "Puls Health Centre",
+    addressLine: "Testgatan 1",
+    postalCode: "111 11",
+    city: "Exempelstad",
+    phone: "070-1740690",
+    email: "reception@puls.test",
+  };
+  await prisma.clinicSettings.upsert({
+    where: { id: 1 },
+    create: { id: 1, ...clinic },
+    update: clinic,
+  });
 
-// Sharing scenario: Sara has shared her note about Anna with Johan.
-// Johan has no appointments with Anna, so the shared note is his only access.
-// Looked up through relations, so it does not depend on variable names or
-// pick the wrong patient if two patients share a name.
+  // Sharing scenario: Sara has shared her note about Anna with Johan.
+  // Johan has no appointments with Anna, so the shared note is his only access.
+  // Looked up through relations, so it does not depend on variable names or
+  // pick the wrong patient if two patients share a name.
 async function seedNoteShares() {
   const saraNoteForAnna = await prisma.clinicalNote.findFirstOrThrow({
     where: {

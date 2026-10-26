@@ -11,6 +11,7 @@ import doctorRoutes from "./routes/doctors.js";
 import noteRoutes from "./routes/notes.js";
 import documentationTemplateRoutes from "./routes/documentationTemplates.js";
 import accountRoutes from "./routes/account.js";
+import clinicRoutes from "./routes/clinic.js";
 
 const LOGIN_WINDOW_MINUTES = 15;
 const LOGIN_MAX_FAILED_ATTEMPTS = 10;
@@ -59,6 +60,7 @@ export function createApp({ loginRateLimit = process.env.NODE_ENV !== "test" }: 
   app.use("/api/appointments", appointmentRoutes);
   app.use("/api/patients", patientRoutes);
   app.use("/api/doctors", doctorRoutes);
+  app.use("/api/clinic", clinicRoutes);
   app.use("/api/notes", noteRoutes);
   app.use("/api/documentation-templates", documentationTemplateRoutes);
 
