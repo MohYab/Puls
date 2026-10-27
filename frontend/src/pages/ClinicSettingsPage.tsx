@@ -42,9 +42,18 @@ function ClinicForm({ clinic }: { clinic: Clinic }) {
         {(field) => <input {...field} {...register("name")} className={inputClassName} />}
       </FormField>
 
-      <FormField id={`${formId}-address`} label="Street address (optional)" error={errors.addressLine?.message}>
+      <FormField
+        id={`${formId}-address`}
+        label="Street address (optional)"
+        error={errors.addressLine?.message}
+      >
         {(field) => (
-          <input {...field} autoComplete="street-address" {...register("addressLine")} className={inputClassName} />
+          <input
+            {...field}
+            autoComplete="street-address"
+            {...register("addressLine")}
+            className={inputClassName}
+          />
         )}
       </FormField>
 
@@ -62,17 +71,26 @@ function ClinicForm({ clinic }: { clinic: Clinic }) {
         </FormField>
         <FormField id={`${formId}-city`} label="City" error={errors.city?.message}>
           {(field) => (
-            <input {...field} autoComplete="address-level2" {...register("city")} className={inputClassName} />
+            <input
+              {...field}
+              autoComplete="address-level2"
+              {...register("city")}
+              className={inputClassName}
+            />
           )}
         </FormField>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField id={`${formId}-phone`} label="Phone (optional)" error={errors.phone?.message}>
-          {(field) => <input {...field} type="tel" {...register("phone")} className={inputClassName} />}
+          {(field) => (
+            <input {...field} type="tel" {...register("phone")} className={inputClassName} />
+          )}
         </FormField>
         <FormField id={`${formId}-email`} label="Email (optional)" error={errors.email?.message}>
-          {(field) => <input {...field} type="email" {...register("email")} className={inputClassName} />}
+          {(field) => (
+            <input {...field} type="email" {...register("email")} className={inputClassName} />
+          )}
         </FormField>
       </div>
 

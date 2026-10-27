@@ -38,7 +38,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     section: "admin",
     roles: ["ADMIN"],
   },
-  { to: "/admin/clinic", label: "Clinic settings", icon: Building2, section: "admin", roles: ["ADMIN"] },
+  {
+    to: "/admin/clinic",
+    label: "Clinic settings",
+    icon: Building2,
+    section: "admin",
+    roles: ["ADMIN"],
+  },
   { to: "/account", label: "My account", icon: UserRound, section: "account" },
 ];
 

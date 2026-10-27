@@ -12,8 +12,8 @@ export function DoctorSelect({ doctors, value, onChange }: DoctorSelectProps) {
   const id = useId();
 
   return (
-    <div className="flex items-center gap-2">
-      <label htmlFor={id} className="shrink-0 text-sm text-gray-600">
+    <div className="flex w-full items-center gap-2 sm:w-auto">
+      <label htmlFor={id} className="shrink-0 text-sm font-medium text-muted">
         Doctor
       </label>
       <select

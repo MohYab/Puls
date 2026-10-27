@@ -81,3 +81,13 @@ export function addDays(date: Date, days: number): Date {
 export function isSameDay(a: Date, b: Date): boolean {
   return toDateString(a) === toDateString(b);
 }
+
+/** "Tuesday 27 October 2026" – the calendar's date heading. */
+export function formatLongDate(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}

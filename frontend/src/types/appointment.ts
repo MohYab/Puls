@@ -19,6 +19,11 @@ export interface Appointment {
     name: string;
     duration: number;
   };
+  doctor: {
+    user: { name: string };
+  };
+  /** Only sent to doctors (decision #56). Missing for admins and in create/update responses. */
+  hasNote?: boolean;
 }
 
 // Shape returned by GET /api/patients/:id/appointments (patient history).

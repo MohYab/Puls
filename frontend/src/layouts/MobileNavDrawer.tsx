@@ -24,7 +24,7 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === "Escape") {
+      if (event.key === "Escape") {
         onClose();
       }
     }

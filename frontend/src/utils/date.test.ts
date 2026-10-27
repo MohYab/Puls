@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, isSameDay, toDateString } from "./date";
+import { addDays, formatLongDate, isSameDay, toDateString } from "./date";
 
 describe("addDays", () => {
   it("moves to the next calendar day across the switch to winter time", () => {
@@ -40,7 +40,14 @@ describe("isSameDay", () => {
   });
 });
 
-import { calculateAge, formatBirthDate, formatDate, formatDuration, formatTimeRange, formatWeekdayDate } from "./date";
+import {
+  calculateAge,
+  formatBirthDate,
+  formatDate,
+  formatDuration,
+  formatTimeRange,
+  formatWeekdayDate,
+} from "./date";
 
 describe("display formats", () => {
   // 08:30 UTC is 10:30 in Sweden in October (tests run in Europe/Stockholm).
@@ -56,6 +63,11 @@ describe("display formats", () => {
 
   it("shows a date of birth exactly as stored", () => {
     expect(formatBirthDate("1985-03-12T00:00:00.000Z")).toBe("1985-03-12");
+  });
+
+  it("formats the calendar's long date", () => {
+    // Some ICU versions add a comma after the weekday.
+    expect(formatLongDate(new Date(2026, 9, 27))).toMatch(/^Tuesday,? 27 October 2026$/);
   });
 });
 

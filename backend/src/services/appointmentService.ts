@@ -20,7 +20,26 @@ import type { RequestingUser } from "../types/requestingUser.js";
 const appointmentInclude = {
   patient: { select: { firstName: true, lastName: true } },
   appointmentType: { select: { name: true, duration: true } },
+  doctor: { select: { user: { select: { name: true } } } },
 } as const;
+
+// Reads only: adds the note's id so we know whether it exists. The content is never selected.
+const appointmentReadInclude = {
+  ...appointmentInclude,
+  note: { select: { id: true } },
+} as const;
+
+/**
+ * Replaces the note relation with a hasNote flag. Only doctors get the flag:
+ * admins have no access to clinical notes, not even to whether one exists (decision #56).
+ */
+function toAppointmentResponse<T extends { note: { id: string } | null }>(
+  appointment: T,
+  requestingUser: RequestingUser
+) {
+  const { note, ...rest } = appointment;
+  return requestingUser.role === "DOCTOR" ? { ...rest, hasNote: note !== null } : rest;
+}
 
 /**
  * Where-filter that limits a query to the requesting doctor's own rows.
@@ -100,19 +119,21 @@ export async function getAppointments({ requestingUser, date, doctorId }: GetApp
       }
     : {};
 
-  return prisma.appointment.findMany({
+    const appointments = await prisma.appointment.findMany({
     where: { ...doctorFilter, ...startTimeFilter },
-    include: appointmentInclude,
+    include: appointmentReadInclude,
     orderBy: { startTime: "asc" },
   });
+  return appointments.map((appointment) => toAppointmentResponse(appointment, requestingUser));
 }
 
 export async function getAppointmentById(appointmentId: string, requestingUser: RequestingUser) {
   const appointment = await assertOwnsAppointment(appointmentId, requestingUser);
-  return prisma.appointment.findUnique({
+    const result = await prisma.appointment.findUnique({
     where: { id: appointment.id },
-    include: appointmentInclude,
+    include: appointmentReadInclude,
   });
+  return result && toAppointmentResponse(result, requestingUser);
 }
 
 export async function getPatientAppointments(patientId: string, requestingUser: RequestingUser) {

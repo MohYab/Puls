@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 
 export type BadgeTone =
-  | "scheduled"
-  | "confirmed"
-  | "completed"
-  | "no-show"
-  | "cancelled"
-  | "neutral"
-  | "accent";
+  "scheduled" | "confirmed" | "completed" | "no-show" | "cancelled" | "neutral" | "accent";
 
 const tones: Record<BadgeTone, string> = {
   scheduled: "bg-scheduled-bg text-scheduled",

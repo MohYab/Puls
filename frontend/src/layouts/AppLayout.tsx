@@ -22,7 +22,7 @@ export function AppLayout() {
       {/* First focusable element: lets keyboard users jump past the menu. */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-pop"
+        className="sr-only focus:not-sr-only focus:fixed focus:inset-s-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-pop"
       >
         Skip to main content
       </a>
@@ -54,11 +54,7 @@ export function AppLayout() {
           </span>
         </header>
 
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className="flex-1 p-4 outline-none md:p-6 lg:p-8"
-        >
+        <main id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-6 lg:p-8">
           {/* key: a new page gets a fresh boundary, so navigating away clears the error. */}
           <ErrorBoundary key={location.pathname}>
             <Outlet />

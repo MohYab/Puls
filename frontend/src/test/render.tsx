@@ -33,7 +33,13 @@ interface RenderOptions {
 // query client, so no cached data leaks between tests.
 export function renderWithProviders(
   ui: ReactElement,
-  { user = testDoctor, sessionExpired = false, login = () => {}, logout = () => {} }: RenderOptions = {}) {
+  {
+    user = testDoctor,
+    sessionExpired = false,
+    login = () => {},
+    logout = () => {},
+  }: RenderOptions = {}
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });

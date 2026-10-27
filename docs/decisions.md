@@ -734,7 +734,11 @@ write.
 features and sharing gave more value, and the day view covers the main
 workflow (today's patients, booking, one doctor at a time). Can be revisited in
 week 14 if time allows, reusing `DayView` per column.
-(Revisited in the redesign: built as 3.3b.)
+
+**Update (v.44):** Revisited during the redesign. Since the calendar is rebuilt
+in step 3.3 anyway, the week view is built right after it (3.3b), reusing the
+new appointment blocks and side panel. The project brief listed day and week
+views, so it is placed before the remaining COULD items.
 
 ---
 
@@ -1006,3 +1010,11 @@ is logged in, and a clinic's name and address are public.
 **Alternative considered:** Opening hours as a setting too. Left as future
 development: the calendar and the booking validation would then read the hours
 from the API instead of a constant.
+
+## 56. Appointment responses: doctor's name, and a note flag for doctors only
+
+**Decision:** `GET /api/appointments` and `GET /api/appointments/:id` include the doctor's name. Doctors also get `hasNote: boolean`; admins get no note information at all. The note's content is never part of an appointment response.
+
+**Why:** The redesigned calendar shows whether a visit is documented. Admins have no access to clinical notes (decision #17), and even the existence of a note is information about the care given, so least privilege applies. A doctor only sees her own appointments, so the flag only ever describes her own notes.
+
+**How:** A separate include for reads selects only the note's id; `toAppointmentResponse` replaces it with `hasNote` for doctors and removes it for admins. Create and update responses use the include without the note relation. Tested in `appointments.response.test.ts`.

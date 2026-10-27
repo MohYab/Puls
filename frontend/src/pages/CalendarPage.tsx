@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "../components/Button";
+import { PageHeader } from "../components/PageHeader";
 import { useAppointments } from "../features/appointments/useAppointments";
 import { CalendarToolbar } from "../features/calendar/CalendarToolbar";
 import { DayView } from "../features/calendar/DayView";
@@ -38,14 +41,16 @@ export default function CalendarPage() {
   } = useAppointments(toDateString(currentDate), { doctorId, enabled: canLoadAppointments });
 
   return (
-    <div className="flex flex-col gap-4">
-      {isAdmin && doctorsQuery.data && doctorsQuery.data.length > 0 && (
-        <DoctorSelect
-          doctors={doctorsQuery.data}
-          value={doctorId ?? ""}
-          onChange={setChosenDoctorId}
-        />
-      )}
+    <div className="flex flex-col">
+      <PageHeader
+        title="Calendar"
+        actions={
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus aria-hidden="true" className="size-4" />
+            Book appointment
+          </Button>
+        }
+      />
 
       <CalendarToolbar
         date={currentDate}
@@ -53,44 +58,54 @@ export default function CalendarPage() {
         onPrevDay={() => setCurrentDate((d) => addDays(d, -1))}
         onNextDay={() => setCurrentDate((d) => addDays(d, 1))}
         onToday={() => setCurrentDate(new Date())}
-        onNewAppointment={() => setIsFormOpen(true)}
-      />
+      >
+        {isAdmin && doctorsQuery.data && doctorsQuery.data.length > 0 && (
+          <DoctorSelect
+            doctors={doctorsQuery.data}
+            value={doctorId ?? ""}
+            onChange={setChosenDoctorId}
+          />
+        )}
+      </CalendarToolbar>
 
-      {isAdmin && doctorsQuery.isPending && <LoadingMessage>Loading doctors...</LoadingMessage>}
+      <div className="flex flex-col gap-4">
+        {isAdmin && doctorsQuery.isPending && <LoadingMessage>Loading doctors...</LoadingMessage>}
 
-      {isAdmin && doctorsQuery.isError && (
-        <ErrorMessage
-          message="Could not load the list of doctors."
-          onRetry={() => doctorsQuery.refetch()}
-        />
-      )}
+        {isAdmin && doctorsQuery.isError && (
+          <ErrorMessage
+            message="Could not load the list of doctors."
+            onRetry={() => doctorsQuery.refetch()}
+          />
+        )}
 
-      {isAdmin && doctorsQuery.data?.length === 0 && (
-        <EmptyMessage>There are no doctors yet.</EmptyMessage>
-      )}
+        {isAdmin && doctorsQuery.data?.length === 0 && (
+          <EmptyMessage>There are no doctors yet.</EmptyMessage>
+        )}
 
-      {canLoadAppointments && (
-        <>
-          {isLoading && <LoadingMessage>Loading appointments...</LoadingMessage>}
+        {canLoadAppointments && (
+          <>
+            {isLoading && <LoadingMessage>Loading appointments...</LoadingMessage>}
 
-          {isError && (
-            <ErrorMessage
-              message="Could not load appointments for this day."
-              onRetry={() => refetch()}
-            />
-          )}
+            {isError && (
+              <ErrorMessage
+                message="Could not load appointments for this day."
+                onRetry={() => refetch()}
+              />
+            )}
 
-          {!isLoading && !isError && (
-            <DayView
-              appointments={appointments ?? []}
-              onAppointmentClick={(appointment) => setSelectedAppointment(appointment)}
-            />
-          )}
-        </>
-      )}
+            {!isLoading && !isError && (
+              <DayView
+                date={currentDate}
+                appointments={appointments ?? []}
+                onAppointmentClick={(appointment) => setSelectedAppointment(appointment)}
+              />
+            )}
+          </>
+        )}
+      </div>
 
       {isFormOpen && (
-        <Modal title="New appointment" onClose={() => setIsFormOpen(false)}>
+        <Modal title="Book appointment" onClose={() => setIsFormOpen(false)}>
           <AppointmentForm
             defaultDate={currentDate}
             defaultDoctorId={doctorId}
