@@ -71,7 +71,7 @@ Based on the mockups in `docs/design/` and the decisions in
 | 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons | MUST | Done |
 | 3.2  | Shell: sidebar grouped into main and Administration, user, My account and log out at the bottom, clinic name, prototype label, mobile menu | MUST | Todo |
 | 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration | SHOULD | Todo |
-| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=` | SHOULD | Todo |
+| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=`, Day/Week switch | SHOULD | Todo |
 | 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today) | SHOULD | Todo |
 | 3.5  | Patients: list, patient page with Book appointment, age and next appointment                          | SHOULD | Todo   |
 | 3.6  | Documentation: numbered sections, sharing panel, correct wording (the template is locked, not the note) | SHOULD | Todo |

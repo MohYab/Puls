@@ -25,6 +25,7 @@ interface RenderOptions {
   user?: User | null;
   sessionExpired?: boolean;
   login?: (token: string, user: User) => void;
+  logout?: () => void;
 }
 
 // Renders a component with the same providers as the app: TanStack Query,
@@ -32,8 +33,7 @@ interface RenderOptions {
 // query client, so no cached data leaks between tests.
 export function renderWithProviders(
   ui: ReactElement,
-  { user = testDoctor, sessionExpired = false, login = () => {} }: RenderOptions = {}
-) {
+  { user = testDoctor, sessionExpired = false, login = () => {}, logout = () => {} }: RenderOptions = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -43,7 +43,7 @@ export function renderWithProviders(
     isLoading: false,
     sessionExpired,
     login,
-    logout: () => {},
+    logout,
     updateUser: () => {},
   };
 

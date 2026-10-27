@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { X } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { Sidebar } from "./Sidebar";
 
@@ -59,7 +60,7 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Main menu"
-        className="relative h-full w-64 max-w-[80%] shadow-xl"
+        className="relative h-full w-72 max-w-[85%] shadow-pop"
       >
         {/* Before the links in the DOM so Tab goes from ✕ to the first link. */}
         <button
@@ -67,9 +68,9 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="absolute right-2 top-3 rounded p-2 text-white hover:bg-gray-800"
+          className="absolute end-3 top-4 rounded-lg p-2 text-white hover:bg-white/10 focus-visible:outline-white"
         >
-          ✕
+          <X aria-hidden="true" className="h-5 w-5" />
         </button>
         <Sidebar onNavigate={onClose} />
       </div>
