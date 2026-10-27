@@ -734,6 +734,7 @@ write.
 features and sharing gave more value, and the day view covers the main
 workflow (today's patients, booking, one doctor at a time). Can be revisited in
 week 14 if time allows, reusing `DayView` per column.
+(Revisited in the redesign: built as 3.3b.)
 
 ---
 

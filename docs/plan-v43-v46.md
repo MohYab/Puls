@@ -68,9 +68,10 @@ Based on the mockups in `docs/design/` and the decisions in
 | #    | Task                                                                                                   | Class  | Status |
 | ---- | ------------------------------------------------------------------------------------------------------ | ------ | ------ |
 | 3.0  | Design direction written down (`docs/design-direction.md`)                        | MUST   | Done   |
-| 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons | MUST | Todo |
+| 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons | MUST | Done |
 | 3.2  | Shell: sidebar grouped into main and Administration, user, My account and log out at the bottom, clinic name, prototype label, mobile menu | MUST | Todo |
 | 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration | SHOULD | Todo |
+| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=` | SHOULD | Todo |
 | 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today) | SHOULD | Todo |
 | 3.5  | Patients: list, patient page with Book appointment, age and next appointment                          | SHOULD | Todo   |
 | 3.6  | Documentation: numbered sections, sharing panel, correct wording (the template is locked, not the note) | SHOULD | Todo |
@@ -104,7 +105,7 @@ the current design.
 | --- | ---------------------------------------------------------------------------------- | --------------- | ------ |
 | 32  | Decide on deployment (yes or no) at the start of the week                          | MUST (decision) | Todo   |
 | 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone      | COULD           | Todo   |
-| 34  | Calendar week view (decisions #41), only if everything above is done               | COULD           | Todo   |
+| 34  | Calendar week view (decisions #41). moved to 3.3b               | COULD           | Todo   |
 | 35  | Docs: project log, decisions, README, ER diagram, api.md                           | MUST            | Todo   |
 | 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md` | SHOULD | Todo |
 | 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video | MUST            | Todo   |

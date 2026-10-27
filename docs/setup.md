@@ -137,3 +137,4 @@ blocking ports 5173 and 3001. Delete `.env.local` afterwards.
 | Login works but pages show 401                      | Token from an old seed (IDs changed)              | Log out and log in again                                                                  |
 | Frontend shows "Failed to fetch"                    | Backend is not running                            | `npm run dev` in `backend/`                                                               |
 | `ECONNREFUSED`, every login in the tests gives 500  | PostgreSQL is not running (e.g. after a restart)  | `sudo systemctl start postgresql`; `sudo systemctl enable postgresql` to start it on boot |
+| Editor: "Unknown at rule @theme" | The built-in CSS linter does not know Tailwind | Install Tailwind CSS IntelliSense; `.vscode/settings.json` maps `*.css` to Tailwind |

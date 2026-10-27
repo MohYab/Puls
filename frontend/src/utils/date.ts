@@ -1,3 +1,5 @@
+// One date and time format for the whole app (docs/design-direction.md).
+
 export function toDateString(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -5,28 +7,64 @@ export function toDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatTime(isoString: string): string {
-  return new Date(isoString).toLocaleTimeString("sv-SE", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export function todayDateString(): string {
   return toDateString(new Date());
 }
 
+const dateFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+const weekdayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
+const timeFormat = new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
+/** "22 Oct 2026" */
 export function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("sv-SE");
+  return dateFormat.format(new Date(isoString));
 }
 
-// Date of birth is stored as UTC midnight, so format it in UTC to avoid day shifts.
-export function formatBirthDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString("sv-SE", { timeZone: "UTC" });
+/** "Thu 22 Oct 2026" */
+export function formatWeekdayDate(isoString: string): string {
+  const date = new Date(isoString);
+  return `${weekdayFormat.format(date)} ${dateFormat.format(date)}`;
 }
 
+/** "10:30" (24-hour) */
+export function formatTime(isoString: string): string {
+  return timeFormat.format(new Date(isoString));
+}
+
+/** "10:30–11:15" */
+export function formatTimeRange(startIso: string, endIso: string): string {
+  return `${formatTime(startIso)}–${formatTime(endIso)}`;
+}
+
+/** "22 Oct 2026 10:30" */
 export function formatDateTime(isoString: string): string {
   return `${formatDate(isoString)} ${formatTime(isoString)}`;
+}
+
+/** "45 min" */
+export function formatDuration(startIso: string, endIso: string): string {
+  const minutes = Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60000);
+  return `${minutes} min`;
+}
+
+// Date of birth is stored as UTC midnight, so the first ten characters are the date.
+/** "1985-03-12" */
+export function formatBirthDate(isoString: string): string {
+  return isoString.slice(0, 10);
+}
+
+/** Age in whole years on the given day. */
+export function calculateAge(birthIso: string, today: Date = new Date()): number {
+  const [year, month, day] = birthIso.slice(0, 10).split("-").map(Number);
+  let age = today.getFullYear() - year;
+  const hadBirthday =
+    today.getMonth() + 1 > month || (today.getMonth() + 1 === month && today.getDate() >= day);
+  if (!hadBirthday) age -= 1;
+  return age;
 }
 
 /**
