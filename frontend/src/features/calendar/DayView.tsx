@@ -14,6 +14,7 @@ import {
 interface DayViewProps {
   date: Date;
   appointments: Appointment[];
+  selectedId?: string | null;
   onAppointmentClick: (appointment: Appointment) => void;
 }
 
@@ -22,7 +23,7 @@ const HOURS = Array.from(
   (_, i) => CALENDAR_START_HOUR + i
 );
 
-export function DayView({ date, appointments, onAppointmentClick }: DayViewProps) {
+export function DayView({ date, selectedId, appointments, onAppointmentClick }: DayViewProps) {
   const now = useNow();
   const nowOffset = minutesSinceCalendarStart(now) * PX_PER_MINUTE;
   // Only on today's date, and only within the opening hours.
@@ -58,7 +59,7 @@ export function DayView({ date, appointments, onAppointmentClick }: DayViewProps
         <ul aria-label="Appointments">
           {appointments.map((appointment) => (
             <li key={appointment.id}>
-              <AppointmentBlock appointment={appointment} onClick={onAppointmentClick} />
+              <AppointmentBlock appointment={appointment} isSelected={appointment.id === selectedId} onClick={onAppointmentClick} />
             </li>
           ))}
         </ul>

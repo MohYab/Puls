@@ -1,5 +1,8 @@
 import { useId, useState } from "react";
 import { Link } from "react-router-dom";
+import { FileText } from "lucide-react";
+import { Button } from "../../components/Button";
+import { buttonClassName } from "../../components/buttonStyles";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +13,7 @@ import { StatusBadge } from "../../components/StatusBadge";
 import { ApiError } from "../../services/apiClient";
 import type { Appointment } from "../../types/appointment";
 import { STATUS_PHRASES, isFinalStatus } from "../../utils/appointmentStatus";
-import { formatTime, toDateString } from "../../utils/date";
+import { formatDuration, formatTimeRange, formatWeekdayDate, toDateString } from "../../utils/date";
 import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
 import { useAuth } from "../auth/useAuth";
 import { AppointmentStatusActions } from "./AppointmentStatusActions";
@@ -129,48 +132,68 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
         </div>
 
         {serverError && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-danger">
             {serverError}
           </p>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={() => setIsEditing(false)}
-            className="rounded border px-4 py-2 text-sm"
-          >
+          <Button variant="secondary" onClick={() => setIsEditing(false)}>
             Back
-          </button>
-          <button
-            type="submit"
-            disabled={updateMutation.isPending}
-            className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-          >
-            {updateMutation.isPending ? "Saving..." : "Save changes"}
-          </button>
+          </Button>
+          <Button type="submit" isPending={updateMutation.isPending} pendingText="Saving...">
+            Save changes
+          </Button>
         </div>
       </form>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <p className="font-medium">
-          {appointment.patient.firstName} {appointment.patient.lastName}
-        </p>
-        <p className="text-sm text-gray-600">
-          {formatTime(appointment.startTime)} – {appointment.appointmentType.name}
-        </p>
-        <div className="mt-2">
-          <StatusBadge status={appointment.status} />
+    <div className="flex flex-col gap-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Link
+            to={`/patients/${appointment.patientId}`}
+            className="font-display text-lg font-semibold text-ink hover:underline"
+          >
+            {appointment.patient.firstName} {appointment.patient.lastName}
+          </Link>
+          <p className="mt-0.5 text-sm text-muted">{appointment.appointmentType.name}</p>
         </div>
+        <StatusBadge status={appointment.status} />
       </div>
+
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+        <dt className="text-muted">Date</dt>
+        <dd>{formatWeekdayDate(appointment.startTime)}</dd>        
+        <dt className="text-muted">Time</dt>
+        <dd className="tabular-nums">
+          {formatTimeRange(appointment.startTime, appointment.endTime)}
+        </dd>
+        <dt className="text-muted">Length</dt>
+        {/* The booked length (end − start), not the type's current duration. */}
+        <dd>{formatDuration(appointment.startTime, appointment.endTime)}</dd>        
+        <dt className="text-muted">Doctor</dt>
+        <dd>{appointment.doctor.user.name}</dd>
+        {appointment.bookingComment && (
+          <>
+            <dt className="text-muted">Comment</dt>
+            <dd className="whitespace-pre-line">{appointment.bookingComment}</dd>
+          </>
+        )}
+        {/* Only doctors get the flag (decision #56). */}
+        {appointment.hasNote !== undefined && (
+          <>
+            <dt className="text-muted">Documentation</dt>
+            <dd>{appointment.hasNote ? "Documented" : "Not documented"}</dd>
+          </>
+        )}
+      </dl>
 
       <div className="flex flex-col gap-3 border-t pt-4">
         {isLocked ? (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             This appointment is {STATUS_PHRASES[appointment.status]} and can no longer be changed.
             {isDoctor && " Contact an administrator to correct it."}
           </p>
@@ -182,29 +205,24 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
           {canDocument && (
             <Link
               to={`/documentation/${appointment.id}`}
-              className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
+              className={buttonClassName(appointment.hasNote ? "secondary" : "accent", "md")}
             >
-              Documentation
+              <FileText aria-hidden="true" className="size-4" />
+              {appointment.hasNote ? "Open documentation" : "Document visit"}
             </Link>
           )}
-          {isLocked && isAdmin && (
-            <button
-              type="button"
-              onClick={() => setShowCorrection(true)}
-              className="ml-auto rounded border px-4 py-2 text-sm hover:bg-gray-50"
-            >
-              Correct status
-            </button>
-          )}
-          {!isLocked && (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="ml-auto rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-            >
-              Edit
-            </button>
-          )}
+          <div className="ms-auto flex gap-2">
+            {isLocked && isAdmin && (
+              <Button variant="secondary" onClick={() => setShowCorrection(true)}>
+                Correct status
+              </Button>
+            )}
+            {!isLocked && (
+              <Button variant="secondary" onClick={() => setIsEditing(true)}>
+                Edit
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

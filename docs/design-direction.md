@@ -27,7 +27,7 @@ workplace UX before visual effects.
 5. **Say exactly what is locked.** The documentation template is locked after
    the first save; the note can still be edited by its author. Every save
    updates "Last saved".
-6. **Logical directions.** Use `ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-` and
+6. **Logical directions.** Use `ms-`/`me-`, `ps-`/`pe-`, `inset-s-`/`inset-e-` and
    `text-start` instead of left and right, so a right-to-left language
    (Arabic) can be added later without rewriting the layout.
 7. **Fonts are delivered with the app** (`@fontsource`), not loaded from
