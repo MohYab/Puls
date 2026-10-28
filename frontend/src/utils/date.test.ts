@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, formatLongDate, isSameDay, toDateString } from "./date";
+import { addDays, formatLongDate, formatWeekRange, isSameDay, startOfWeek, toDateString } from "./date";
 
 describe("addDays", () => {
   it("moves to the next calendar day across the switch to winter time", () => {
@@ -76,5 +76,24 @@ describe("calculateAge", () => {
     const birth = "1985-03-12T00:00:00.000Z";
     expect(calculateAge(birth, new Date(2026, 2, 11))).toBe(40);
     expect(calculateAge(birth, new Date(2026, 2, 12))).toBe(41);
+  });
+});
+
+describe("startOfWeek", () => {
+  it("goes back to Monday, and keeps a Monday as it is", () => {
+    expect(startOfWeek(new Date(2026, 9, 28, 14, 30))).toEqual(new Date(2026, 9, 26)); // Wed
+    expect(startOfWeek(new Date(2026, 10, 1))).toEqual(new Date(2026, 9, 26)); // Sun
+    expect(startOfWeek(new Date(2026, 9, 26, 9))).toEqual(new Date(2026, 9, 26)); // Mon
+  });
+
+  it("works in the week clocks go back (25 October 2026)", () => {
+    expect(startOfWeek(new Date(2026, 9, 25, 12))).toEqual(new Date(2026, 9, 19));
+  });
+});
+
+describe("formatWeekRange", () => {
+  it("shows the year once within a year, and twice across a new year", () => {
+    expect(formatWeekRange(new Date(2026, 9, 26))).toBe("26 Oct – 1 Nov 2026");
+    expect(formatWeekRange(new Date(2026, 11, 28))).toBe("28 Dec 2026 – 3 Jan 2027");
   });
 });

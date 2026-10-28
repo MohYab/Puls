@@ -6,30 +6,49 @@ import { Modal } from "../components/Modal";
 import { PageHeader } from "../components/PageHeader";
 import { AppointmentDetail } from "../features/appointments/AppointmentDetail";
 import { AppointmentForm } from "../features/appointments/AppointmentForm";
-import { useAppointments } from "../features/appointments/useAppointments";
+import { useAppointmentsInRange } from "../features/appointments/useAppointments";
 import { useAuth } from "../features/auth/useAuth";
 import { AppointmentPanel } from "../features/calendar/AppointmentPanel";
 import { CalendarToolbar } from "../features/calendar/CalendarToolbar";
 import { DayView } from "../features/calendar/DayView";
 import { DoctorSelect } from "../features/calendar/DoctorSelect";
+import { ViewSwitch } from "../features/calendar/ViewSwitch";
+import { WeekView } from "../features/calendar/WeekView";
+import type { CalendarView } from "../features/calendar/constants";
 import { useDoctors } from "../features/doctors/useDoctors";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { addDays, isSameDay, toDateString } from "../utils/date";
+import {
+  addDays,
+  formatLongDate,
+  formatWeekRange,
+  isSameDay,
+  startOfWeek,
+  toDateString,
+} from "../utils/date";
 
 // From this width the details sit next to the calendar; below it they open in a modal.
 const PANEL_QUERY = "(min-width: 1280px)";
+// The week view needs room for seven columns; phones always get the day view.
+const WEEK_QUERY = "(min-width: 768px)";
 
 export default function CalendarPage() {
   usePageTitle("Calendar");
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const hasPanel = useMediaQuery(PANEL_QUERY);
+  const canShowWeek = useMediaQuery(WEEK_QUERY);
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [view, setView] = useState<CalendarView>("day");
   const [chosenDoctorId, setChosenDoctorId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // The chosen view is kept when the window shrinks, and comes back when it grows.
+  const isWeek = canShowWeek && view === "week";
+  const weekStart = startOfWeek(currentDate);
+  const days = isWeek ? Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)) : [currentDate];
 
   const doctorsQuery = useDoctors(isAdmin);
 
@@ -43,13 +62,33 @@ export default function CalendarPage() {
     isLoading,
     isError,
     refetch,
-  } = useAppointments(toDateString(currentDate), { doctorId, enabled: canLoadAppointments });
+  } = useAppointmentsInRange(toDateString(days[0]), toDateString(days[days.length - 1]), {
+    doctorId,
+    enabled: canLoadAppointments,
+  });
 
   // Looked up in the list, so the details update when the list is refetched (e.g. after a status change).
   const selectedAppointment = appointments?.find((a) => a.id === selectedId) ?? null;
 
+  const today = new Date();
+  const isCurrent = isWeek
+    ? isSameDay(weekStart, startOfWeek(today))
+    : isSameDay(currentDate, today);
+  const step = isWeek ? 7 : 1;
+
   function changeDate(update: (date: Date) => Date) {
     setCurrentDate(update);
+    setSelectedId(null);
+  }
+
+  function changeView(next: CalendarView) {
+    setView(next);
+    setSelectedId(null);
+  }
+
+  function openDay(day: Date) {
+    setCurrentDate(day);
+    setView("day");
     setSelectedId(null);
   }
 
@@ -59,6 +98,7 @@ export default function CalendarPage() {
   }
 
   const closeDetails = () => setSelectedId(null);
+  const selectAppointment = (appointment: { id: string }) => setSelectedId(appointment.id);
 
   return (
     <div className="flex flex-col">
@@ -73,12 +113,14 @@ export default function CalendarPage() {
       />
 
       <CalendarToolbar
-        date={currentDate}
-        isToday={isSameDay(currentDate, new Date())}
-        onPrevDay={() => changeDate((d) => addDays(d, -1))}
-        onNextDay={() => changeDate((d) => addDays(d, 1))}
+        title={isWeek ? formatWeekRange(weekStart) : formatLongDate(currentDate)}
+        unit={isWeek ? "week" : "day"}
+        isCurrent={isCurrent}
+        onPrev={() => changeDate((d) => addDays(d, -step))}
+        onNext={() => changeDate((d) => addDays(d, step))}
         onToday={() => changeDate(() => new Date())}
       >
+        {canShowWeek && <ViewSwitch value={view} onChange={changeView} />}
         {isAdmin && doctorsQuery.data && doctorsQuery.data.length > 0 && (
           <DoctorSelect doctors={doctorsQuery.data} value={doctorId ?? ""} onChange={changeDoctor} />
         )}
@@ -105,19 +147,28 @@ export default function CalendarPage() {
 
               {isError && (
                 <ErrorMessage
-                  message="Could not load appointments for this day."
+                  message={`Could not load appointments for this ${isWeek ? "week" : "day"}.`}
                   onRetry={() => refetch()}
                 />
               )}
 
-              {!isLoading && !isError && (
-                <DayView
-                  date={currentDate}
-                  appointments={appointments ?? []}
-                  selectedId={selectedId}
-                  onAppointmentClick={(appointment) => setSelectedId(appointment.id)}
-                />
-              )}
+              {!isLoading && !isError &&
+                (isWeek ? (
+                  <WeekView
+                    days={days}
+                    appointments={appointments ?? []}
+                    selectedId={selectedId}
+                    onAppointmentClick={selectAppointment}
+                    onDayClick={openDay}
+                  />
+                ) : (
+                  <DayView
+                    date={currentDate}
+                    appointments={appointments ?? []}
+                    selectedId={selectedId}
+                    onAppointmentClick={selectAppointment}
+                  />
+                ))}
             </>
           )}
         </div>

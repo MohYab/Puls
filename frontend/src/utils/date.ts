@@ -91,3 +91,22 @@ export function formatLongDate(date: Date): string {
     year: "numeric",
   });
 }
+
+/** Monday 00:00 of the week the date is in (ISO 8601: weeks start on Monday). */
+export function startOfWeek(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  const daysSinceMonday = (result.getDay() + 6) % 7; // getDay(): 0 = Sunday
+  result.setDate(result.getDate() - daysSinceMonday); // calendar days, safe across DST
+  return result;
+}
+
+/** "26 Oct – 1 Nov 2026", or "28 Dec 2026 – 3 Jan 2027" across a new year. */
+export function formatWeekRange(weekStart: Date): string {
+  const weekEnd = addDays(weekStart, 6);
+  const dayMonth = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+  return weekStart.getFullYear() === weekEnd.getFullYear()
+    ? `${dayMonth(weekStart)} – ${dayMonth(weekEnd)} ${weekEnd.getFullYear()}`
+    : `${dayMonth(weekStart)} ${weekStart.getFullYear()} – ${dayMonth(weekEnd)} ${weekEnd.getFullYear()}`;
+}

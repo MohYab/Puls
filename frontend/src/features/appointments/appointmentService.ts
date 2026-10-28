@@ -1,9 +1,19 @@
 import { apiClient } from "../../services/apiClient";
 import type { Appointment, AppointmentStatus } from "../../types/appointment";
 
-export function getAppointments(date?: string, doctorId?: string) {
+export interface AppointmentListParams {
+  date?: string;
+  /** Inclusive range (YYYY-MM-DD), at most 7 days. Use instead of date. */
+  from?: string;
+  to?: string;
+  doctorId?: string;
+}
+
+export function getAppointments({ date, from, to, doctorId }: AppointmentListParams = {}) {
   const params = new URLSearchParams();
   if (date) params.set("date", date);
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
   if (doctorId) params.set("doctorId", doctorId);
   const query = params.toString();
   return apiClient.get<Appointment[]>(`/appointments${query ? `?${query}` : ""}`);

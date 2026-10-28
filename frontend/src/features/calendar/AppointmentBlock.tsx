@@ -8,10 +8,17 @@ import { statusBorderColors } from "./statusColors";
 interface AppointmentBlockProps {
   appointment: Appointment;
   isSelected?: boolean;
+  /** Week view: no room for the appointment type (still read out by screen readers). */
+  isNarrow?: boolean;
   onClick: (appointment: Appointment) => void;
 }
 
-export function AppointmentBlock({ appointment, isSelected = false, onClick }: AppointmentBlockProps) {  
+export function AppointmentBlock({
+  appointment,
+  isSelected = false,
+  isNarrow = false,
+  onClick,
+}: AppointmentBlockProps) {  
   const { startTime, endTime, status, patient, appointmentType, hasNote } = appointment;
   const top = minutesSinceCalendarStart(new Date(startTime)) * PX_PER_MINUTE;
   // Use the booked length, not the type's current duration (an admin may change it later).
@@ -19,6 +26,7 @@ export function AppointmentBlock({ appointment, isSelected = false, onClick }: A
   const height = durationMinutes * PX_PER_MINUTE;
 
   const isCompact = durationMinutes <= COMPACT_MAX_MINUTES;
+  const showType = !isCompact && !isNarrow;
   const isCancelled = status === "CANCELLED";
   const patientName = `${patient.firstName} ${patient.lastName}`;
 
@@ -27,7 +35,7 @@ export function AppointmentBlock({ appointment, isSelected = false, onClick }: A
   const nameClass = `truncate font-medium ${isCancelled ? "text-muted line-through" : "text-ink"}`;
   const hiddenDetails = (
     <span className="sr-only">
-      {isCompact && `, ${appointmentType.name}`}, {STATUS_PHRASES[status]}
+      {!showType && `, ${appointmentType.name}`}, {STATUS_PHRASES[status]}      
       {hasNote && ", documented"}
     </span>
   );
@@ -58,8 +66,8 @@ export function AppointmentBlock({ appointment, isSelected = false, onClick }: A
             {noteIcon}
           </span>
           <span className="block truncate text-muted">
-            <span className="tabular-nums">{formatTimeRange(startTime, endTime)}</span> ·{" "}
-            {appointmentType.name}
+            <span className="tabular-nums">{formatTimeRange(startTime, endTime)}</span> ·
+            {showType && ` · ${appointmentType.name}`}
           </span>
         </>
       )}

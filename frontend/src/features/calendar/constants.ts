@@ -15,3 +15,5 @@ export function minutesSinceCalendarStart(date: Date): number {
   startOfDay.setHours(CALENDAR_START_HOUR, 0, 0, 0);
   return (date.getTime() - startOfDay.getTime()) / 60000;
 }
+
+export type CalendarView = "day" | "week";
