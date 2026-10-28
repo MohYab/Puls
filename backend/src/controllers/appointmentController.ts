@@ -7,14 +7,19 @@ import {
   updateAppointment,
   updateAppointmentStatus,
 } from "../services/appointmentService.js";
+import { listAppointmentsQuerySchema } from "../validators/appointmentValidators.js";
+import { ValidationError } from "../utils/errors.js";
 
 // Express 5 forwards rejected promises from async handlers to errorHandler,
 // so no try/catch is needed (decisions #46).
 
 export async function listAppointments(req: Request, res: Response) {
-  const date = typeof req.query.date === "string" ? req.query.date : undefined;
-  const doctorId = typeof req.query.doctorId === "string" ? req.query.doctorId : undefined;
-  res.json(await getAppointments({ requestingUser: req.user!, date, doctorId }));
+  // validate() only checks the body, so the query string is parsed here.
+  const result = listAppointmentsQuerySchema.safeParse(req.query);
+  if (!result.success) {
+    throw new ValidationError(result.error.issues[0].message);
+  }
+  res.json(await getAppointments({ requestingUser: req.user!, ...result.data }));
 }
 
 export async function createAppointmentHandler(req: Request, res: Response) {

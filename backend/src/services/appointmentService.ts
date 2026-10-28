@@ -102,22 +102,37 @@ async function assertOwnsAppointment(appointmentId: string, requestingUser: Requ
 interface GetAppointmentsParams {
   requestingUser: RequestingUser;
   date?: string;
+  /** Inclusive range (YYYY-MM-DD), at most 7 days. Validated in the controller. */
+  from?: string;
+  to?: string;
   /** Admin only: limit to one doctor. Ignored for doctors, who always see their own. */
   doctorId?: string;
 }
 
-export async function getAppointments({ requestingUser, date, doctorId }: GetAppointmentsParams) {
+// Midnight in the server's time zone, which must be the clinic's (TZ=Europe/Stockholm, decision #57).
+function startOfDay(isoDate: string): Date {
+  return new Date(`${isoDate}T00:00:00`);
+}
+
+export async function getAppointments({
+  requestingUser,
+  date,
+  from,
+  to,
+  doctorId,
+}: GetAppointmentsParams) {
   const doctorFilter =
     requestingUser.role === "ADMIN" && doctorId ? { doctorId } : ownDoctorFilter(requestingUser);
 
-  const startTimeFilter = date
-    ? {
-        startTime: {
-          gte: new Date(`${date}T00:00:00`),
-          lte: new Date(`${date}T23:59:59.999`),
-        },
-      }
-    : {};
+  // One day is a range from and to the same date.
+  const range = from && to ? { from, to } : date ? { from: date, to: date } : null;
+
+  let startTimeFilter = {};
+  if (range) {
+    const end = startOfDay(range.to);
+    end.setDate(end.getDate() + 1); // calendar day, not +24 h (safe across DST)
+    startTimeFilter = { startTime: { gte: startOfDay(range.from), lt: end } };
+  }
 
     const appointments = await prisma.appointment.findMany({
     where: { ...doctorFilter, ...startTimeFilter },
