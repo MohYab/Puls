@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addDays, formatLongDate, formatWeekRange, isSameDay, startOfWeek, toDateString } from "./date";
+import {
+  addDays,
+  formatLongDate,
+  formatWeekRange,
+  isSameDay,
+  startOfWeek,
+  toDateString,
+} from "./date";
 
 describe("addDays", () => {
   it("moves to the next calendar day across the switch to winter time", () => {

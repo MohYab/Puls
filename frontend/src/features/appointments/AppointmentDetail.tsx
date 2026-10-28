@@ -166,14 +166,14 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
         <dt className="text-muted">Date</dt>
-        <dd>{formatWeekdayDate(appointment.startTime)}</dd>        
+        <dd>{formatWeekdayDate(appointment.startTime)}</dd>
         <dt className="text-muted">Time</dt>
         <dd className="tabular-nums">
           {formatTimeRange(appointment.startTime, appointment.endTime)}
         </dd>
         <dt className="text-muted">Length</dt>
         {/* The booked length (end − start), not the type's current duration. */}
-        <dd>{formatDuration(appointment.startTime, appointment.endTime)}</dd>        
+        <dd>{formatDuration(appointment.startTime, appointment.endTime)}</dd>
         <dt className="text-muted">Doctor</dt>
         <dd>{appointment.doctor.user.name}</dd>
         {appointment.bookingComment && (

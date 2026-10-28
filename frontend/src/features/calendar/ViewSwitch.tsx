@@ -12,7 +12,11 @@ interface ViewSwitchProps {
 
 export function ViewSwitch({ value, onChange }: ViewSwitchProps) {
   return (
-    <div role="group" aria-label="Calendar view" className="inline-flex rounded-lg border bg-surface p-0.5">
+    <div
+      role="group"
+      aria-label="Calendar view"
+      className="inline-flex rounded-lg border bg-surface p-0.5"
+    >
       {VIEWS.map((view) => {
         const isActive = view.value === value;
         return (

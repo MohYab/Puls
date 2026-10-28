@@ -18,7 +18,7 @@ export function AppointmentBlock({
   isSelected = false,
   isNarrow = false,
   onClick,
-}: AppointmentBlockProps) {  
+}: AppointmentBlockProps) {
   const { startTime, endTime, status, patient, appointmentType, hasNote } = appointment;
   const top = minutesSinceCalendarStart(new Date(startTime)) * PX_PER_MINUTE;
   // Use the booked length, not the type's current duration (an admin may change it later).
@@ -35,7 +35,7 @@ export function AppointmentBlock({
   const nameClass = `truncate font-medium ${isCancelled ? "text-muted line-through" : "text-ink"}`;
   const hiddenDetails = (
     <span className="sr-only">
-      {!showType && `, ${appointmentType.name}`}, {STATUS_PHRASES[status]}      
+      {!showType && `, ${appointmentType.name}`}, {STATUS_PHRASES[status]}
       {hasNote && ", documented"}
     </span>
   );
@@ -48,6 +48,7 @@ export function AppointmentBlock({
       type="button"
       onClick={() => onClick(appointment)}
       aria-current={isSelected || undefined}
+      data-appointment-id={appointment.id}
       style={{ top, height }}
       className={`absolute inset-x-1 overflow-hidden rounded-md border-s-4 text-start text-xs leading-4 transition-shadow hover:shadow-pop ${
         isCompact ? "flex items-center gap-1.5 px-2" : "px-2 py-1"

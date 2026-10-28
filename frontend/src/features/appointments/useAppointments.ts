@@ -15,7 +15,7 @@ export function useAppointments(
   return useQuery({
     // doctorId must be part of the key, otherwise all doctors would share one cache entry.
     queryKey: ["appointments", "list", { date, doctorId }],
-    queryFn: () => getAppointments({date, doctorId}),
+    queryFn: () => getAppointments({ date, doctorId }),
     enabled,
     retry: retryUnlessClientError,
   });

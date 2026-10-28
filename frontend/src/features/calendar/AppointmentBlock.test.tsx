@@ -6,7 +6,9 @@ import { makeAppointment } from "../../test/fixtures";
 
 describe("AppointmentBlock", () => {
   it("tells screen readers that the appointment is documented", () => {
-    render(<AppointmentBlock appointment={makeAppointment({ hasNote: true })} onClick={() => {}} />);
+    render(
+      <AppointmentBlock appointment={makeAppointment({ hasNote: true })} onClick={() => {}} />
+    );
 
     expect(screen.getByRole("button")).toHaveAccessibleName(/Anna Andersson.*documented/);
   });

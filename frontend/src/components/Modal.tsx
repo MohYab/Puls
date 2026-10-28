@@ -1,15 +1,13 @@
 import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { isTopmostModal, registerModal, unregisterModal } from "./modalStack";
 
 interface ModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
 }
-
-// Open modals, topmost last. Escape only closes the topmost one.
-const openModals: symbol[] = [];
 
 export function Modal({ title, onClose, children }: ModalProps) {
   const titleId = useId();
@@ -23,14 +21,14 @@ export function Modal({ title, onClose, children }: ModalProps) {
   });
 
   useEffect(() => {
-    const id = Symbol("modal");
-    openModals.push(id);
+    const id = registerModal();
 
     const previouslyFocused = document.activeElement;
     dialogRef.current?.focus();
 
+    // Escape only closes the topmost modal.
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && openModals[openModals.length - 1] === id) {
+      if (event.key === "Escape" && isTopmostModal(id)) {
         onCloseRef.current();
       }
     }
@@ -38,7 +36,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      openModals.splice(openModals.indexOf(id), 1);
+      unregisterModal(id);
       if (previouslyFocused instanceof HTMLElement) {
         previouslyFocused.focus();
       }

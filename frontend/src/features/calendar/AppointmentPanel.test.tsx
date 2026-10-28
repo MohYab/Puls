@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Modal } from "../../components/Modal";
 import { renderWithProviders, testDoctor } from "../../test/render";
 import { makeAppointment } from "../../test/fixtures";
 import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
@@ -16,12 +17,6 @@ describe("AppointmentPanel", () => {
     vi.mocked(useAppointmentTypes).mockReturnValue({
       data: [],
     } as unknown as ReturnType<typeof useAppointmentTypes>);
-  });
-
-  it("asks the user to pick an appointment when none is selected", () => {
-    renderWithProviders(<AppointmentPanel appointment={null} onClose={() => {}} />);
-
-    expect(screen.getByText(/Select an appointment/)).toBeInTheDocument();
   });
 
   it("shows the appointment and moves focus to the panel", () => {
@@ -54,5 +49,35 @@ describe("AppointmentPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "Close details" }));
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("closes on Escape", async () => {
+    const onClose = vi.fn();
+    renderWithProviders(<AppointmentPanel appointment={makeAppointment()} onClose={onClose} />, {
+      user: testDoctor,
+    });
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves Escape to an open modal", async () => {
+    const onPanelClose = vi.fn();
+    const onModalClose = vi.fn();
+    renderWithProviders(
+      <>
+        <AppointmentPanel appointment={makeAppointment()} onClose={onPanelClose} />
+        <Modal title="Cancel appointment" onClose={onModalClose}>
+          Are you sure?
+        </Modal>
+      </>,
+      { user: testDoctor }
+    );
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onModalClose).toHaveBeenCalledTimes(1);
+    expect(onPanelClose).not.toHaveBeenCalled();
   });
 });

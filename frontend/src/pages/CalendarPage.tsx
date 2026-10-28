@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "../components/Button";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../components/Feedback";
@@ -31,6 +31,14 @@ import {
 const PANEL_QUERY = "(min-width: 1280px)";
 // The week view needs room for seven columns; phones always get the day view.
 const WEEK_QUERY = "(min-width: 768px)";
+
+/** Gives focus back to the block that opened the details, so keyboard users keep their place. */
+function focusAppointmentBlock(container: HTMLElement | null, appointmentId: string) {
+  const blocks = container?.querySelectorAll<HTMLElement>("[data-appointment-id]") ?? [];
+  Array.from(blocks)
+    .find((block) => block.dataset.appointmentId === appointmentId)
+    ?.focus();
+}
 
 export default function CalendarPage() {
   usePageTitle("Calendar");
@@ -97,7 +105,15 @@ export default function CalendarPage() {
     setSelectedId(null);
   }
 
-  const closeDetails = () => setSelectedId(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const showPanel = hasPanel && selectedAppointment !== null;
+
+  function closeDetails() {
+    // The block stays mounted (only the panel goes away), so it can be focused right away.
+    if (selectedId) focusAppointmentBlock(calendarRef.current, selectedId);
+    setSelectedId(null);
+  }
+
   const selectAppointment = (appointment: { id: string }) => setSelectedId(appointment.id);
 
   return (
@@ -122,12 +138,20 @@ export default function CalendarPage() {
       >
         {canShowWeek && <ViewSwitch value={view} onChange={changeView} />}
         {isAdmin && doctorsQuery.data && doctorsQuery.data.length > 0 && (
-          <DoctorSelect doctors={doctorsQuery.data} value={doctorId ?? ""} onChange={changeDoctor} />
+          <DoctorSelect
+            doctors={doctorsQuery.data}
+            value={doctorId ?? ""}
+            onChange={changeDoctor}
+          />
         )}
       </CalendarToolbar>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
-        <div className="flex min-w-0 flex-col gap-4">
+      <div
+        className={`grid grid-cols-1 gap-6 ${
+          showPanel ? "xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start" : ""
+        }`}
+      >
+        <div ref={calendarRef} className="flex min-w-0 flex-col gap-4">
           {isAdmin && doctorsQuery.isPending && <LoadingMessage>Loading doctors...</LoadingMessage>}
 
           {isAdmin && doctorsQuery.isError && (
@@ -152,7 +176,8 @@ export default function CalendarPage() {
                 />
               )}
 
-              {!isLoading && !isError &&
+              {!isLoading &&
+                !isError &&
                 (isWeek ? (
                   <WeekView
                     days={days}
@@ -172,8 +197,9 @@ export default function CalendarPage() {
             </>
           )}
         </div>
-
-        {hasPanel && <AppointmentPanel appointment={selectedAppointment} onClose={closeDetails} />}
+        {hasPanel && selectedAppointment && (
+          <AppointmentPanel appointment={selectedAppointment} onClose={closeDetails} />
+        )}{" "}
       </div>
 
       {isFormOpen && (

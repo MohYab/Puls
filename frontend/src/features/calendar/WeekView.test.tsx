@@ -24,13 +24,20 @@ describe("WeekView", () => {
     const monday = screen.getByRole("group", { name: /Monday,? 26 October/ });
 
     expect(within(tuesday).getByRole("button", { name: /Anna Andersson/ })).toBeInTheDocument();
-    expect(within(monday).queryByRole("button", { name: /Anna Andersson/ })).not.toBeInTheDocument();
+    expect(
+      within(monday).queryByRole("button", { name: /Anna Andersson/ })
+    ).not.toBeInTheDocument();
   });
 
   it("opens a day from its header", async () => {
     const onDayClick = vi.fn();
     render(
-      <WeekView days={days} appointments={[]} onAppointmentClick={() => {}} onDayClick={onDayClick} />
+      <WeekView
+        days={days}
+        appointments={[]}
+        onAppointmentClick={() => {}}
+        onDayClick={onDayClick}
+      />
     );
 
     await userEvent.click(screen.getByRole("button", { name: /29.*open day view/ }));
