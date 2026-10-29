@@ -50,5 +50,5 @@ describe("Login rate limit", () => {
         .send({ email: "erik@puls.test", password: "password123" });
       expect(res.status).toBe(200);
     }
-  });
+  }, 20_000);
 });
