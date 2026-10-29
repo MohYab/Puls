@@ -29,11 +29,11 @@ one doctor and a reception.
 
 ## Who the system is for
 
-| | Private clinic (one doctor) | Health centre | Hospital |
-| - | --------------------------- | ------------- | -------- |
-| Staff | One doctor, often one receptionist | Several doctors, nurses, reception, an administrator | Many departments and roles |
-| Who administers | The doctor | An administrator | An IT department |
-| Most important | Few steps, works on a phone, payment at the desk | Scheduling for many doctors | Departments, access per department |
+|                 | Private clinic (one doctor)                      | Health centre                                        | Hospital                           |
+| --------------- | ------------------------------------------------ | ---------------------------------------------------- | ---------------------------------- |
+| Staff           | One doctor, often one receptionist               | Several doctors, nurses, reception, an administrator | Many departments and roles         |
+| Who administers | The doctor                                       | An administrator                                     | An IT department                   |
+| Most important  | Few steps, works on a phone, payment at the desk | Scheduling for many doctors                          | Departments, access per department |
 
 ## Phase A – Roles, reception and the Syrian market
 
@@ -42,12 +42,12 @@ one doctor and a reception.
 (`appointments:write`, `patients:deactivate`, `notes:read`), and the API checks
 permissions. A new role then becomes configuration, not a code change.
 
-| Role | Can | Cannot |
-| ---- | --- | ------ |
-| Receptionist | Book, move and cancel appointments; register and edit patients; take payments; see the schedule | Read clinical notes |
-| Doctor | Own appointments and notes; share notes with the patient's consent | Change clinic settings |
-| Nurse (later) | Limited documentation | |
-| Clinic administrator | Staff, appointment types, prices, clinic settings | Read clinical notes |
+| Role                 | Can                                                                                             | Cannot                 |
+| -------------------- | ----------------------------------------------------------------------------------------------- | ---------------------- |
+| Receptionist         | Book, move and cancel appointments; register and edit patients; take payments; see the schedule | Read clinical notes    |
+| Doctor               | Own appointments and notes; share notes with the patient's consent                              | Change clinic settings |
+| Nurse (later)        | Limited documentation                                                                           |                        |
+| Clinic administrator | Staff, appointment types, prices, clinic settings                                               | Read clinical notes    |
 
 **Several roles per user.** A doctor running their own clinic is both doctor and
 clinic administrator.
@@ -109,8 +109,8 @@ makes sharing between clinics hard.
 ## Phase E – Sharing between clinics and a patient portal
 
 Sharing a note within a clinic exists in the MVP (decisions #38). Between
-clinics it is a different matter: in Sweden it is called *coherent record
-keeping* and requires the patient's consent, a care relationship with the
+clinics it is a different matter: in Sweden it is called _coherent record
+keeping_ and requires the patient's consent, a care relationship with the
 receiving doctor, and an access log (phase B).
 
 **Who takes the initiative:**
@@ -161,15 +161,15 @@ features are added:
 
 ## What the MVP already prepares
 
-| In the MVP | Prepares for |
-| ---------- | ------------  |
-| `NoteShare` with history, `createdByUserId`, `consentConfirmedAt` | Patient-initiated sharing, consent records (A, E) |
-| Status history with reason, nothing deleted | Access log and corrections, also for payments (B, C) |
-| Deactivation of patients and doctors | Retention rules (B) |
-| `ClinicSettings` | A clinic table with time zone, hours and currency (A, D) |
-| Times stored in UTC, opening hours checked in the clinic's time zone | Clinics in other time zones (A) |
-| Permission rules in one place per area (`readableNotesWhere`, `ownDoctorFilter`) | Permissions instead of fixed roles (A) |
-| One shared `RequestingUser` type | Roles per clinic (A, D) |
+| In the MVP                                                                       | Prepares for                                             |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `NoteShare` with history, `createdByUserId`, `consentConfirmedAt`                | Patient-initiated sharing, consent records (A, E)        |
+| Status history with reason, nothing deleted                                      | Access log and corrections, also for payments (B, C)     |
+| Deactivation of patients and doctors                                             | Retention rules (B)                                      |
+| `ClinicSettings`                                                                 | A clinic table with time zone, hours and currency (A, D) |
+| Times stored in UTC, opening hours checked in the clinic's time zone             | Clinics in other time zones (A)                          |
+| Permission rules in one place per area (`readableNotesWhere`, `ownDoctorFilter`) | Permissions instead of fixed roles (A)                   |
+| One shared `RequestingUser` type                                                 | Roles per clinic (A, D)                                  |
 
 ## Open questions
 

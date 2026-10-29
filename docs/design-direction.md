@@ -40,29 +40,29 @@ workplace UX before visual effects.
 Defined once in `frontend/src/index.css` with Tailwind v4 `@theme`, and used
 as classes (`bg-surface`, `text-muted`, `border-border`).
 
-| Token | Value | Use |
-| ----- | ----- | --- |
-| `primary` | `#0F2942` | Sidebar, primary buttons, headings |
-| `accent` | `#0F766E` | Links, focus ring, highlights, accent buttons |
-| `ink` | `#0B1C30` | Body text |
-| `muted` | `#64748B` | Secondary text, form control borders |
-| `canvas` | `#F8FAFC` | Page background |
-| `surface` | `#FFFFFF` | Cards, dialogs, inputs |
-| `subtle` | `#F1F5F9` | Table headers, hover, inactive rows |
-| `border` | `#E2E8F0` | Decorative borders and dividers |
-| `danger` | `#B91C1C` | Errors and destructive actions only |
+| Token     | Value     | Use                                           |
+| --------- | --------- | --------------------------------------------- |
+| `primary` | `#0F2942` | Sidebar, primary buttons, headings            |
+| `accent`  | `#0F766E` | Links, focus ring, highlights, accent buttons |
+| `ink`     | `#0B1C30` | Body text                                     |
+| `muted`   | `#64748B` | Secondary text, form control borders          |
+| `canvas`  | `#F8FAFC` | Page background                               |
+| `surface` | `#FFFFFF` | Cards, dialogs, inputs                        |
+| `subtle`  | `#F1F5F9` | Table headers, hover, inactive rows           |
+| `border`  | `#E2E8F0` | Decorative borders and dividers               |
+| `danger`  | `#B91C1C` | Errors and destructive actions only           |
 
 ### Appointment status
 
 Text colour on a tinted background. Every pair meets WCAG AA (4.5:1).
 
-| Status | Text | Background | Contrast |
-| ------ | ---- | ---------- | -------- |
-| Scheduled | `#0369A1` | `#F0F9FF` | 5.57 |
-| Confirmed | `#0F766E` | `#F0FDFA` | 5.25 |
-| Completed | `#047857` | `#ECFDF5` | 5.21 |
-| No-show | `#B45309` | `#FFFBEB` | 4.84 |
-| Cancelled | `#475569` | `#F1F5F9` | 6.92 |
+| Status    | Text      | Background | Contrast |
+| --------- | --------- | ---------- | -------- |
+| Scheduled | `#0369A1` | `#F0F9FF`  | 5.57     |
+| Confirmed | `#0F766E` | `#F0FDFA`  | 5.25     |
+| Completed | `#047857` | `#ECFDF5`  | 5.21     |
+| No-show   | `#B45309` | `#FFFBEB`  | 4.84     |
+| Cancelled | `#475569` | `#F1F5F9`  | 6.92     |
 
 ### Contrast rules
 
@@ -73,14 +73,14 @@ Text colour on a tinted background. Every pair meets WCAG AA (4.5:1).
 
 ## Typography
 
-| Role | Font | Weight | Size |
-| ---- | ---- | ------ | ---- |
-| Display | Plus Jakarta Sans | 700 | 36 px |
-| Heading | Plus Jakarta Sans | 700 | 28 px |
-| Title | Plus Jakarta Sans | 600 | 18 px |
-| Body | Inter | 400 | 14 px |
-| Label | Inter, upper case | 600 | 12 px |
-| Numbers | Inter, `tabular-nums` | – | – |
+| Role    | Font                  | Weight | Size  |
+| ------- | --------------------- | ------ | ----- |
+| Display | Plus Jakarta Sans     | 700    | 36 px |
+| Heading | Plus Jakarta Sans     | 700    | 28 px |
+| Title   | Plus Jakarta Sans     | 600    | 18 px |
+| Body    | Inter                 | 400    | 14 px |
+| Label   | Inter, upper case     | 600    | 12 px |
+| Numbers | Inter, `tabular-nums` | –      | –     |
 
 Times, measurements and counts use tabular numbers so they line up in columns.
 
@@ -90,27 +90,27 @@ ranges "10:30–11:15"; date of birth "1985-03-12".
 
 ## Shape and elevation
 
-| Token | Value |
-| ----- | ----- |
-| Radius (cards, buttons, inputs) | 8 px |
-| Radius (highlight cards) | 16 px |
-| Card | 1 px `border`, light shadow |
-| Popover and dialog | Stronger shadow |
-| Button and input height | 40 px |
+| Token                           | Value                       |
+| ------------------------------- | --------------------------- |
+| Radius (cards, buttons, inputs) | 8 px                        |
+| Radius (highlight cards)        | 16 px                       |
+| Card                            | 1 px `border`, light shadow |
+| Popover and dialog              | Stronger shadow             |
+| Button and input height         | 40 px                       |
 
 ## Components and their states
 
-| Component | Variants | States |
-| --------- | -------- | ------ |
-| `Button` | primary, accent, secondary, ghost, danger | hover, focus, disabled, pending ("Saving…") |
-| `Badge` | one per appointment status; neutral; inactive | – |
-| `Input`, `Select`, `Textarea` | with unit ("mmHg") | focus, error (red border and message), disabled |
-| `Card` | default, highlight | – |
-| `Avatar` | initials | – |
-| `Dialog` (Modal, ConfirmDialog) | default, destructive | open with focus trap, pending, error |
-| `Combobox` | doctors, patients | open, active option, no match, loading |
-| Feedback | loading, empty, error with "Try again" | – |
-| `StateMessage` | not found, no access | – |
+| Component                       | Variants                                      | States                                          |
+| ------------------------------- | --------------------------------------------- | ----------------------------------------------- |
+| `Button`                        | primary, accent, secondary, ghost, danger     | hover, focus, disabled, pending ("Saving…")     |
+| `Badge`                         | one per appointment status; neutral; inactive | –                                               |
+| `Input`, `Select`, `Textarea`   | with unit ("mmHg")                            | focus, error (red border and message), disabled |
+| `Card`                          | default, highlight                            | –                                               |
+| `Avatar`                        | initials                                      | –                                               |
+| `Dialog` (Modal, ConfirmDialog) | default, destructive                          | open with focus trap, pending, error            |
+| `Combobox`                      | doctors, patients                             | open, active option, no match, loading          |
+| Feedback                        | loading, empty, error with "Try again"        | –                                               |
+| `StateMessage`                  | not found, no access                          | –                                               |
 
 **Focus:** every interactive element shows a 2 px `accent` ring with 2 px
 offset when focused with the keyboard (`focus-visible`).
