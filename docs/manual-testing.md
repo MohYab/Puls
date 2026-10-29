@@ -338,7 +338,7 @@ const w = document.documentElement.clientWidth;
 [...document.querySelectorAll("body *")]
   .filter((el) => el.getBoundingClientRect().right > w + 1)
   .map(
-    (el) => `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 60)}`
+    (el) => `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 60)}`,
   );
 ```
 
@@ -592,3 +592,61 @@ TYPE=$(curl -s $API/appointment-types -H "Authorization: Bearer $ERIK" | jq -r '
 - My account: the name in the header links there; saving the name updates the
   header; a wrong current password shows at the field without logging out;
   admins have no specialization field
+
+## Appointments in a date range (phase 3)
+
+Needs `$DOCTOR_TOKEN` and `$ADMIN_TOKEN` (see "Tokens for both roles").
+`date -d` is GNU date (Linux).
+
+```bash
+API=http://localhost:3001/api
+FROM=$(date +%F)
+TO=$(date -d "+6 days" +%F)
+
+# 1. Seven days: 200, the doctor's own appointments in the week
+curl -s "$API/appointments?from=$FROM&to=$TO" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq length
+
+# 2. Eight days: 400 "At most 7 days at a time"
+curl -s "$API/appointments?from=$FROM&to=$(date -d "+7 days" +%F)" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 3. to before from: 400 "from must be on or before to"
+curl -s "$API/appointments?from=$TO&to=$FROM" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 4. Only from: 400 "from and to must be used together"
+curl -s "$API/appointments?from=$FROM" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 5. date together with from/to: 400 "Use either date or from/to, not both"
+curl -s "$API/appointments?date=$FROM&from=$FROM&to=$TO" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 6. Not a real date: 400 "Dates must be valid ..."
+curl -s "$API/appointments?from=2026-13-01&to=2026-13-02" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 7. Admin, one doctor: only that doctor's appointments
+DOCTOR_ID=$(curl -s "$API/doctors" -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+curl -s "$API/appointments?from=$FROM&to=$TO&doctorId=$DOCTOR_ID" -H "Authorization: Bearer $ADMIN_TOKEN" \
+  | jq '[.[].doctorId] | unique'
+```
+
+Expected: 1 a number, 2–6 an error object with code `VALIDATION_ERROR`,
+7 a list with one doctor id.
+
+Daylight saving: `from=2026-10-19&to=2026-10-25` (DST ends 25 October) is
+7 days and is accepted.
+
+## UI checklist: week view and details panel (phase 3)
+
+Window at least 1280 px, logged in as a doctor:
+
+- [ ] Day/Week switch; the week shows Monday–Sunday, previous/next move a whole week
+- [ ] Today button marks the current week; the now line only in today's column
+- [ ] Clicking a day header opens that day in the day view
+- [ ] No details panel until an appointment is chosen; the calendar has full width
+- [ ] Choosing an appointment opens the panel and moves focus to its heading
+- [ ] Escape and ✕ close the panel; focus goes back to the appointment block
+- [ ] With the cancel confirmation open, Escape closes only the confirmation
+- [ ] Changing day, week, view or doctor closes the panel
+- [ ] Under 1280 px the details open in a modal; Escape returns focus to the block
+- [ ] Under 768 px there is no Day/Week switch and the day view is shown
+
+Known edge case: if an open appointment disappears from the list (an admin
+moves it to another day or doctor), the panel closes without returning focus.

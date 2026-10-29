@@ -137,4 +137,10 @@ blocking ports 5173 and 3001. Delete `.env.local` afterwards.
 | Login works but pages show 401                      | Token from an old seed (IDs changed)              | Log out and log in again                                                                  |
 | Frontend shows "Failed to fetch"                    | Backend is not running                            | `npm run dev` in `backend/`                                                               |
 | `ECONNREFUSED`, every login in the tests gives 500  | PostgreSQL is not running (e.g. after a restart)  | `sudo systemctl start postgresql`; `sudo systemctl enable postgresql` to start it on boot |
-| Editor: "Unknown at rule @theme" | The built-in CSS linter does not know Tailwind | Install Tailwind CSS IntelliSense; `.vscode/settings.json` maps `*.css` to Tailwind |
+| Editor: "Unknown at rule @theme"                    | The built-in CSS linter does not know Tailwind    | Install Tailwind CSS IntelliSense; `.vscode/settings.json` maps `*.css` to Tailwind       |
+
+## Server refuses to start: "The server must run with TZ=Europe/Stockholm"
+
+The calendar counts days in the clinic's time zone (decision #57). Make sure
+`backend/.env` has the line `TZ=Europe/Stockholm` (it is in `.env.example`).
+A `TZ` set in the terminal wins over `.env`; remove it with `unset TZ`.

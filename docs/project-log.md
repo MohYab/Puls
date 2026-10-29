@@ -1392,6 +1392,31 @@ real phone, completed the quality phase.
 - Tests that change seed users cannot run in parallel with the other test
   files, so those changes are tested manually.
 
+### Entry 13: Calendar week view and the details panel (phase 3)
+
+**What I did**
+
+- Added `from`/`to` to `GET /api/appointments` (inclusive calendar days, at
+  most 7, validated with Zod) so the week view needs one request
+  (decision #57).
+- Built the week view with a Day/Week switch, on screens from 768 px. The
+  time axis, hour lines, now line and appointment list moved to a shared
+  `CalendarGrid.tsx` used by both views.
+- Made the details panel appear only when an appointment is chosen. Escape
+  closes it, unless a modal is open, and focus goes back to the block that
+  opened it.
+
+**What I learned**
+
+- Time zones belong in one place. The frontend sends the days it shows; the
+  backend turns them into UTC limits. "Next calendar day" and "+24 hours" are
+  not the same in a week with a daylight saving change.
+- Two components listening for Escape on `document` run in the order they
+  were registered, so the panel cannot rely on a modal stopping the event.
+  Sharing the stack of open modals (`modalStack.ts`) solved it.
+- Accessibility for a side panel is mostly about focus: where it goes when
+  the panel opens, and where it comes back when it closes.
+
 ### Problems and solutions
 
 | Problem                                       | Cause                                                            | Solution                                                     |

@@ -65,22 +65,23 @@ application to IVO and is outside the system.
 Based on the mockups in `docs/design/` and the decisions in
 `docs/design-direction.md`.
 
-| #    | Task                                                                                                   | Class  | Status |
-| ---- | ------------------------------------------------------------------------------------------------------ | ------ | ------ |
-| 3.0  | Design direction written down (`docs/design-direction.md`)                        | MUST   | Done   |
-| 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons | MUST | Done |
-| 3.2  | Shell: sidebar grouped into main and Administration, user, My account and log out at the bottom, clinic name, prototype label, mobile menu | MUST | Done |
-| 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration | SHOULD | Done |
-| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=`, Day/Week switch | SHOULD | Todo |
-| 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today) | SHOULD | Todo |
-| 3.5  | Patients: list, patient page with Book appointment, age and next appointment                          | SHOULD | Todo   |
-| 3.6  | Documentation: numbered sections, sharing panel, correct wording (the template is locked, not the note) | SHOULD | Todo |
-| 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                          | SHOULD | Todo   |
-| 3.8  | Searchable select (combobox) for doctors and patients                                                  | SHOULD | Todo   |
-| 3.9  | Duplicate patient warning with "This is a different person"                                            | COULD  | Todo   |
-| 3.10 | Quick actions in the header (Book appointment, Add patient)                                            | COULD  | Todo   |
-| 3.11 | Statistics for a period and appointments by type                                                       | COULD  | Todo   |
-| 3.12 | Vital signs in the visit note and latest measurements on the patient page                              | COULD  | Todo   |
+| #    | Task                                                                                                                                       | Class  | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
+| 3.0  | Design direction written down (`docs/design-direction.md`)                                                                                 | MUST   | Done   |
+| 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons                         | MUST   | Done   |
+| 3.2  | Shell: sidebar grouped into main and Administration, user, My account and log out at the bottom, clinic name, prototype label, mobile menu | MUST   | Done   |
+| 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration          | SHOULD | Done   |
+| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=`, Day/Week switch                                         | SHOULD | Done   |
+| 3.3c | Details panel only when an appointment is chosen; Escape closes it; focus returns to the block                                             | SHOULD | Done   |
+| 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today)              | SHOULD | Todo   |
+| 3.5  | Patients: list, patient page with Book appointment, age and next appointment                                                               | SHOULD | Todo   |
+| 3.6  | Documentation: numbered sections, sharing panel, correct wording (the template is locked, not the note)                                    | SHOULD | Todo   |
+| 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                                                              | SHOULD | Todo   |
+| 3.8  | Searchable select (combobox) for doctors and patients                                                                                      | SHOULD | Todo   |
+| 3.9  | Duplicate patient warning with "This is a different person"                                                                                | COULD  | Todo   |
+| 3.10 | Quick actions in the header (Book appointment, Add patient)                                                                                | COULD  | Todo   |
+| 3.11 | Statistics for a period and appointments by type                                                                                           | COULD  | Todo   |
+| 3.12 | Vital signs in the visit note and latest measurements on the patient page                                                                  | COULD  | Todo   |
 
 **Scope rule:** phase 3 changes appearance and layout. The only functional
 changes are 3.4, 3.5 (next appointment), 3.8 and, if time allows, 3.9–3.12.
@@ -101,15 +102,15 @@ the current design.
 
 ## Phase 5 – Polish and freeze (v.46)
 
-| #   | Task                                                                               | Class           | Status |
-| --- | ---------------------------------------------------------------------------------- | --------------- | ------ |
-| 32  | Decide on deployment (yes or no) at the start of the week                          | MUST (decision) | Todo   |
-| 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone      | COULD           | Todo   |
-| 34  | Calendar week view (decisions #41). moved to 3.3b               | COULD           | Todo   |
-| 35  | Docs: project log, decisions, README, ER diagram, api.md                           | MUST            | Todo   |
-| 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md` | SHOULD | Todo |
-| 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video | MUST            | Todo   |
-| 37  | **MVP freeze**: no new features after v.46                                         | MUST            | Todo   |
+| #   | Task                                                                                                  | Class           | Status |
+| --- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
+| 32  | Decide on deployment (yes or no) at the start of the week                                             | MUST (decision) | Todo   |
+| 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone                         | COULD           | Todo   |
+| 34  | Calendar week view (decisions #41). moved to 3.3b                                                     | COULD           | Done   |
+| 35  | Docs: project log, decisions, README, ER diagram, api.md                                              | MUST            | Todo   |
+| 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md` | SHOULD          | Todo   |
+| 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video                    | MUST            | Todo   |
+| 37  | **MVP freeze**: no new features after v.46                                                            | MUST            | Todo   |
 
 - `VITE_API_URL` from #33 is Done.
 

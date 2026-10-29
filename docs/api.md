@@ -51,13 +51,48 @@ active"), even with a token that has not expired.
 
 ## Appointments
 
-| Method | Path                          | Role | Notes                                                                                                                  |
-| ------ | ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------- |
-| GET    | /appointments?date=&doctorId= | any  | Doctor sees own only. Admin sees all, or one doctor with `doctorId` (ignored for doctors)                              |
-| GET    | /appointments/:id             | any  | 404 if not found, 403 if doctor doesn't own it                                                                         |
-| POST   | /appointments                 | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
-| PUT    | /appointments/:id             | any  | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
-| PATCH  | /appointments/:id/status      | any  | Body: `{ status, reason? }`; see Appointment status                                                                    |
+| Method | Path                     | Role | Notes                                                                                                                  |
+| ------ | ------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------- |
+| GET    | /appointments            | any  | Filters: `date` or `from`+`to`, and `doctorId` (see below). Doctor sees own only; admin sees all or one doctor         |
+| GET    | /appointments/:id        | any  | 404 if not found, 403 if doctor doesn't own it                                                                         |
+| POST   | /appointments            | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
+| PUT    | /appointments/:id        | any  | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
+| PATCH  | /appointments/:id/status | any  | Body: `{ status, reason? }`; see Appointment status                                                                    |
+
+**Filters on `GET /appointments`:**
+
+| Query      | Format       | Meaning                                                               |
+| ---------- | ------------ | --------------------------------------------------------------------- |
+| `date`     | `YYYY-MM-DD` | One day                                                               |
+| `from`     | `YYYY-MM-DD` | First day of a range (inclusive)                                      |
+| `to`       | `YYYY-MM-DD` | Last day of a range (inclusive)                                       |
+| `doctorId` | id           | Admin only: one doctor. Ignored for doctors, who always see their own |
+
+- Dates are calendar days in the clinic's time zone (`Europe/Stockholm`):
+  `from=2026-10-26&to=2026-11-01` returns appointments that start from
+  00:00 Swedish time on 26 October up to (not including) 00:00 on 2 November
+  (decision #57).
+- A range is at most 7 days (one week in the calendar).
+- `date=X` is the same as `from=X&to=X`.
+- Without `date` or `from`/`to`, every appointment the user may see is
+  returned (no pagination).
+
+Example:
+
+```bash
+curl -s "http://localhost:3001/api/appointments?from=2026-10-26&to=2026-11-01" \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq length
+```
+
+400 `VALIDATION_ERROR` when:
+
+| Case                                | Message                                          |
+| ----------------------------------- | ------------------------------------------------ |
+| Not a real date, or wrong format    | Dates must be valid and in the format YYYY-MM-DD |
+| `date` together with `from` or `to` | Use either date or from/to, not both             |
+| Only one of `from` and `to`         | from and to must be used together                |
+| `to` before `from`                  | from must be on or before to                     |
+| More than 7 days                    | At most 7 days at a time                         |
 
 On `PUT`, `APPOINTMENT_TYPE_INACTIVE` is only returned when the type is
 changed. Editing the time of an appointment whose type was deactivated later
@@ -305,8 +340,8 @@ the frontend treats every 401 as an expired session.
 
 ## Clinic
 
-| Method | Path    | Role  | Notes                                                       |
-| ------ | ------- | ----- | ----------------------------------------------------------- |
+| Method | Path    | Role  | Notes                                                        |
+| ------ | ------- | ----- | ------------------------------------------------------------ |
 | GET    | /clinic | none  | Public: shown on the login page. Name, address, phone, email |
 | PUT    | /clinic | ADMIN | `{ name, addressLine, postalCode, city, phone, email }`      |
 

@@ -1018,3 +1018,39 @@ from the API instead of a constant.
 **Why:** The redesigned calendar shows whether a visit is documented. Admins have no access to clinical notes (decision #17), and even the existence of a note is information about the care given, so least privilege applies. A doctor only sees her own appointments, so the flag only ever describes her own notes.
 
 **How:** A separate include for reads selects only the note's id; `toAppointmentResponse` replaces it with `hasNote` for doctors and removes it for admins. Create and update responses use the include without the note relation. Tested in `appointments.response.test.ts`.
+
+---
+
+## 57. Calendar date ranges: local calendar days, at most 7
+
+**Decision:** `GET /api/appointments` takes `from` and `to` (`YYYY-MM-DD`,
+both inclusive) next to the older `date`. The dates are calendar days in the
+clinic's time zone. The backend turns `from` into midnight Swedish time and
+`to` into midnight of the following day (exclusive end), and filters
+`startTime`, which is stored in UTC, between the two. A range is at most 7
+days. The backend runs with `TZ=Europe/Stockholm`, set in `backend/.env`
+(see `.env.example`) and in the CI workflow; the server refuses to start in
+any other time zone (`assertClinicTimeZone`).
+
+**Why:** The calendar thinks in days and weeks, not in UTC instants, so the
+frontend sends the days it shows and the backend owns the conversion. The end
+is "next calendar day", not "+24 hours", so a week with a daylight saving
+change (e.g. 25 October 2026) still ends at midnight. The number of days is
+counted from the date strings alone (`Date.parse` reads `YYYY-MM-DD` as UTC
+midnight), so a 23- or 25-hour day does not change the count. Seven days is
+exactly one week view in one request; the limit stops anyone fetching a whole
+year at once, since the API has no pagination. `date` is kept, as a one-day
+range, so the dashboard and older calls keep working.
+
+**Alternative considered:** The frontend sends UTC instants (`from` and `to`
+as ISO date-times). More flexible, but every client would have to get the
+time zone right, and a browser in another time zone would show a different
+"day". Converting with an explicit time zone in code (a library such as
+`date-fns-tz`, or `Temporal` later) instead of the server's `TZ` would not
+depend on the server setup; it is the better choice if Puls ever serves
+clinics in more than one time zone.
+
+**Known limitation:** Results depend on the server's time zone. A missing
+`TZ` is caught at startup, but the time zone is still a setting, not part of
+the code. The frontend sends the browser's local dates, so a user in another time zone sees the clinic's days under her own dates. One clinic,
+one time zone is assumed (decision #55).
