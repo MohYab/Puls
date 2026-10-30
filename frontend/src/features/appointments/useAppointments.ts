@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { retryUnlessClientError } from "../../utils/queryRetry";
-import { getAppointment, getAppointments, updateAppointmentStatus } from "./appointmentService";
+import { getAppointment, getAppointments, getAppointmentsToDocument, updateAppointmentStatus } from "./appointmentService";
 import type { AppointmentStatus } from "../../types/appointment";
 
 interface UseAppointmentsOptions {
@@ -31,6 +31,15 @@ export function useAppointmentsInRange(
     queryKey: ["appointments", "list", { from, to, doctorId }],
     queryFn: () => getAppointments({ from, to, doctorId }),
     enabled,
+    retry: retryUnlessClientError,
+  });
+}
+
+/** Doctors only. The key starts with "appointments", so status changes refresh it too. */
+export function useAppointmentsToDocument() {
+  return useQuery({
+    queryKey: ["appointments", "to-document"],
+    queryFn: () => getAppointmentsToDocument(),
     retry: retryUnlessClientError,
   });
 }

@@ -47,3 +47,13 @@ export function updateAppointmentStatus(id: string, status: AppointmentStatus, r
 export function getAppointment(id: string) {
   return apiClient.get<Appointment>(`/appointments/${id}`);
 }
+
+export interface AppointmentsToDocument {
+  appointments: Appointment[];
+  total: number;
+}
+
+/** Doctors only: completed visits without a note, oldest first, at most 20. */
+export function getAppointmentsToDocument() {
+  return apiClient.get<AppointmentsToDocument>("/appointments/to-document");
+}

@@ -24,7 +24,7 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+            if (event.key === "Escape") {
         onClose();
       }
     }
@@ -68,7 +68,7 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="absolute end-3 top-4 rounded-lg p-2 text-white hover:bg-white/10 focus-visible:outline-white"
+          className="absolute inset-e-3 top-4 rounded-lg p-2 text-white hover:bg-white/10 focus-visible:outline-white"
         >
           <X aria-hidden="true" className="h-5 w-5" />
         </button>
