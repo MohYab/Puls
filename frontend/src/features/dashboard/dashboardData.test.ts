@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { makeAppointment } from "../../test/fixtures";
 import type { Appointment } from "../../types/appointment";
-import { countByStatus, findNextAppointment, groupByDoctor } from "./dashboardData";
+import { countByStatus, countLabel, findNextAppointment, greetingFor, groupByDoctor } from "./dashboardData";
 
 // Local times on one test day, as ISO strings like the API sends.
 const at = (time: string) => new Date(`2026-10-30T${time}:00`).toISOString();
@@ -94,5 +94,21 @@ describe("groupByDoctor", () => {
 
   it("returns an empty list for no appointments", () => {
     expect(groupByDoctor([])).toEqual([]);
+  });
+});
+
+describe("greetingFor", () => {
+  it("follows the time of day", () => {
+    expect(greetingFor(new Date("2026-10-30T08:00:00"))).toBe("Good morning");
+    expect(greetingFor(new Date("2026-10-30T12:00:00"))).toBe("Good afternoon");
+    expect(greetingFor(new Date("2026-10-30T18:00:00"))).toBe("Good evening");
+  });
+});
+
+describe("countLabel", () => {
+  it("uses the singular only for one", () => {
+    expect(countLabel(0, "appointment")).toBe("0 appointments");
+    expect(countLabel(1, "appointment")).toBe("1 appointment");
+    expect(countLabel(6, "visit")).toBe("6 visits");
   });
 });

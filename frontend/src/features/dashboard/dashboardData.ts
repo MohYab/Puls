@@ -76,3 +76,19 @@ export function groupByDoctor(appointments: readonly Appointment[]): DoctorDay[]
 
   return [...byDoctor.values()].sort((a, b) => collator.compare(a.doctorName, b.doctorName));
 }
+
+/** "Good morning" before 12, "Good afternoon" before 18, then "Good evening". */
+export function greetingFor(now: Date = new Date()): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+/**
+ * "1 appointment", "6 appointments". English plurals only; a translated app
+ * would use Intl.PluralRules (Arabic has more plural forms than two).
+ */
+export function countLabel(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}

@@ -110,3 +110,24 @@ export function formatWeekRange(weekStart: Date): string {
     ? `${dayMonth(weekStart)} – ${dayMonth(weekEnd)} ${weekEnd.getFullYear()}`
     : `${dayMonth(weekStart)} ${weekStart.getFullYear()} – ${dayMonth(weekEnd)} ${weekEnd.getFullYear()}`;
 }
+
+/** "Today", "Yesterday", "Tomorrow", otherwise "22 Oct 2026". */
+export function formatRelativeDay(isoString: string, now: Date = new Date()): string {
+  const date = new Date(isoString);
+  if (isSameDay(date, now)) return "Today";
+  if (isSameDay(date, addDays(now, -1))) return "Yesterday";
+  if (isSameDay(date, addDays(now, 1))) return "Tomorrow";
+  return formatDate(isoString);
+}
+
+/** "Starts in 25 min", "Starts in 1 h 5 min", or "Started" once the time has passed. */
+export function formatStartsIn(startIso: string, now: Date = new Date()): string {
+  // Rounded up: 30 seconds left is "1 min", never "0 min".
+  const minutes = Math.ceil((Date.parse(startIso) - now.getTime()) / 60_000);
+  if (minutes <= 0) return "Started";
+  if (minutes < 60) return `Starts in ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `Starts in ${hours} h` : `Starts in ${hours} h ${rest} min`;
+}

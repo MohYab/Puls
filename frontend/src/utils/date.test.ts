@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   formatLongDate,
+  formatRelativeDay,
+  formatStartsIn,
   formatWeekRange,
   isSameDay,
   startOfWeek,
@@ -102,5 +104,36 @@ describe("formatWeekRange", () => {
   it("shows the year once within a year, and twice across a new year", () => {
     expect(formatWeekRange(new Date(2026, 9, 26))).toBe("26 Oct – 1 Nov 2026");
     expect(formatWeekRange(new Date(2026, 11, 28))).toBe("28 Dec 2026 – 3 Jan 2027");
+  });
+});
+
+describe("formatRelativeDay", () => {
+  const now = new Date("2026-10-30T10:00:00");
+  const local = (dateTime: string) => new Date(dateTime).toISOString();
+
+  it("names today, yesterday and tomorrow", () => {
+    expect(formatRelativeDay(local("2026-10-30T08:30:00"), now)).toBe("Today");
+    expect(formatRelativeDay(local("2026-10-29T15:00:00"), now)).toBe("Yesterday");
+    expect(formatRelativeDay(local("2026-10-31T09:00:00"), now)).toBe("Tomorrow");
+  });
+
+  it("gives the date for other days", () => {
+    expect(formatRelativeDay(local("2026-10-27T10:30:00"), now)).toBe("27 Oct 2026");
+  });
+});
+
+describe("formatStartsIn", () => {
+  const now = new Date("2026-10-30T10:00:00");
+  const at = (time: string) => new Date(`2026-10-30T${time}`).toISOString();
+
+  it("counts minutes, then hours and minutes", () => {
+    expect(formatStartsIn(at("10:25:00"), now)).toBe("Starts in 25 min");
+    expect(formatStartsIn(at("11:05:00"), now)).toBe("Starts in 1 h 5 min");
+    expect(formatStartsIn(at("12:00:00"), now)).toBe("Starts in 2 h");
+  });
+
+  it("rounds up, and says Started once the time has passed", () => {
+    expect(formatStartsIn(at("10:00:30"), now)).toBe("Starts in 1 min");
+    expect(formatStartsIn(at("09:59:00"), now)).toBe("Started");
   });
 });
