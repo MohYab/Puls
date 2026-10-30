@@ -3,6 +3,7 @@ import {
   createAppointment,
   getAppointmentById,
   getAppointments,
+  getAppointmentsToDocument,
   getPatientAppointments,
   updateAppointment,
   updateAppointmentStatus,
@@ -20,6 +21,10 @@ export async function listAppointments(req: Request, res: Response) {
     throw new ValidationError(result.error.issues[0].message);
   }
   res.json(await getAppointments({ requestingUser: req.user!, ...result.data }));
+}
+
+export async function listAppointmentsToDocument(req: Request, res: Response) {
+  res.json(await getAppointmentsToDocument(req.user!));
 }
 
 export async function createAppointmentHandler(req: Request, res: Response) {

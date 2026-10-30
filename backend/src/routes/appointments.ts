@@ -1,26 +1,31 @@
 import { Router } from "express";
-import { listAppointments } from "../controllers/appointmentController.js";
-import { authenticate } from "../middleware/authenticate.js";
-import { validate } from "../middleware/validate.js";
-import { createAppointmentSchema } from "../validators/appointmentValidators.js";
-import { createAppointmentHandler } from "../controllers/appointmentController.js";
 import {
-  updateAppointmentSchema,
-  updateStatusSchema,
-} from "../validators/appointmentValidators.js";
-import {
+  createAppointmentHandler,
   getAppointmentHandler,
+  listAppointments,
+  listAppointmentsToDocument,
   updateAppointmentHandler,
   updateAppointmentStatusHandler,
 } from "../controllers/appointmentController.js";
 import { createNoteHandler, getAppointmentNoteHandler } from "../controllers/noteController.js";
-import { createNoteSchema } from "../validators/noteValidators.js";
+import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
+import { validate } from "../middleware/validate.js";
+import {
+  createAppointmentSchema,
+  updateAppointmentSchema,
+  updateStatusSchema,
+} from "../validators/appointmentValidators.js";
+import { createNoteSchema } from "../validators/noteValidators.js";
 
 const router = Router();
 
 router.get("/", authenticate, listAppointments);
 router.post("/", authenticate, validate(createAppointmentSchema), createAppointmentHandler);
+
+// Must come before "/:id", or Express matches "to-document" as an id (first match wins).
+router.get("/to-document", authenticate, authorize("DOCTOR"), listAppointmentsToDocument);
+
 router.get("/:id", authenticate, getAppointmentHandler);
 router.put("/:id", authenticate, validate(updateAppointmentSchema), updateAppointmentHandler);
 router.patch(

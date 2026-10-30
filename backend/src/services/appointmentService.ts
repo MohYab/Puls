@@ -134,7 +134,7 @@ export async function getAppointments({
     startTimeFilter = { startTime: { gte: startOfDay(range.from), lt: end } };
   }
 
-    const appointments = await prisma.appointment.findMany({
+  const appointments = await prisma.appointment.findMany({
     where: { ...doctorFilter, ...startTimeFilter },
     include: appointmentReadInclude,
     orderBy: { startTime: "asc" },
@@ -142,9 +142,44 @@ export async function getAppointments({
   return appointments.map((appointment) => toAppointmentResponse(appointment, requestingUser));
 }
 
+/** How many undocumented visits the dashboard lists; `total` tells how many there are. */
+export const TO_DOCUMENT_LIMIT = 20;
+
+/**
+ * The doctor's completed visits that have no clinical note yet, oldest first
+ * (the longest-waiting visit is the most urgent). Only the note's existence is
+ * checked; its content is never read.
+ */
+export async function getAppointmentsToDocument(requestingUser: RequestingUser) {
+  const where = {
+    ...ownDoctorFilter(requestingUser),
+    status: "COMPLETED" as const,
+    note: { is: null },
+  };
+
+  // Interactive transaction: the two queries run one after the other on the same
+  // connection. The array form sends them at once, which pg warns about (an error in pg 9).
+  const { appointments, total } = await prisma.$transaction(async (tx) => {
+    const appointments = await tx.appointment.findMany({
+      where,
+      include: appointmentInclude,
+      orderBy: { startTime: "asc" },
+      take: TO_DOCUMENT_LIMIT,
+    });
+    const total = await tx.appointment.count({ where });
+    return { appointments, total };
+  });
+
+  // Same shape as other appointment responses for doctors (decision #56).
+  return {
+    appointments: appointments.map((appointment) => ({ ...appointment, hasNote: false })),
+    total,
+  };
+}
+
 export async function getAppointmentById(appointmentId: string, requestingUser: RequestingUser) {
   const appointment = await assertOwnsAppointment(appointmentId, requestingUser);
-    const result = await prisma.appointment.findUnique({
+  const result = await prisma.appointment.findUnique({
     where: { id: appointment.id },
     include: appointmentReadInclude,
   });
