@@ -157,18 +157,20 @@ export async function getAppointmentsToDocument(requestingUser: RequestingUser) 
     note: { is: null },
   };
 
-  // Interactive transaction: the two queries run one after the other on the same
-  // connection. The array form sends them at once, which pg warns about (an error in pg 9).
-  const { appointments, total } = await prisma.$transaction(async (tx) => {
-    const appointments = await tx.appointment.findMany({
+  // No transaction: with the pg driver adapter, a read with includes inside a
+  // transaction sends its queries at once on one connection (a known Prisma 7
+  // issue; pg warns, and pg 9 will reject it). Outside a transaction each query
+  // gets its own pooled connection. The list and the total may differ for a
+  // moment if a note is saved in between; the dashboard refetches, so that is fine.
+  const [appointments, total] = await Promise.all([
+    prisma.appointment.findMany({
       where,
       include: appointmentInclude,
       orderBy: { startTime: "asc" },
       take: TO_DOCUMENT_LIMIT,
-    });
-    const total = await tx.appointment.count({ where });
-    return { appointments, total };
-  });
+    }),
+    prisma.appointment.count({ where }),
+  ]);
 
   // Same shape as other appointment responses for doctors (decision #56).
   return {
