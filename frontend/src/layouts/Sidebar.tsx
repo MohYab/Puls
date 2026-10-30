@@ -8,7 +8,6 @@ import { navItemsForRole, navItemsInSection, type NavItem } from "./navItems";
 
 const ROLE_LABELS = { DOCTOR: "Doctor", ADMIN: "Administrator" } as const;
 
-// White focus ring: the global accent ring has too little contrast on navy (WCAG 2.4.7).
 const itemBase =
   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors " +
   "focus-visible:outline-white";

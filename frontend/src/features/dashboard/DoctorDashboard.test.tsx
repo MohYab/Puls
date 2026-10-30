@@ -49,6 +49,7 @@ describe("DoctorDashboard", () => {
           id: "next",
           patientId: "p-cecilia",
           status: "SCHEDULED",
+          hasNote: false,
           startTime: inHours(1),
           endTime: inHours(1.5),
           patient: testPatient("Cecilia", "Ek"),
@@ -60,9 +61,7 @@ describe("DoctorDashboard", () => {
     });
     mockToDocument({
       data: {
-        appointments: [
-          makeAppointment({ id: "old", patient: testPatient("Folke", "Nyberg") }),
-        ],
+        appointments: [makeAppointment({ id: "old", patient: testPatient("Folke", "Nyberg") })],
         total: 1,
       },
       isLoading: false,
@@ -72,13 +71,29 @@ describe("DoctorDashboard", () => {
 
     renderWithProviders(<DoctorDashboard />);
 
-    expect(within(card("Next patient")).getByRole("link", { name: "Cecilia Ek" })).toHaveAttribute(
+    expect(screen.getByText("2 appointments today · 1 visit to document")).toBeInTheDocument();
+
+    const next = card("Next patient");
+    expect(within(next).getByText("Cecilia Ek")).toBeInTheDocument();
+    expect(within(next).getByRole("link", { name: "Open patient" })).toHaveAttribute(
       "href",
       "/patients/p-cecilia"
     );
-    expect(
-      within(card("Today's schedule")).getByRole("link", { name: "Document visit, Bo Berg" })
-    ).toHaveAttribute("href", "/documentation/done");
+    expect(within(next).getByRole("link", { name: "Document visit" })).toHaveAttribute(
+      "href",
+      "/documentation/next"
+    );
+
+    const schedule = card("Today's schedule");
+    expect(within(schedule).getByRole("link", { name: "Document visit, Bo Berg" })).toHaveAttribute(
+      "href",
+      "/documentation/done"
+    );
+    expect(within(schedule).getByRole("link", { name: "Open, Cecilia Ek" })).toHaveAttribute(
+      "href",
+      "/patients/p-cecilia"
+    );
+
     expect(
       within(card("To document")).getByRole("link", { name: "Document, Folke Nyberg" })
     ).toHaveAttribute("href", "/documentation/old");

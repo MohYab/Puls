@@ -1,5 +1,6 @@
 import type { Appointment, AppointmentStatus } from "../../types/appointment";
 import { ALL_STATUSES, isFinalStatus } from "../../utils/appointmentStatus";
+import { calculateAge, formatBirthDate } from "../../utils/date";
 
 // Pure functions for the dashboards: no React, no fetching, easy to unit test.
 
@@ -91,4 +92,9 @@ export function greetingFor(now: Date = new Date()): string {
  */
 export function countLabel(count: number, singular: string, plural = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+/** "1985-03-12 · 41 y": with the name, it identifies the patient. */
+export function birthDateAndAge(dateOfBirth: string, now: Date = new Date()): string {
+  return `${formatBirthDate(dateOfBirth)} · ${calculateAge(dateOfBirth, now)} y`;
 }

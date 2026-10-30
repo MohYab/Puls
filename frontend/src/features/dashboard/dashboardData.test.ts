@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { makeAppointment } from "../../test/fixtures";
 import type { Appointment } from "../../types/appointment";
-import { countByStatus, countLabel, findNextAppointment, greetingFor, groupByDoctor } from "./dashboardData";
+import { birthDateAndAge, countByStatus, countLabel, findNextAppointment, greetingFor, groupByDoctor } from "./dashboardData";
 
 // Local times on one test day, as ISO strings like the API sends.
 const at = (time: string) => new Date(`2026-10-30T${time}:00`).toISOString();
@@ -110,5 +110,13 @@ describe("countLabel", () => {
     expect(countLabel(0, "appointment")).toBe("0 appointments");
     expect(countLabel(1, "appointment")).toBe("1 appointment");
     expect(countLabel(6, "visit")).toBe("6 visits");
+  });
+});
+
+describe("birthDateAndAge", () => {
+  it("shows the date of birth and the age on that day", () => {
+    const dob = "1985-03-12T00:00:00.000Z";
+    expect(birthDateAndAge(dob, new Date("2026-10-30T10:00:00"))).toBe("1985-03-12 · 41 y");
+    expect(birthDateAndAge(dob, new Date("2026-03-11T10:00:00"))).toBe("1985-03-12 · 40 y");
   });
 });
