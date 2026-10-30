@@ -1,5 +1,14 @@
 import type { Appointment } from "../types/appointment";
 
+/** A patient for test appointments; change fields here, not in every test. */
+export function testPatient(
+  firstName = "Anna",
+  lastName = "Andersson",
+  dateOfBirth = "1985-03-12T00:00:00.000Z"
+): Appointment["patient"] {
+  return { firstName, lastName, dateOfBirth };
+}
+
 export function makeAppointment(overrides: Partial<Appointment> = {}): Appointment {
   return {
     id: "a1",
@@ -12,7 +21,7 @@ export function makeAppointment(overrides: Partial<Appointment> = {}): Appointme
     bookingComment: null,
     createdAt: "2026-10-20T08:00:00.000Z",
     updatedAt: "2026-10-20T08:00:00.000Z",
-    patient: { firstName: "Anna", lastName: "Andersson" },
+    patient: testPatient(),
     appointmentType: { name: "General consultation", duration: 45 },
     doctor: { user: { name: "Erik Lindqvist" } },
     ...overrides,

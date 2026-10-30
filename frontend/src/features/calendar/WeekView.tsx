@@ -27,7 +27,7 @@ export function WeekView({
   return (
     // Below the minimum width the week scrolls sideways inside the card, never the page.
     <div className="overflow-x-auto rounded-lg border bg-surface shadow-card">
-      <div className="min-w-[36rem]">
+      <div className="min-w-xl">
         <div className="flex border-b">
           <div aria-hidden="true" className={`${TIME_AXIS_WIDTH} shrink-0 border-e`} />
           {days.map((day) => {

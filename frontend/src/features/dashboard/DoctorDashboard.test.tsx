@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { makeAppointment } from "../../test/fixtures";
+import { makeAppointment, testPatient } from "../../test/fixtures";
 import { renderWithProviders } from "../../test/render";
 import { useAppointments, useAppointmentsToDocument } from "../appointments/useAppointments";
 import { DoctorDashboard } from "./DoctorDashboard";
@@ -43,7 +43,7 @@ describe("DoctorDashboard", () => {
           hasNote: false,
           startTime: inHours(-3),
           endTime: inHours(-2.5),
-          patient: { firstName: "Bo", lastName: "Berg" },
+          patient: testPatient("Bo", "Berg"),
         }),
         makeAppointment({
           id: "next",
@@ -51,7 +51,7 @@ describe("DoctorDashboard", () => {
           status: "SCHEDULED",
           startTime: inHours(1),
           endTime: inHours(1.5),
-          patient: { firstName: "Cecilia", lastName: "Ek" },
+          patient: testPatient("Cecilia", "Ek"),
         }),
       ],
       isLoading: false,
@@ -61,7 +61,7 @@ describe("DoctorDashboard", () => {
     mockToDocument({
       data: {
         appointments: [
-          makeAppointment({ id: "old", patient: { firstName: "Folke", lastName: "Nyberg" } }),
+          makeAppointment({ id: "old", patient: testPatient("Folke", "Nyberg") }),
         ],
         total: 1,
       },

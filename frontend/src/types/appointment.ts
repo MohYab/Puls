@@ -14,6 +14,8 @@ export interface Appointment {
   patient: {
     firstName: string;
     lastName: string;
+    /** Stored as UTC midnight: the first ten characters are the date. */
+    dateOfBirth: string;
   };
   appointmentType: {
     name: string;

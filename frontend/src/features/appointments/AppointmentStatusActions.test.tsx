@@ -5,6 +5,7 @@ import { renderWithProviders } from "../../test/render";
 import type { Appointment } from "../../types/appointment";
 import { AppointmentStatusActions } from "./AppointmentStatusActions";
 import { updateAppointmentStatus } from "./appointmentService";
+import { testPatient } from "../../test/fixtures";
 
 // Replace only the API call; the rest of the module stays real.
 vi.mock(import("./appointmentService"), async (importOriginal) => ({
@@ -24,7 +25,7 @@ function makeAppointment(overrides: Partial<Appointment> = {}): Appointment {
     bookingComment: null,
     createdAt: "2026-10-01T10:00:00.000Z",
     updatedAt: "2026-10-01T10:00:00.000Z",
-    patient: { firstName: "Anna", lastName: "Andersson" },
+    patient: testPatient (),
     doctor: { user: { name: "Erik Lind" } },
     appointmentType: { name: "Routine consultation", duration: 30 },
     ...overrides,

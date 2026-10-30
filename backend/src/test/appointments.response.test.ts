@@ -5,6 +5,7 @@ import { createApp } from "../app.js";
 const app = createApp();
 
 interface AppointmentBody {
+  patient?: { dateOfBirth?: string };
   doctor?: { user?: { name?: string } };
   hasNote?: boolean;
   note?: unknown;
@@ -36,6 +37,7 @@ describe("Appointment responses", () => {
 
     for (const appointment of appointments) {
       expect(typeof appointment.doctor?.user?.name).toBe("string");
+      expect(appointment.patient?.dateOfBirth).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       expect(typeof appointment.hasNote).toBe("boolean");
       expect(appointment).not.toHaveProperty("note");
     }

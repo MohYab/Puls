@@ -18,7 +18,8 @@ import type { RequestingUser } from "../types/requestingUser.js";
 
 // Shape of an appointment in lists and details.
 const appointmentInclude = {
-  patient: { select: { firstName: true, lastName: true } },
+  // Name and date of birth together identify the patient (avoids mixing up namesakes).
+  patient: { select: { firstName: true, lastName: true, dateOfBirth: true } },
   appointmentType: { select: { name: true, duration: true } },
   doctor: { select: { user: { select: { name: true } } } },
 } as const;
