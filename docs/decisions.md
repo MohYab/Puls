@@ -1119,3 +1119,43 @@ stepping through every doctor change.
 
 **Alternative considered:** Navigation state (`useNavigate` with `state`);
 lost on reload and cannot be shared.
+
+---
+
+## 62. The patient page
+
+**Decision:** The patient page shows the patient's age and contact details,
+the next appointment and Book appointment (with the patient preselected) in
+one header. The history comes from `GET /patients/:id/appointments`, where
+doctors get `hasNote` and a link per visit: "Open note" when a note exists
+(whatever the status), "Document" for a completed visit without one. A doctor
+still sees only their own visits with the patient. Inactive patients get no
+booking button and no next appointment.
+
+**Why:** Before a visit the doctor wants the context in one place. The note
+link uses the same rule as the dashboard (#56), in the same function
+(`toAppointmentResponse`). Showing other doctors' visits would show bookings
+the doctor has no part in; shared notes are already listed under Previous
+notes. An inactive patient cannot be booked (400 `PATIENT_INACTIVE`), so the
+button would only lead to an error.
+
+**Alternative considered:** Other doctors' visits marked "Shared note" (in the
+mockup); rejected for the reason above.
+
+## 63. A duplicate patient cannot be accepted from the form
+
+**Decision:** When a patient with the same name and date of birth exists, the
+API keeps answering 409 `PATIENT_EXISTS`. The form explains why and links to
+the existing patient. There is no "This is a different person" option.
+
+**Why:** Two records for one person split their history: a doctor may miss
+earlier notes or book on the wrong record. Without a personal identity number
+the check cannot be certain, so accepting a duplicate should not be one click
+away in a prototype.
+
+**Alternative considered:** The mockup's checkbox "This is a different person"
+with an override flag in the API. It would need a review step (another person
+confirming) to be safe; left for future development.
+
+**Known limitation:** Two real people with the same name and date of birth
+cannot both be registered.

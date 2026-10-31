@@ -1447,6 +1447,31 @@ real phone, completed the quality phase.
   knows about appointments or patients.
 - Formatting is only consistent when a machine checks it.
 
+### Entry 15: Patients (phase 3)
+
+**What I did**
+
+- Added `hasNote` for doctors to a patient's appointment history, with the
+  same function as the appointment list, so the rule lives in one place.
+- Rebuilt the patient page after the mockup: a header with age, contact
+  details, Book appointment with the patient preselected and the next
+  appointment; the history as a table with links to notes (decision #62).
+- Rebuilt the patient list, and made the duplicate warning explain the risk
+  and link to the existing patient instead of letting it be accepted
+  (decision #63).
+- Moved "Latest measurements" to the documentation step, since the values do
+  not exist until notes have vital signs.
+
+**What I learned**
+
+- A function that two features need belongs in `utils/`, not in one of the
+  features.
+- Two components can call the same query hook: TanStack Query sends one
+  request and both read the same cache.
+- A test describes what I decided, so it also catches code that drifted from
+  the decision: the duplicate warning in the file was not the version I had
+  planned, and the test found it.
+
 ### Problems and solutions
 
 | Problem                                          | Cause                                                                 | Solution                                                         |
@@ -1466,6 +1491,8 @@ real phone, completed the quality phase.
 | Login test timed out only in the full run        | jsdom per file and typing character by character under load           | 15 s test timeout in the frontend                                |
 | 26 files not formatted                           | Prettier was only run by hand                                         | `format:check` script and a CI step                              |
 | `package.json` appeared in the repository root   | An npm command was run from the root                                  | Deleted; run npm commands inside `frontend/` or `backend/`       |
+| `hasNote` missing on `PatientAppointment`        | The type change went into the wrong interface                         | TypeScript pointed at every use; added it to the right type      |
+| Duplicate warning test failed                    | The component file held a different version than planned              | Replaced it with the planned version                             |
 
 ### Feedback from supervisor
 

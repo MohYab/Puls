@@ -702,3 +702,35 @@ Admin (`admin@puls.test`):
 - [ ] `/calendar?doctor=unknown` shows the first doctor without an error
 - [ ] At 375 px the table scrolls inside its card
 - [ ] Network tab: no request to `to-document`
+
+## Patient history with note flags (phase 3)
+
+```bash
+API=http://localhost:3001/api
+ANNA=$(curl -s "$API/patients?search=Anna%20Andersson" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[0].id')
+
+# 1. Doctor: hasNote on every row, at least one true
+curl -s $API/patients/$ANNA/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq '[.[] | {startTime, status, hasNote}]'
+
+# 2. Admin: no hasNote and no note
+curl -s $API/patients/$ANNA/appointments -H "Authorization: Bearer $ADMIN_TOKEN" | jq '.[0] | keys'
+```
+
+## UI checklist: patients (phase 3)
+
+Doctor (`erik@puls.test`):
+
+- [ ] Patient list: Add patient as the main button, date of birth with age, inactive patients marked "Inactive" (with Show inactive)
+- [ ] Search narrows the list; "No patients match …" when nothing is found
+- [ ] Patient page: name, "1985-03-12 · 41 y", phone and email (or "No phone", "No email")
+- [ ] Book appointment opens the form with the patient preselected; "Next: …" updates after booking
+- [ ] History: "Open note" for documented visits, "Document" for completed ones without a note
+- [ ] Previous notes beside the history from 1024 px, below it on a phone
+- [ ] Add patient with the name and date of birth of an existing patient: a warning with a link to that patient; the link closes the dialog
+
+Admin (`admin@puls.test`):
+
+- [ ] No documentation column in the history; "Clinical notes are only visible to doctors."
+- [ ] Next names the doctor
+- [ ] Deactivating a patient (use one you created): "Inactive", "Deactivated … (…)", no Book appointment and no Next

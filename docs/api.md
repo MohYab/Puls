@@ -178,7 +178,7 @@ Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason),
 | GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                             |
 | PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                              |
 | PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                       |
-| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient; admin sees all                                                              |
+| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient and gets `hasNote`; admin sees all, without note information                 |
 | GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                             |
 
 Body for POST and PUT:
