@@ -26,7 +26,10 @@ describe("Clinic settings", () => {
   });
 
   it("can only be changed by an admin", async () => {
-    const res = await request(app).put("/api/clinic").set(auth(erikToken)).send({ name: "Not allowed" });
+    const res = await request(app)
+      .put("/api/clinic")
+      .set(auth(erikToken))
+      .send({ name: "Not allowed" });
 
     expect(res.status).toBe(403);
   });
