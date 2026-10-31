@@ -192,7 +192,7 @@ export async function getAppointmentById(appointmentId: string, requestingUser: 
 export async function getPatientAppointments(patientId: string, requestingUser: RequestingUser) {
   await getPatientById(patientId); // 404 if the patient does not exist
 
-  return prisma.appointment.findMany({
+  const appointments = await prisma.appointment.findMany({
     where: {
       patientId,
       // Doctors only see their own visits with the patient; admins see all.
@@ -206,8 +206,12 @@ export async function getPatientAppointments(patientId: string, requestingUser: 
       status: true,
       doctor: { select: { id: true, user: { select: { name: true } } } },
       appointmentType: { select: { id: true, name: true } },
+      // Only the id, to know whether a note exists. The content is never selected.
+      note: { select: { id: true } },
     },
   });
+  // hasNote for doctors, nothing about notes for admins (decision #56).
+  return appointments.map((appointment) => toAppointmentResponse(appointment, requestingUser));
 }
 
 // --- Booking and editing ------------------------------------------------------

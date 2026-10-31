@@ -73,4 +73,37 @@ describe("Appointment responses", () => {
     expect(typeof res.body.hasNote).toBe("boolean");
     expect(res.body).not.toHaveProperty("note");
   });
+
+  it("adds the note flag to a patient's history for doctors only", async () => {
+    // Seed: Erik has a documented visit with Anna Andersson.
+    const patients = await request(app)
+      .get("/api/patients")
+      .query({ search: "Anna Andersson" })
+      .set("Authorization", `Bearer ${doctorToken}`);
+    const annaId = (patients.body as { id: string }[])[0].id;
+
+    const [doctorRes, adminRes] = await Promise.all([
+      request(app)
+        .get(`/api/patients/${annaId}/appointments`)
+        .set("Authorization", `Bearer ${doctorToken}`),
+      request(app)
+        .get(`/api/patients/${annaId}/appointments`)
+        .set("Authorization", `Bearer ${adminToken}`),
+    ]);
+
+    expect(doctorRes.status).toBe(200);
+    const doctorRows = doctorRes.body as AppointmentBody[];
+    expect(doctorRows.length).toBeGreaterThan(0);
+    for (const row of doctorRows) {
+      expect(typeof row.hasNote).toBe("boolean");
+      expect(row).not.toHaveProperty("note");
+    }
+    expect(doctorRows.some((row) => row.hasNote === true)).toBe(true);
+
+    expect(adminRes.status).toBe(200);
+    for (const row of adminRes.body as AppointmentBody[]) {
+      expect(row).not.toHaveProperty("hasNote");
+      expect(row).not.toHaveProperty("note");
+    }
+  });
 });
