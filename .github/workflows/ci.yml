@@ -19,7 +19,7 @@ env:
 
 jobs:
   backend:
-    name: Backend (lint, build, test)
+    name: Backend (lint, format, build, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -69,6 +69,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Formatting
+        run: npm run format:check
+
       - name: Build
         run: npm run build
 
@@ -76,7 +79,7 @@ jobs:
         run: npm test
 
   frontend:
-    name: Frontend (lint, build, test)
+    name: Frontend (lint, format, build, test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -96,6 +99,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Formatting
+        run: npm run format:check
 
       - name: Check conventions
         run: |
