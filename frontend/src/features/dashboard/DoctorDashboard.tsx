@@ -48,7 +48,12 @@ export function DoctorDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="flex min-w-0 flex-col gap-6">
           <NextAppointment appointment={next} now={now} {...state} />
-          <TodaySchedule appointments={appointments} nextId={next?.id ?? null} now={now} {...state} />
+          <TodaySchedule
+            appointments={appointments}
+            nextId={next?.id ?? null}
+            now={now}
+            {...state}
+          />
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <ToDocumentList

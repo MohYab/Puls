@@ -24,7 +24,14 @@ function doctor(id: string, name: string): Doctor {
   return {
     id,
     specialization: null,
-    user: { id: `u-${id}`, name, email: `${id}@puls.test`, phone: null, isActive: true, deactivatedAt: null },
+    user: {
+      id: `u-${id}`,
+      name,
+      email: `${id}@puls.test`,
+      phone: null,
+      isActive: true,
+      deactivatedAt: null,
+    },
   };
 }
 
@@ -56,7 +63,9 @@ describe("AdminDashboard", () => {
 
     renderWithProviders(<AdminDashboard />, { user: testAdmin });
 
-    expect(screen.getByText("3 appointments · 1 doctor with appointments today")).toBeInTheDocument();
+    expect(
+      screen.getByText("3 appointments · 1 doctor with appointments today")
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Dr. Erik Lindqvist" })).toHaveAttribute(
       "href",
       "/calendar?doctor=d-erik"

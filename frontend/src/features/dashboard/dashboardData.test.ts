@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { makeAppointment } from "../../test/fixtures";
 import type { Appointment } from "../../types/appointment";
-import { birthDateAndAge, countByStatus, countLabel, findNextAppointment, greetingFor, groupByDoctor } from "./dashboardData";
+import {
+  birthDateAndAge,
+  countByStatus,
+  countLabel,
+  findNextAppointment,
+  greetingFor,
+  groupByDoctor,
+} from "./dashboardData";
 
 // Local times on one test day, as ISO strings like the API sends.
 const at = (time: string) => new Date(`2026-10-30T${time}:00`).toISOString();

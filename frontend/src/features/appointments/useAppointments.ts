@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { retryUnlessClientError } from "../../utils/queryRetry";
-import { getAppointment, getAppointments, getAppointmentsToDocument, updateAppointmentStatus } from "./appointmentService";
+import {
+  getAppointment,
+  getAppointments,
+  getAppointmentsToDocument,
+  updateAppointmentStatus,
+} from "./appointmentService";
 import type { AppointmentStatus } from "../../types/appointment";
 
 interface UseAppointmentsOptions {

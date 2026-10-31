@@ -18,7 +18,13 @@ interface DoctorsTodayProps {
 const cell = "px-4 py-3 md:px-5";
 const countCell = `${cell} text-center`;
 
-export function DoctorsToday({ rows, withoutAppointments, isLoading, isError, onRetry }: DoctorsTodayProps) {
+export function DoctorsToday({
+  rows,
+  withoutAppointments,
+  isLoading,
+  isError,
+  onRetry,
+}: DoctorsTodayProps) {
   const isReady = !isLoading && !isError;
 
   return (
@@ -38,11 +44,21 @@ export function DoctorsToday({ rows, withoutAppointments, isLoading, isError, on
           <table className="w-full text-sm tabular-nums">
             <thead>
               <tr className="border-b text-xs font-semibold uppercase tracking-wide text-muted">
-                <th scope="col" className={`${cell} text-start`}>Doctor</th>
-                <th scope="col" className={countCell}>Appointments</th>
-                <th scope="col" className={countCell}>Completed</th>
-                <th scope="col" className={countCell}>No-show</th>
-                <th scope="col" className={`${cell} text-start`}>Next</th>
+                <th scope="col" className={`${cell} text-start`}>
+                  Doctor
+                </th>
+                <th scope="col" className={countCell}>
+                  Appointments
+                </th>
+                <th scope="col" className={countCell}>
+                  Completed
+                </th>
+                <th scope="col" className={countCell}>
+                  No-show
+                </th>
+                <th scope="col" className={`${cell} text-start`}>
+                  Next
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -71,7 +87,9 @@ export function DoctorsToday({ rows, withoutAppointments, isLoading, isError, on
                       formatTime(row.nextStart)
                     ) : (
                       <>
-                        <span aria-hidden="true" className="text-muted">–</span>
+                        <span aria-hidden="true" className="text-muted">
+                          –
+                        </span>
                         <span className="sr-only">None</span>
                       </>
                     )}
@@ -85,8 +103,8 @@ export function DoctorsToday({ rows, withoutAppointments, isLoading, isError, on
 
       {isReady && withoutAppointments !== null && withoutAppointments > 0 && (
         <p className="mt-3 text-sm text-muted">
-          {countLabel(withoutAppointments, "doctor")} {withoutAppointments === 1 ? "has" : "have"} no
-          appointments today.
+          {countLabel(withoutAppointments, "doctor")} {withoutAppointments === 1 ? "has" : "have"}{" "}
+          no appointments today.
         </p>
       )}
     </Card>

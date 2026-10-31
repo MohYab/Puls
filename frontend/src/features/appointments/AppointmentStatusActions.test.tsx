@@ -25,7 +25,7 @@ function makeAppointment(overrides: Partial<Appointment> = {}): Appointment {
     bookingComment: null,
     createdAt: "2026-10-01T10:00:00.000Z",
     updatedAt: "2026-10-01T10:00:00.000Z",
-    patient: testPatient (),
+    patient: testPatient(),
     doctor: { user: { name: "Erik Lind" } },
     appointmentType: { name: "Routine consultation", duration: 30 },
     ...overrides,

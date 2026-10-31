@@ -16,7 +16,13 @@ interface NextAppointmentProps {
   onRetry: () => void;
 }
 
-export function NextAppointment({ appointment, now, isLoading, isError, onRetry }: NextAppointmentProps) {
+export function NextAppointment({
+  appointment,
+  now,
+  isLoading,
+  isError,
+  onRetry,
+}: NextAppointmentProps) {
   const isReady = !isLoading && !isError;
   if (isReady && appointment) return <NextPatientHero appointment={appointment} now={now} />;
 
@@ -53,7 +59,9 @@ function NextPatientHero({ appointment, now }: { appointment: Appointment; now: 
           </h2>
           <span className="tabular-nums">· {formatTime(startTime)}</span>
         </div>
-        <span className="text-sm tabular-nums text-slate-300">{formatStartsIn(startTime, now)}</span>
+        <span className="text-sm tabular-nums text-slate-300">
+          {formatStartsIn(startTime, now)}
+        </span>
       </div>
 
       <div className="flex flex-wrap items-center gap-4">

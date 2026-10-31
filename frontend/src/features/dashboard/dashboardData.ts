@@ -87,7 +87,6 @@ export function groupByDoctor(
   return [...byDoctor.values()].sort((a, b) => collator.compare(a.doctorName, b.doctorName));
 }
 
-
 /** "Good morning" before 12, "Good afternoon" before 18, then "Good evening". */
 export function greetingFor(now: Date = new Date()): string {
   const hour = now.getHours();

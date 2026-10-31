@@ -18,7 +18,14 @@ interface TodayScheduleProps {
   onRetry: () => void;
 }
 
-export function TodaySchedule({ appointments, nextId, now, isLoading, isError, onRetry }: TodayScheduleProps) {
+export function TodaySchedule({
+  appointments,
+  nextId,
+  now,
+  isLoading,
+  isError,
+  onRetry,
+}: TodayScheduleProps) {
   const isReady = !isLoading && !isError;
 
   return (
@@ -84,7 +91,9 @@ function ScheduleRow({ appointment, isNext, now }: ScheduleRowProps) {
       </span>
       <Avatar name={name} size="sm" />
       <span className="min-w-0 flex-[1_1_12rem] leading-snug">
-        <span className={`block font-semibold ${isCancelled ? "text-muted line-through" : "text-ink"}`}>
+        <span
+          className={`block font-semibold ${isCancelled ? "text-muted line-through" : "text-ink"}`}
+        >
           {name}
           {/* Colour is never the only signal for the next appointment. */}
           {isNext && <span className="ms-2 text-xs font-semibold text-accent">Next</span>}

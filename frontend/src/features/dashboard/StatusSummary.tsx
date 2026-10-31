@@ -42,9 +42,7 @@ export function StatusSummary({
     <Card title={title}>
       {isLoading && <LoadingMessage />}
 
-      {isError && (
-        <ErrorMessage message="Could not load today's appointments." onRetry={onRetry} />
-      )}
+      {isError && <ErrorMessage message="Could not load today's appointments." onRetry={onRetry} />}
 
       {counts && !isLoading && !isError && (
         <dl className={`grid gap-3 ${layouts[layout]}`}>

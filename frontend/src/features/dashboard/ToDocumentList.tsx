@@ -34,7 +34,9 @@ export function ToDocumentList({ data, now, isLoading, isError, onRetry }: ToDoc
 
       {isLoading && <LoadingMessage />}
       {isError && <ErrorMessage message="Could not load visits to document." onRetry={onRetry} />}
-      {data && data.total === 0 && <EmptyMessage>All completed visits are documented.</EmptyMessage>}
+      {data && data.total === 0 && (
+        <EmptyMessage>All completed visits are documented.</EmptyMessage>
+      )}
 
       {data && data.appointments.length > 0 && (
         <>
@@ -47,8 +49,8 @@ export function ToDocumentList({ data, now, isLoading, isError, onRetry }: ToDoc
                   <span className="min-w-0 flex-1 leading-snug">
                     <span className="block truncate font-semibold text-ink">{name}</span>
                     <span className="block truncate text-sm tabular-nums text-muted">
-                      {formatRelativeDay(appointment.startTime, now)} {formatTime(appointment.startTime)} ·{" "}
-                      {appointment.appointmentType.name}
+                      {formatRelativeDay(appointment.startTime, now)}{" "}
+                      {formatTime(appointment.startTime)} · {appointment.appointmentType.name}
                     </span>
                   </span>
                   <Link
