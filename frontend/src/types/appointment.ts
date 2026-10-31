@@ -42,4 +42,6 @@ export interface PatientAppointment {
     id: string;
     name: string;
   };
+  /** Only sent to doctors (decision #56). */
+  hasNote?: boolean;
 }

@@ -20,6 +20,8 @@ import { useDoctors } from "../doctors/useDoctors";
 
 interface AppointmentFormProps {
   defaultDate: Date;
+  /** Preselects the patient (e.g. on the patient page); it can still be changed. */
+  defaultPatientId?: string;
   /** Admin only: the doctor selected in the calendar. Doctors always book for themselves. */
   defaultDoctorId?: string;
   onSuccess: () => void;
@@ -28,6 +30,7 @@ interface AppointmentFormProps {
 
 export function AppointmentForm({
   defaultDate,
+  defaultPatientId,
   defaultDoctorId,
   onSuccess,
   onCancel,
@@ -50,6 +53,7 @@ export function AppointmentForm({
   } = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
+      patientId: defaultPatientId ?? "",
       date: toDateString(defaultDate),
       doctorId: user?.role === "DOCTOR" ? (user.doctorId ?? "") : (defaultDoctorId ?? ""),
     },

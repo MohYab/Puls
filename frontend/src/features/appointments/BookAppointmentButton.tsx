@@ -4,8 +4,15 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { AppointmentForm } from "../appointments/AppointmentForm";
 
-// The same booking form as in the calendar. Doctors get themselves preselected.
-export function BookAppointmentButton({ doctorId }: { doctorId?: string }) {
+interface BookAppointmentButtonProps {
+  /** Admins: the doctor to preselect. Doctors always book for themselves. */
+  doctorId?: string;
+  /** The patient to preselect, e.g. on the patient page. */
+  patientId?: string;
+}
+
+// The same booking form as in the calendar.
+export function BookAppointmentButton({ doctorId, patientId }: BookAppointmentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const close = () => setIsOpen(false);
 
@@ -19,6 +26,7 @@ export function BookAppointmentButton({ doctorId }: { doctorId?: string }) {
         <Modal title="Book appointment" onClose={close}>
           <AppointmentForm
             defaultDate={new Date()}
+            defaultPatientId={patientId}
             defaultDoctorId={doctorId}
             onSuccess={close}
             onCancel={close}
