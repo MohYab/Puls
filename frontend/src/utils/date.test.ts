@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addDays,
+  birthDateAndAge,
   formatLongDate,
   formatRelativeDay,
   formatStartsIn,
@@ -135,5 +136,13 @@ describe("formatStartsIn", () => {
   it("rounds up, and says Started once the time has passed", () => {
     expect(formatStartsIn(at("10:00:30"), now)).toBe("Starts in 1 min");
     expect(formatStartsIn(at("09:59:00"), now)).toBe("Started");
+  });
+});
+
+describe("birthDateAndAge", () => {
+  it("shows the date of birth and the age on that day", () => {
+    const dob = "1985-03-12T00:00:00.000Z";
+    expect(birthDateAndAge(dob, new Date("2026-10-30T10:00:00"))).toBe("1985-03-12 · 41 y");
+    expect(birthDateAndAge(dob, new Date("2026-03-11T10:00:00"))).toBe("1985-03-12 · 40 y");
   });
 });

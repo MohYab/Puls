@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { ErrorMessage, LoadingMessage } from "../components/Feedback";
 import { Modal } from "../components/Modal";
@@ -9,7 +11,7 @@ import { PreviousNotes } from "../features/notes/PreviousNotes";
 import { AppointmentHistory } from "../features/patients/AppointmentHistory";
 import { DeactivatePatientDialog } from "../features/patients/DeactivatePatientDialog";
 import { PatientForm } from "../features/patients/PatientForm";
-import { PatientInfoCard } from "../features/patients/PatientInfoCard";
+import { PatientHeader } from "../features/patients/PatientHeader";
 import { usePatient, useSetPatientStatus } from "../features/patients/usePatients";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { ApiError } from "../services/apiClient";
@@ -43,6 +45,11 @@ export default function PatientDetailPage() {
 
   const isNotFound = isError && error instanceof ApiError && error.status === 404;
 
+  function openDialog(next: "edit" | "deactivate") {
+    setNotice(null);
+    setDialog(next);
+  }
+
   function handleReactivate() {
     setNotice(null);
     reactivate.mutate(
@@ -58,15 +65,15 @@ export default function PatientDetailPage() {
 
   return (
     <div>
-      <Link to="/patients" className="text-sm text-blue-700 hover:underline">
-        ← Back to patients
+      <Link
+        to="/patients"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline"
+      >
+        <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />
+        Back to patients
       </Link>
 
-      {isPending && (
-        <div className="mt-6">
-          <LoadingMessage>Loading patient...</LoadingMessage>
-        </div>
-      )}
+      {isPending && <LoadingMessage>Loading patient...</LoadingMessage>}
 
       {isNotFound && (
         <StateMessage
@@ -75,91 +82,57 @@ export default function PatientDetailPage() {
         />
       )}
 
-      {isError && !isNotFound && (
-        <div className="mt-6">
-          <ErrorMessage message={error.message} onRetry={() => refetch()} />
-        </div>
-      )}
+      {isError && !isNotFound && <ErrorMessage message={error.message} onRetry={() => refetch()} />}
 
       {patient && (
         <>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {patient.firstName} {patient.lastName}
-              </h1>
-              {!patient.isActive && (
-                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-800">
-                  Inactive
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setNotice(null);
-                  setDialog("edit");
-                }}
-                className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
-              >
-                Edit
-              </button>
-              {isAdmin &&
-                (patient.isActive ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNotice(null);
-                      setDialog("deactivate");
-                    }}
-                    className="rounded border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Deactivate
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleReactivate}
-                    disabled={reactivate.isPending}
-                    className="rounded border px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    {reactivate.isPending ? "Reactivating..." : "Reactivate"}
-                  </button>
-                ))}
-            </div>
-          </div>
+          <PatientHeader
+            patient={patient}
+            actions={
+              <>
+                <Button variant="secondary" onClick={() => openDialog("edit")}>
+                  Edit
+                </Button>
+                {isAdmin &&
+                  (patient.isActive ? (
+                    <Button variant="secondary" onClick={() => openDialog("deactivate")}>
+                      Deactivate
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      onClick={handleReactivate}
+                      isPending={reactivate.isPending}
+                      pendingText="Reactivating..."
+                    >
+                      Reactivate
+                    </Button>
+                  ))}
+              </>
+            }
+          />
 
           {notice && (
             <p
               role="status"
-              className="mt-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-900"
+              className="mb-6 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-900"
             >
               {notice}
             </p>
           )}
           {reactivate.isError && (
-            <div className="mt-4">
+            <div className="mb-6">
               <ErrorMessage message={reactivate.error.message} />
             </div>
           )}
 
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <PatientInfoCard patient={patient} />
-            </div>
-            <div className="lg:col-span-2">
-              <AppointmentHistory patientId={patient.id} />
-            </div>
-          </div>
-
-          <div className="mt-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+            <AppointmentHistory patientId={patient.id} />
             {user?.role === "DOCTOR" ? (
               <PreviousNotes patientId={patient.id} />
             ) : (
-              <Card title="Documentation">
-                <p className="text-sm text-gray-600">Clinical notes are only visible to doctors.</p>
+              <Card title="Clinical notes">
+                <p className="text-sm text-muted">Clinical notes are only visible to doctors.</p>
               </Card>
             )}
           </div>

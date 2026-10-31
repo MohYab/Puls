@@ -5,8 +5,13 @@ import { Avatar } from "../../components/Avatar";
 import { Card } from "../../components/Card";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
 import type { Appointment } from "../../types/appointment";
-import { formatDuration, formatStartsIn, formatTime, formatTimeRange } from "../../utils/date";
-import { birthDateAndAge } from "./dashboardData";
+import {
+  birthDateAndAge,
+  formatDuration,
+  formatStartsIn,
+  formatTime,
+  formatTimeRange,
+} from "../../utils/date";
 
 interface NextAppointmentProps {
   appointment: Appointment | null;

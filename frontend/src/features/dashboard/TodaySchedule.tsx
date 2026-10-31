@@ -6,8 +6,7 @@ import { Card } from "../../components/Card";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
 import { StatusBadge } from "../../components/StatusBadge";
 import type { Appointment } from "../../types/appointment";
-import { formatDuration, formatTime } from "../../utils/date";
-import { birthDateAndAge } from "./dashboardData";
+import { birthDateAndAge, formatDuration, formatTime } from "../../utils/date";
 
 interface TodayScheduleProps {
   appointments: Appointment[];

@@ -131,3 +131,8 @@ export function formatStartsIn(startIso: string, now: Date = new Date()): string
   const rest = minutes % 60;
   return rest === 0 ? `Starts in ${hours} h` : `Starts in ${hours} h ${rest} min`;
 }
+
+/** "1985-03-12 · 41 y": with the name, it identifies the patient. */
+export function birthDateAndAge(dateOfBirth: string, now: Date = new Date()): string {
+  return `${formatBirthDate(dateOfBirth)} · ${calculateAge(dateOfBirth, now)} y`;
+}
