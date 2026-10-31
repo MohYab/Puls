@@ -26,6 +26,7 @@ import {
   startOfWeek,
   toDateString,
 } from "../utils/date";
+import { useSearchParams } from "react-router-dom";
 
 // From this width the details sit next to the calendar; below it they open in a modal.
 const PANEL_QUERY = "(min-width: 1280px)";
@@ -49,7 +50,11 @@ export default function CalendarPage() {
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [view, setView] = useState<CalendarView>("day");
-  const [chosenDoctorId, setChosenDoctorId] = useState<string | null>(null);
+  // ?doctor=<id> opens a doctor's calendar directly (the admin dashboard links here).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [chosenDoctorId, setChosenDoctorId] = useState<string | null>(() =>
+    searchParams.get("doctor")
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -62,7 +67,13 @@ export default function CalendarPage() {
 
   // Admins see one doctor at a time (one column, no overlapping blocks).
   // Until they choose, the first doctor in alphabetical order is shown.
-  const doctorId = isAdmin ? (chosenDoctorId ?? doctorsQuery.data?.[0]?.id) : undefined;
+  // An id that is not an active doctor (e.g. from an old link) falls back to the first one.
+  const chosenIsListed = doctorsQuery.data?.some((doctor) => doctor.id === chosenDoctorId) ?? false;
+  const doctorId = isAdmin
+    ? chosenIsListed && chosenDoctorId
+      ? chosenDoctorId
+      : doctorsQuery.data?.[0]?.id
+    : undefined;
   const canLoadAppointments = !isAdmin || doctorId !== undefined;
 
   const {
@@ -102,6 +113,8 @@ export default function CalendarPage() {
 
   function changeDoctor(id: string) {
     setChosenDoctorId(id);
+    // replace: the back button does not step through every doctor change.
+    setSearchParams({ doctor: id }, { replace: true });
     setSelectedId(null);
   }
 

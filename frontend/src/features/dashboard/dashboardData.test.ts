@@ -70,30 +70,38 @@ describe("groupByDoctor", () => {
   const sara = { doctorId: "d-sara", doctor: { user: { name: "Sara Lind" } } };
   const erik = { doctorId: "d-erik", doctor: { user: { name: "Erik Holm" } } };
 
-  it("gives one row per doctor, sorted by name, with first start and last end", () => {
-    const rows = groupByDoctor([
-      appointment({ id: "1", ...sara, status: "SCHEDULED", startTime: at("13:00"), endTime: at("13:30") }),
-      appointment({ id: "2", ...erik, status: "COMPLETED", startTime: at("08:00"), endTime: at("08:30") }),
-      appointment({ id: "3", ...sara, status: "CONFIRMED", startTime: at("09:00"), endTime: at("09:20") }),
-    ]);
+  it("counts each doctor's appointments and finds the next one, sorted by name", () => {
+    const rows = groupByDoctor(
+      [
+        appointment({ id: "1", ...sara, status: "SCHEDULED", startTime: at("13:00") }),
+        appointment({ id: "2", ...sara, status: "COMPLETED", startTime: at("09:00") }),
+        appointment({ id: "3", ...sara, status: "CONFIRMED", startTime: at("11:00") }),
+        appointment({ id: "4", ...erik, status: "NO_SHOW", startTime: at("08:00") }),
+      ],
+      NOW
+    );
 
     expect(rows.map((row) => row.doctorName)).toEqual(["Erik Holm", "Sara Lind"]);
-    expect(rows[1]).toMatchObject({ count: 2, firstStart: at("09:00"), lastEnd: at("13:30") });
+    expect(rows[0]).toMatchObject({ count: 1, completed: 0, noShow: 1, nextStart: null });
+    expect(rows[1]).toMatchObject({ count: 3, completed: 1, noShow: 0, nextStart: at("11:00") });
   });
 
   it("leaves out cancelled appointments, and doctors with only cancelled ones", () => {
-    const rows = groupByDoctor([
-      appointment({ id: "1", ...erik, status: "CANCELLED", startTime: at("08:00"), endTime: at("08:30") }),
-      appointment({ id: "2", ...sara, status: "CANCELLED", startTime: at("09:00"), endTime: at("09:30") }),
-      appointment({ id: "3", ...sara, status: "SCHEDULED", startTime: at("10:00"), endTime: at("10:30") }),
-    ]);
+    const rows = groupByDoctor(
+      [
+        appointment({ id: "1", ...erik, status: "CANCELLED", startTime: at("11:00") }),
+        appointment({ id: "2", ...sara, status: "CANCELLED", startTime: at("12:00") }),
+        appointment({ id: "3", ...sara, status: "SCHEDULED", startTime: at("14:00") }),
+      ],
+      NOW
+    );
 
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ doctorName: "Sara Lind", count: 1 });
+    expect(rows[0]).toMatchObject({ doctorName: "Sara Lind", count: 1, nextStart: at("14:00") });
   });
 
   it("returns an empty list for no appointments", () => {
-    expect(groupByDoctor([])).toEqual([]);
+    expect(groupByDoctor([], NOW)).toEqual([]);
   });
 });
 

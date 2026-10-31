@@ -37,9 +37,12 @@ export function findNextAppointment(
 export interface DoctorDay {
   doctorId: string;
   doctorName: string;
+  /** Appointments that are not cancelled. */
   count: number;
-  firstStart: string;
-  lastEnd: string;
+  completed: number;
+  noShow: number;
+  /** Start of the next appointment that has not started and has no final status. */
+  nextStart: string | null;
 }
 
 const collator = new Intl.Collator("sv");
@@ -48,35 +51,42 @@ const collator = new Intl.Collator("sv");
  * One row per doctor with at least one appointment that is not cancelled,
  * sorted by name. A doctor whose appointments are all cancelled is not working.
  */
-export function groupByDoctor(appointments: readonly Appointment[]): DoctorDay[] {
+export function groupByDoctor(
+  appointments: readonly Appointment[],
+  now: Date = new Date()
+): DoctorDay[] {
   const byDoctor = new Map<string, DoctorDay>();
 
   for (const appointment of appointments) {
     if (appointment.status === "CANCELLED") continue;
 
-    const day = byDoctor.get(appointment.doctorId);
+    let day = byDoctor.get(appointment.doctorId);
     if (!day) {
-      byDoctor.set(appointment.doctorId, {
+      day = {
         doctorId: appointment.doctorId,
         doctorName: appointment.doctor.user.name,
-        count: 1,
-        firstStart: appointment.startTime,
-        lastEnd: appointment.endTime,
-      });
-      continue;
+        count: 0,
+        completed: 0,
+        noShow: 0,
+        nextStart: null,
+      };
+      byDoctor.set(appointment.doctorId, day);
     }
 
     day.count += 1;
-    if (Date.parse(appointment.startTime) < Date.parse(day.firstStart)) {
-      day.firstStart = appointment.startTime;
-    }
-    if (Date.parse(appointment.endTime) > Date.parse(day.lastEnd)) {
-      day.lastEnd = appointment.endTime;
+    if (appointment.status === "COMPLETED") day.completed += 1;
+    if (appointment.status === "NO_SHOW") day.noShow += 1;
+
+    const start = Date.parse(appointment.startTime);
+    const isUpcoming = !isFinalStatus(appointment.status) && start > now.getTime();
+    if (isUpcoming && (day.nextStart === null || start < Date.parse(day.nextStart))) {
+      day.nextStart = appointment.startTime;
     }
   }
 
   return [...byDoctor.values()].sort((a, b) => collator.compare(a.doctorName, b.doctorName));
 }
+
 
 /** "Good morning" before 12, "Good afternoon" before 18, then "Good evening". */
 export function greetingFor(now: Date = new Date()): string {
