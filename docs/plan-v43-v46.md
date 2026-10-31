@@ -73,7 +73,7 @@ Based on the mockups in `docs/design/` and the decisions in
 | 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration          | SHOULD | Done   |
 | 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=`, Day/Week switch                                         | SHOULD | Done   |
 | 3.3c | Details panel only when an appointment is chosen; Escape closes it; focus returns to the block                                             | SHOULD | Done   |
-| 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today)              | SHOULD | Todo   |
+| 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today)              | SHOULD | Done   |
 | 3.5  | Patients: list, patient page with Book appointment, age and next appointment                                                               | SHOULD | Todo   |
 | 3.6  | Documentation: numbered sections, sharing panel, correct wording (the template is locked, not the note)                                    | SHOULD | Todo   |
 | 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                                                              | SHOULD | Todo   |
@@ -111,6 +111,10 @@ the current design.
 | 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md` | SHOULD          | Todo   |
 | 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video                    | MUST            | Todo   |
 | 37  | **MVP freeze**: no new features after v.46                                                            | MUST            | Todo   |
+| 38  | Admin statistics: appointments, no-show and cancellation rate, appointments by type (decision #60)    | COULD           | Todo   |
+| 39  | Recently added patients on the admin dashboard                                                        | COULD           | Todo   |
+| 40  | Separate test database, so manual tests never affect the automated ones                               | COULD           | Todo   |
+| 41  | One constant for the clinic's time zone (`CLINIC_TIME_ZONE`) in backend and frontend                  | COULD           | Todo   |
 
 - `VITE_API_URL` from #33 is Done.
 

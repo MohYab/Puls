@@ -51,13 +51,45 @@ active"), even with a token that has not expired.
 
 ## Appointments
 
-| Method | Path                     | Role | Notes                                                                                                                  |
-| ------ | ------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------- |
-| GET    | /appointments            | any  | Filters: `date` or `from`+`to`, and `doctorId` (see below). Doctor sees own only; admin sees all or one doctor         |
-| GET    | /appointments/:id        | any  | 404 if not found, 403 if doctor doesn't own it                                                                         |
-| POST   | /appointments            | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
-| PUT    | /appointments/:id        | any  | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
-| PATCH  | /appointments/:id/status | any  | Body: `{ status, reason? }`; see Appointment status                                                                    |
+| Method | Path                      | Role   | Notes                                                                                                                  |
+| ------ | ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| GET    | /appointments             | any    | Filters: `date` or `from`+`to`, and `doctorId` (see below). Doctor sees own only; admin sees all or one doctor         |
+| GET    | /appointments/to-document | DOCTOR | Own completed visits without a note, oldest first, at most 20 (see below)                                              |
+| GET    | /appointments/:id         | any    | 404 if not found, 403 if doctor doesn't own it                                                                         |
+| POST   | /appointments             | any    | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
+| PUT    | /appointments/:id         | any    | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
+| PATCH  | /appointments/:id/status  | any    | Body: `{ status, reason? }`; see Appointment status                                                                    |
+
+**Response:** every appointment response has the patient's name and date of
+birth, the type and the doctor's name. Doctors also get `hasNote` (decision #56).
+
+```json
+{
+  "id": "…",
+  "startTime": "2026-10-30T09:30:00.000Z",
+  "endTime": "2026-10-30T10:15:00.000Z",
+  "status": "SCHEDULED",
+  "patient": {
+    "firstName": "Anna",
+    "lastName": "Andersson",
+    "dateOfBirth": "1985-03-12T00:00:00.000Z"
+  },
+  "appointmentType": { "name": "General consultation", "duration": 45 },
+  "doctor": { "user": { "name": "Dr. Erik Lindqvist" } },
+  "hasNote": false
+}
+```
+
+**Visits to document (doctors only):** `GET /appointments/to-document` returns
+the doctor's own appointments with status `COMPLETED` that have no clinical
+note, oldest first. At most 20 are listed; `total` counts all of them. Only the
+existence of a note is checked, never its content (decision #58).
+
+```json
+{ "appointments": [{ "…": "same shape as above" }], "total": 34 }
+```
+
+Errors: 401 `UNAUTHORIZED`, 403 `FORBIDDEN` (admins).
 
 **Filters on `GET /appointments`:**
 

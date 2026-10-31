@@ -1054,3 +1054,68 @@ clinics in more than one time zone.
 `TZ` is caught at startup, but the time zone is still a setting, not part of
 the code. The frontend sends the browser's local dates, so a user in another time zone sees the clinic's days under her own dates. One clinic,
 one time zone is assumed (decision #55).
+
+---
+
+## 58. Visits to document: own endpoint, oldest first
+
+**Decision:** `GET /api/appointments/to-document` (doctors only) returns the
+doctor's completed visits without a note, oldest first, at most 20, with a
+`total`. The list and the count are read without a transaction.
+
+**Why:** Filtering the last days in the frontend would lose exactly the visit
+that matters most: one that has waited for weeks. The oldest is the most
+urgent, and 20 is enough for a card while `total` still shows the size of the
+backlog. Inside a transaction, a read with relations made the pg driver
+adapter send several queries at once on one connection (a known Prisma 7
+issue: a deprecation warning in pg 8, an error in pg 9). Outside a
+transaction each query gets its own connection.
+
+**Alternative considered:** Reading both in a transaction (the list and the
+count can differ for a moment without it). Not worth it for a dashboard that
+refetches; `pg` stays on `^8` until Prisma fixes the issue.
+
+**Known limitation:** A visit that has passed but is still Scheduled or
+Confirmed (the status was never updated) is not listed.
+
+## 59. The patient's date of birth in appointment responses
+
+**Decision:** Every appointment response includes `patient.dateOfBirth`.
+
+**Why:** Name and date of birth together identify the patient, so a doctor
+does not mix up two patients with the same name on the dashboard. No role gets
+new data: admins already see dates of birth on the patient pages, and doctors
+only see their own appointments.
+
+**Alternative considered:** A separate request per patient; more requests for
+the same information.
+
+## 60. One dashboard per role
+
+**Decision:** Doctors see their next patient, today's schedule, visits to
+document and today by status. Admins see operations only: today by status for
+the whole clinic and the doctors working today. The admin dashboard never
+requests `/appointments/to-document`, and no colour other than the booking
+status colours is used for counts.
+
+**Why:** The two roles have different questions ("who is next for me?" and
+"how is the clinic's day going?"). Admins have no access to notes (#17, #56).
+Configuration (doctors, appointment types, clinic settings) stays under
+Administration in the menu (design-direction.md, principle 3).
+
+**Alternative considered:** Statistics over 30 days and recently added
+patients on the admin dashboard (in the mockup). Moved to phase 5 as COULD:
+they need new endpoints and are not needed for the daily work.
+
+## 61. A doctor's calendar from the URL
+
+**Decision:** `/calendar?doctor=<id>` opens that doctor's calendar for admins.
+Changing doctor writes the id back to the URL with `replace`. An unknown or
+inactive id falls back to the first doctor; doctors ignore the parameter.
+
+**Why:** The admin dashboard links each doctor to their calendar, and a link
+that survives a reload can be shared. `replace` keeps the back button from
+stepping through every doctor change.
+
+**Alternative considered:** Navigation state (`useNavigate` with `state`);
+lost on reload and cannot be shared.

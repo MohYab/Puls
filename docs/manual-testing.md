@@ -650,3 +650,55 @@ Window at least 1280 px, logged in as a doctor:
 
 Known edge case: if an open appointment disappears from the list (an admin
 moves it to another day or doctor), the panel closes without returning focus.
+
+## Visits to document (phase 3)
+
+Needs `$DOCTOR_TOKEN` and `$ADMIN_TOKEN` (see "Tokens for both roles").
+
+```bash
+API=http://localhost:3001/api
+
+# 1. Doctor: total and the oldest visits, all COMPLETED with hasNote false
+curl -s $API/appointments/to-document -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq '{total, items: [.appointments[] | {startTime, status, hasNote}]}'
+
+# 2. Admin: 403 FORBIDDEN
+curl -s $API/appointments/to-document -H "Authorization: Bearer $ADMIN_TOKEN" | jq .error
+
+# 3. No token: 401
+curl -s $API/appointments/to-document | jq .error
+
+# 4. Document the oldest one: total drops by one (writes a note; reseed afterwards)
+ID=$(curl -s $API/appointments/to-document -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.appointments[0].id')
+curl -s -X POST $API/appointments/$ID/notes -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"reasonForVisit":"Test note"}' | jq '{id}'
+curl -s $API/appointments/to-document -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .total
+
+# 5. Every appointment has the patient's date of birth
+curl -s "$API/appointments?date=$(date +%F)" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq '.[0].patient'
+```
+
+The automated tests run against the same database. If test 4 has documented
+every completed visit of Erik's, `appointments.toDocument.test.ts` fails until
+the database is seeded again (`npx prisma db seed`).
+
+## UI checklist: dashboards (phase 3)
+
+Doctor (`erik@puls.test`):
+
+- [ ] Date, greeting after the time of day, and "N appointments today · N visits to document"
+- [ ] Two columns from 1024 px; on a phone: next patient, schedule, to document, status
+- [ ] Next patient: dark card with "Starts in …", date of birth and age; the focus ring is visible
+- [ ] Schedule: the next appointment marked "Next"; Document visit / Open documentation for completed, Open for upcoming, nothing for no-show and cancelled
+- [ ] To document: oldest first, "Today 08:30" or "Yesterday …"; saving a note removes the visit
+- [ ] Book appointment opens the form with the doctor preselected; Escape returns focus to the button
+- [ ] Backend stopped: an error with Try again in each card, never "No more patients today"
+
+Admin (`admin@puls.test`):
+
+- [ ] "Today at the clinic", a summary, Add patient and Book appointment
+- [ ] Five status tiles in a row, then Doctors today with centred counts
+- [ ] A doctor's name opens their calendar (`/calendar?doctor=…`); changing doctor updates the URL; a reload keeps the doctor
+- [ ] `/calendar?doctor=unknown` shows the first doctor without an error
+- [ ] At 375 px the table scrolls inside its card
+- [ ] Network tab: no request to `to-document`

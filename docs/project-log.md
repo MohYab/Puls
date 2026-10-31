@@ -1417,20 +1417,55 @@ real phone, completed the quality phase.
 - Accessibility for a side panel is mostly about focus: where it goes when
   the panel opens, and where it comes back when it closes.
 
+### Entry 14: Dashboards for doctors and admins (phase 3)
+
+**What I did**
+
+- Added `GET /api/appointments/to-document`: a doctor's completed visits
+  without a note, oldest first (decision #58), and the patient's date of birth
+  in every appointment response (decision #59).
+- Rebuilt the doctor's dashboard after the mockup: a greeting, the next
+  patient in a dark card with "Starts in …", today's schedule with date of
+  birth and age, visits to document and today by status.
+- Built the admin dashboard: today by status for the whole clinic and a table
+  of the doctors working today. Each doctor links to their calendar through
+  `/calendar?doctor=<id>` (decisions #60 and #61).
+- Moved the dashboard logic into pure functions with unit tests, and added a
+  Prettier check to CI.
+
+**What I learned**
+
+- A hypothesis must be tested. I first thought the array form of
+  `$transaction` caused a warning from the database driver; the stack trace
+  showed that any transaction with relations did, a known issue in Prisma 7.
+- Automated and manual tests should not share a database. A test failed
+  because I had documented the visits it expected while testing by hand.
+- A test that is fine alone can time out when every file runs in parallel.
+  This happened twice, so the frontend got a longer timeout for all tests.
+- Where a component belongs depends on what it knows, not on how many pages
+  use it: `components/` for building blocks, `features/` for anything that
+  knows about appointments or patients.
+- Formatting is only consistent when a machine checks it.
+
 ### Problems and solutions
 
-| Problem                                       | Cause                                                            | Solution                                                     |
-| --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| All borders black                             | Tailwind v4 default border colour is `currentColor`              | Base layer default (gray-200, gray-500 for controls)         |
-| Booking with unknown patient gave 500         | Ids in the body were not checked                                 | Check before writing; 400 for unknown ids (#42)              |
-| "." accepted as a correction reason           | Only "not empty" was required                                    | Minimum 10 characters in both layers                         |
-| Every backend test failed with `ECONNREFUSED` | PostgreSQL had not started after a restart                       | Start and enable the service; better hint in the test helper |
-| Frontend tests: "Found multiple elements"     | No automatic cleanup without Vitest globals                      | `cleanup()` in `afterEach` in the setup file                 |
-| CI: "Cannot find module 'vitest'"             | Test dependencies, scripts and config not in the committed files | Declared them again; read `git status` before every commit   |
-| Editor: unknown option `erasableSyntaxOnly`   | The editor used an older built-in TypeScript                     | Use the workspace TypeScript (`.vscode/settings.json`)       |
-| `hostname -I` not found                       | Not available on every Linux distribution                        | Use `ip route get` in the setup guide                        |
-| Booking from curl gave 400                    | `date --iso-8601` sends `+02:00`, the API only accepted `Z`      | The API accepts offsets; show the full response with `jq`    |
-| Two different 400s looked the same            | Only the status code was printed                                 | Print the error body                                         |
+| Problem                                          | Cause                                                                 | Solution                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| All borders black                                | Tailwind v4 default border colour is `currentColor`                   | Base layer default (gray-200, gray-500 for controls)             |
+| Booking with unknown patient gave 500            | Ids in the body were not checked                                      | Check before writing; 400 for unknown ids (#42)                  |
+| "." accepted as a correction reason              | Only "not empty" was required                                         | Minimum 10 characters in both layers                             |
+| Every backend test failed with `ECONNREFUSED`    | PostgreSQL had not started after a restart                            | Start and enable the service; better hint in the test helper     |
+| Frontend tests: "Found multiple elements"        | No automatic cleanup without Vitest globals                           | `cleanup()` in `afterEach` in the setup file                     |
+| CI: "Cannot find module 'vitest'"                | Test dependencies, scripts and config not in the committed files      | Declared them again; read `git status` before every commit       |
+| Editor: unknown option `erasableSyntaxOnly`      | The editor used an older built-in TypeScript                          | Use the workspace TypeScript (`.vscode/settings.json`)           |
+| `hostname -I` not found                          | Not available on every Linux distribution                             | Use `ip route get` in the setup guide                            |
+| Booking from curl gave 400                       | `date --iso-8601` sends `+02:00`, the API only accepted `Z`           | The API accepts offsets; show the full response with `jq`        |
+| Two different 400s looked the same               | Only the status code was printed                                      | Print the error body                                             |
+| Test expected undocumented visits, found none    | Manual tests had documented them in the shared database               | Reseed; a message in the test; separate test database in phase 5 |
+| pg warning "client is already executing a query" | Prisma 7 sends a read with relations in parallel inside a transaction | No transaction for the read; pg stays on ^8                      |
+| Login test timed out only in the full run        | jsdom per file and typing character by character under load           | 15 s test timeout in the frontend                                |
+| 26 files not formatted                           | Prettier was only run by hand                                         | `format:check` script and a CI step                              |
+| `package.json` appeared in the repository root   | An npm command was run from the root                                  | Deleted; run npm commands inside `frontend/` or `backend/`       |
 
 ### Feedback from supervisor
 
