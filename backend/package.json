@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format:check": "prettier --check src"
   },
   "keywords": [],
   "author": "",
