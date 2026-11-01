@@ -13,6 +13,7 @@ import { SectionNumber } from "./SectionNumber";
 import { useSaveNote } from "./useNotes";
 import { VitalSignsFields } from "./VitalSignsFields";
 import { fromVitalInputs, toVitalInputs } from "./vitals";
+import { Button } from "../../components/Button";
 
 const DEFAULT_TEMPLATE_NAME = "General consultation";
 
@@ -137,7 +138,7 @@ export function DocumentationForm({ appointmentId, note, templates }: Documentat
         </p>
       )}
       {saveNote.isSuccess && !isDirty && (
-        <p role="status" className="text-sm text-completed">
+        <p role="status" className="text-sm text-success">
           Documentation saved.
         </p>
       )}
@@ -148,13 +149,9 @@ export function DocumentationForm({ appointmentId, note, templates }: Documentat
             ? `Created ${formatDateTime(note.createdAt)} · Last saved ${formatDateTime(note.updatedAt)}`
             : "Not saved yet"}
         </p>
-        <button
-          type="submit"
-          disabled={saveNote.isPending}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          {saveNote.isPending ? "Saving..." : note ? "Save changes" : "Save documentation"}
-        </button>
+        <Button type="submit" isPending={saveNote.isPending} pendingText="Saving...">
+          {note ? "Save changes" : "Save documentation"}
+        </Button>
       </div>
     </form>
   );

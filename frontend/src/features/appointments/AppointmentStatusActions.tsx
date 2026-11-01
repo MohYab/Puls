@@ -4,6 +4,8 @@ import type { Appointment, AppointmentStatus } from "../../types/appointment";
 import { STATUS_PHRASES, isFinalStatus, workflowTargets } from "../../utils/appointmentStatus";
 import { formatDate, formatTime } from "../../utils/date";
 import { useUpdateAppointmentStatus } from "./useAppointments";
+import { Button } from "../../components/Button";
+import { FormError } from "../../components/Feedback";
 
 const BUTTON_LABELS: Record<AppointmentStatus, string> = {
   SCHEDULED: "Mark as scheduled",
@@ -12,10 +14,6 @@ const BUTTON_LABELS: Record<AppointmentStatus, string> = {
   NO_SHOW: "Mark as no-show",
   CANCELLED: "Cancel appointment",
 };
-
-const secondaryButton = "rounded border px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50";
-const dangerButton =
-  "rounded border border-red-300 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50";
 
 interface AppointmentStatusActionsProps {
   appointment: Appointment;
@@ -64,24 +62,21 @@ export function AppointmentStatusActions({ appointment, onDone }: AppointmentSta
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2">
         {targets.map((status) => (
-          <button
+          <Button
             key={status}
-            type="button"
+            size="sm"
+            variant={status === "CANCELLED" ? "outlineDanger" : "secondary"}
             onClick={() => handleClick(status)}
             disabled={updateStatus.isPending}
-            className={status === "CANCELLED" ? dangerButton : secondaryButton}
           >
             {BUTTON_LABELS[status]}
-          </button>
+          </Button>
         ))}
       </div>
 
-      {/* Errors from "Confirm" (final statuses show their errors in the dialog). */}
-      {updateStatus.isError && !pendingFinal && (
-        <p role="alert" className="text-sm text-red-600">
-          {updateStatus.error.message}
-        </p>
-      )}
+      <FormError
+        message={updateStatus.isError && !pendingFinal ? updateStatus.error.message : null}
+      />
 
       {pendingFinal && (
         <ConfirmDialog

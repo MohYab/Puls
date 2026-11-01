@@ -43,3 +43,13 @@ export function SuccessMessage({ children }: { children: ReactNode }) {
     </p>
   );
 }
+
+// An error for a whole form (from the API), shown above the buttons. Renders nothing without a message.
+export function FormError({ message }: { message: string | null | undefined }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="text-sm text-danger">
+      {message}
+    </p>
+  );
+}

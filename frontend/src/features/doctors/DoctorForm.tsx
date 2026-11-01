@@ -12,6 +12,8 @@ import {
 } from "../../schemas/doctorSchemas";
 import type { Doctor } from "../../types/doctor";
 import { useCreateDoctor, useUpdateDoctor } from "./useDoctors";
+import { FormError } from "../../components/Feedback";
+import { FormActions } from "../../components/FormActions";
 
 const EMAIL_TAKEN = "EMAIL_IN_USE";
 
@@ -125,29 +127,12 @@ export function DoctorForm({ doctor, onSuccess, onCancel }: DoctorFormProps) {
         </FormField>
       )}
 
-      {formError && (
-        <p role="alert" className="text-sm text-red-600">
-          {formError}
-        </p>
-      )}
-
-      <div className="flex justify-end gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={save.isPending}
-          className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={save.isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {save.isPending ? "Saving..." : isNew ? "Create doctor" : "Save changes"}
-        </button>
-      </div>
+      <FormError message={formError} />
+      <FormActions
+        submitLabel={isNew ? "Create doctor" : "Save changes"}
+        isPending={save.isPending}
+        onCancel={onCancel}
+      />
     </form>
   );
 }

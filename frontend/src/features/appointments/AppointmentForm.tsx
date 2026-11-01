@@ -17,6 +17,8 @@ import { OPENING_TIME, CLOSING_TIME } from "../../config/openingHours";
 import { usePatients } from "../patients/usePatients";
 import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
 import { useDoctors } from "../doctors/useDoctors";
+import { FormError } from "../../components/Feedback";
+import { FormActions } from "../../components/FormActions";
 
 interface AppointmentFormProps {
   defaultDate: Date;
@@ -149,24 +151,8 @@ export function AppointmentForm({
         </FormField>
       </div>
 
-      {serverError && (
-        <p role="alert" className="text-sm text-red-600">
-          {serverError}
-        </p>
-      )}
-
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" onClick={onCancel} className="px-4 py-2 text-sm border rounded">
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:opacity-50"
-        >
-          {mutation.isPending ? "Saving..." : "Save"}
-        </button>
-      </div>
+      <FormError message={serverError} />
+      <FormActions submitLabel="Save" isPending={mutation.isPending} onCancel={onCancel} />
     </form>
   );
 }

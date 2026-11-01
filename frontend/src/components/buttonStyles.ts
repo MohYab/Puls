@@ -1,4 +1,5 @@
-export type ButtonVariant = "primary" | "accent" | "secondary" | "ghost" | "danger";
+export type ButtonVariant =
+  "primary" | "accent" | "secondary" | "ghost" | "danger" | "outlineDanger";
 export type ButtonSize = "md" | "sm";
 
 const base =
@@ -11,6 +12,8 @@ const variants: Record<ButtonVariant, string> = {
   secondary: "border bg-surface text-ink hover:bg-subtle",
   ghost: "text-ink hover:bg-subtle",
   danger: "bg-danger text-white hover:bg-danger-hover",
+  // Secondary weight, destructive meaning (Cancel appointment, Revoke).
+  outlineDanger: "border border-danger/40 bg-surface text-danger hover:bg-danger-subtle",
 };
 
 const sizes: Record<ButtonSize, string> = {
