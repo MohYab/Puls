@@ -16,6 +16,7 @@ import { usePatient, useSetPatientStatus } from "../features/patients/usePatient
 import { usePageTitle } from "../hooks/usePageTitle";
 import { ApiError } from "../services/apiClient";
 import type { PatientStatusResult } from "../types/patient";
+import { LatestMeasurements } from "../features/notes/LatestMeasurements";
 
 function deactivationNotice({
   cancelledAppointments,
@@ -125,6 +126,9 @@ export default function PatientDetailPage() {
               <ErrorMessage message={reactivate.error.message} />
             </div>
           )}
+
+          {/* Clinical data: doctors only (decision aa). */}
+          {user?.role === "DOCTOR" && <LatestMeasurements patientId={patient.id} />}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
             <AppointmentHistory patientId={patient.id} />
