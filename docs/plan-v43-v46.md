@@ -65,23 +65,23 @@ application to IVO and is outside the system.
 Based on the mockups in `docs/design/` and the decisions in
 `docs/design-direction.md`.
 
-| #    | Task                                                                                                                                       | Class  | Status |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
-| 3.0  | Design direction written down (`docs/design-direction.md`)                                                                                 | MUST   | Done   |
-| 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons                         | MUST   | Done   |
-| 3.2  | Shell: sidebar grouped into main and Administration, user, My account and log out at the bottom, clinic name, prototype label, mobile menu | MUST   | Done   |
-| 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration          | SHOULD | Done   |
-| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=`, Day/Week switch                                         | SHOULD | Done   |
-| 3.3c | Details panel only when an appointment is chosen; Escape closes it; focus returns to the block                                             | SHOULD | Done   |
-| 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today)              | SHOULD | Done   |
-| 3.5  | Patients: list, patient page with Book appointment, age and next appointment                                                               | SHOULD | Done   |
-| 3.6  | correct wording (the template is locked, not the note); Latest measurements on the patient page (moved from 3.5)                           | SHOULD | Done   |
-| 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                                                              | SHOULD | Todo   |
-| 3.8  | Searchable select (combobox) for doctors and patients                                                                                      | SHOULD | Todo   |
-| 3.9  | Duplicate patient warning with "This is a different person"                                                                                | COULD  | Todo   |
-| 3.10 | Quick actions in the header (Book appointment, Add patient)                                                                                | COULD  | Todo   |
-| 3.11 | Statistics for a period and appointments by type                                                                                           | COULD  | Todo   |
-| 3.12 | Vital signs in the visit note and latest measurements on the patient page                                                                  | COULD  | Todo   |
+| #    | Task                                                                                                                                       | Class  | Status           |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ---------------- |
+| 3.0  | Design direction written down (`docs/design-direction.md`)                                                                                 | MUST   | Done             |
+| 3.1  | Foundation: self-hosted fonts, design tokens, one date format, `Button`, `Badge`, `Input`, `Card`, `Avatar`, icons                         | MUST   | Done             |
+| 3.2  | Shell: sidebar grouped into main and Administration, user, My account and log out at the bottom, clinic name, prototype label, mobile menu | MUST   | Done             |
+| 3.3  | Calendar: colour shows booking status only, note shown with an icon, current-time line, side panel with date, doctor and duration          | SHOULD | Done             |
+| 3.3b | Calendar week view (from `md`; day view on mobile), `GET /appointments?from=&to=`, Day/Week switch                                         | SHOULD | Done             |
+| 3.3c | Details panel only when an appointment is chosen; Escape closes it; focus returns to the block                                             | SHOULD | Done             |
+| 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today)              | SHOULD | Done             |
+| 3.5  | Patients: list, patient page with Book appointment, age and next appointment                                                               | SHOULD | Done             |
+| 3.6  | correct wording (the template is locked, not the note); Latest measurements on the patient page (moved from 3.5)                           | SHOULD | Done             |
+| 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                                                              | SHOULD | Todo             |
+| 3.8  | Searchable select (combobox) for doctors and patients                                                                                      | SHOULD | Todo             |
+| 3.9  | Duplicate patient warning with "This is a different person"                                                                                | COULD  | Rejected (#63)   |
+| 3.10 | Quick actions in the header (Book appointment, Add patient)                                                                                | COULD  | Done (3.4)       |
+| 3.11 | Statistics for a period and appointments by type                                                                                           | COULD  | Moved to phase 5 |
+| 3.12 | Vital signs in the visit note and latest measurements on the patient page                                                                  | COULD  | Done (3.6)       |
 
 **Scope rule:** phase 3 changes appearance and layout. The only functional
 changes are 3.4, 3.5 (next appointment), 3.8 and, if time allows, 3.9–3.12.
