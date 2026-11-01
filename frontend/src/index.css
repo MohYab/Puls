@@ -22,6 +22,10 @@
   --color-danger: #b91c1c;
   --color-danger-hover: #991b1b;
   --color-danger-subtle: #fef2f2;
+  /* "Saved" messages. The completed colours, but their own name:
+     "saved" is not a booking status. */
+  --color-success: var(--color-completed);
+  --color-success-subtle: var(--color-completed-bg);
 
   /* Appointment status: text on a tinted background, all pairs ≥ 4.5:1. */
   --color-scheduled: #0369a1;

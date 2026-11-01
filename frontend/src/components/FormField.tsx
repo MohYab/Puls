@@ -31,12 +31,12 @@ export function FormField({ id, label, error, hint, children }: FormFieldProps) 
         "aria-describedby": describedBy || undefined,
       })}
       {hint && (
-        <p id={hintId} className="mt-1 text-xs text-gray-500">
+        <p id={hintId} className="mt-1 text-xs text-muted">
           {hint}
         </p>
       )}
       {error && (
-        <p id={errorId} role="alert" className="mt-1 text-sm text-red-600">
+        <p id={errorId} role="alert" className="mt-1 text-sm text-danger">
           {error}
         </p>
       )}

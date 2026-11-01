@@ -1,3 +1,4 @@
+import { Button } from "./Button";
 import { Modal } from "./Modal";
 
 interface ConfirmDialogProps {
@@ -25,29 +26,24 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal title={title} onClose={onCancel}>
-      <p className="text-sm text-gray-700">{message}</p>
+      <p className="text-sm text-ink">{message}</p>
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-600">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {error}
         </p>
       )}
       <div className="mt-5 flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isPending}
-          className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-        >
+        <Button variant="secondary" onClick={onCancel} disabled={isPending}>
           {cancelLabel}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="danger"
           onClick={onConfirm}
-          disabled={isPending}
-          className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+          isPending={isPending}
+          pendingText={pendingLabel}
         >
-          {isPending ? pendingLabel : confirmLabel}
-        </button>
+          {confirmLabel}
+        </Button>
       </div>
     </Modal>
   );

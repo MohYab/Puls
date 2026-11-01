@@ -1,15 +1,16 @@
 import type { ReactNode } from "react";
+import { Button } from "./Button";
 
 export function LoadingMessage({ children = "Loading..." }: { children?: ReactNode }) {
   return (
-    <p role="status" className="text-sm text-gray-600">
+    <p role="status" className="text-sm text-muted">
       {children}
     </p>
   );
 }
 
 export function EmptyMessage({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-gray-600">{children}</p>;
+  return <p className="text-sm text-muted">{children}</p>;
 }
 
 interface ErrorMessageProps {
@@ -17,19 +18,28 @@ interface ErrorMessageProps {
   onRetry?: () => void;
 }
 
+// role="alert": read out at once. An error must never look like an empty state (#25).
 export function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
-    <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm">
-      <p className="text-red-800">{message}</p>
+    <div role="alert" className="rounded-lg border border-danger/20 bg-danger-subtle p-3 text-sm">
+      <p className="text-danger">{message}</p>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-2 rounded bg-red-700 px-3 py-1.5 text-white hover:bg-red-800"
-        >
+        <Button variant="danger" size="sm" onClick={onRetry} className="mt-2">
           Try again
-        </button>
+        </Button>
       )}
     </div>
+  );
+}
+
+// role="status": announced politely, without interrupting. For "saved" and similar.
+export function SuccessMessage({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="status"
+      className="rounded-lg border border-success/20 bg-success-subtle p-3 text-sm text-success"
+    >
+      {children}
+    </p>
   );
 }

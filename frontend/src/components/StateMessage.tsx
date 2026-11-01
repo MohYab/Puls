@@ -1,18 +1,21 @@
+import { Button } from "./Button";
+
 interface StateMessageProps {
   title: string;
   text: string;
   onRetry?: () => void;
 }
 
+// A whole page that cannot be shown: not found, no access, could not load.
 export function StateMessage({ title, text, onRetry }: StateMessageProps) {
   return (
-    <div className="mt-6 rounded-md border border-gray-200 bg-white p-4">
-      <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-      <p className="mt-1 text-sm text-gray-600">{text}</p>
+    <div className="mt-6 rounded-lg border bg-surface p-5 shadow-card">
+      <h1 className="font-display text-lg font-semibold text-ink">{title}</h1>
+      <p className="mt-1 text-sm text-muted">{text}</p>
       {onRetry && (
-        <button type="button" onClick={onRetry} className="mt-3 rounded border px-3 py-1.5 text-sm">
+        <Button variant="secondary" size="sm" onClick={onRetry} className="mt-3">
           Try again
-        </button>
+        </Button>
       )}
     </div>
   );
