@@ -10,6 +10,16 @@ type NoteContent = {
   observation: string;
   assessment: string;
   plan: string;
+  vitals?: {
+    systolic?: number;
+    diastolic?: number;
+    heartRate?: number;
+    temperature?: number;
+    oxygenSaturation?: number;
+    respiratoryRate?: number;
+    weight?: number;
+    height?: number;
+  };
 };
 
 const MS_PER_MINUTE = 60 * 1000;
@@ -453,6 +463,14 @@ async function main() {
     observation: "Blood pressure normal, no concerns.",
     assessment: "Patient in good general health.",
     plan: "Routine follow-up in 12 months.",
+    vitals: {
+      systolic: 138,
+      diastolic: 86,
+      heartRate: 72,
+      temperature: 36.8,
+      weight: 68.5,
+      height: 167,
+    },
   });
   await book(erik.id, bo.id, followUp, at(0, 10));
   await book(erik.id, carin.id, annual, at(0, 11, 30));
@@ -472,6 +490,14 @@ async function main() {
     observation: "Lungs clear on examination.",
     assessment: "Post-viral cough.",
     plan: "Wait and see for two weeks.",
+    vitals: {
+      systolic: 138,
+      diastolic: 86,
+      heartRate: 72,
+      temperature: 36.8,
+      weight: 68.5,
+      height: 167,
+    },
   });
 
   const karinAnnual = await book(sara.id, karin.id, annual, at(-10, 9), "COMPLETED");
@@ -488,6 +514,7 @@ async function main() {
     observation: "Reduced range of motion, no nerve involvement.",
     assessment: "Muscle strain.",
     plan: "Stay active. Over-the-counter pain relief if needed.",
+    vitals: { systolic: 128, diastolic: 82, heartRate: 68, temperature: 37.9 },
   });
 
   await book(sara.id, eva.id, followUp, at(0, 9, 30), "CONFIRMED");
@@ -540,25 +567,25 @@ async function main() {
     `Seed data created: ${doctors} doctors, ${patients} patients, ${appointments} appointments, ${notes} notes.`
   );
 }
-  // Fictional clinic details. upsert, so running the seed again resets them.
-  const clinic = {
-    name: "Puls Health Centre",
-    addressLine: "Testgatan 1",
-    postalCode: "111 11",
-    city: "Exempelstad",
-    phone: "070-1740690",
-    email: "reception@puls.test",
-  };
-  await prisma.clinicSettings.upsert({
-    where: { id: 1 },
-    create: { id: 1, ...clinic },
-    update: clinic,
-  });
+// Fictional clinic details. upsert, so running the seed again resets them.
+const clinic = {
+  name: "Puls Health Centre",
+  addressLine: "Testgatan 1",
+  postalCode: "111 11",
+  city: "Exempelstad",
+  phone: "070-1740690",
+  email: "reception@puls.test",
+};
+await prisma.clinicSettings.upsert({
+  where: { id: 1 },
+  create: { id: 1, ...clinic },
+  update: clinic,
+});
 
-  // Sharing scenario: Sara has shared her note about Anna with Johan.
-  // Johan has no appointments with Anna, so the shared note is his only access.
-  // Looked up through relations, so it does not depend on variable names or
-  // pick the wrong patient if two patients share a name.
+// Sharing scenario: Sara has shared her note about Anna with Johan.
+// Johan has no appointments with Anna, so the shared note is his only access.
+// Looked up through relations, so it does not depend on variable names or
+// pick the wrong patient if two patients share a name.
 async function seedNoteShares() {
   const saraNoteForAnna = await prisma.clinicalNote.findFirstOrThrow({
     where: {
