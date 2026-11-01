@@ -734,3 +734,40 @@ Admin (`admin@puls.test`):
 - [ ] No documentation column in the history; "Clinical notes are only visible to doctors."
 - [ ] Next names the doctor
 - [ ] Deactivating a patient (use one you created): "Inactive", "Deactivated … (…)", no Book appointment and no Next
+
+## Vital signs (phase 3)
+
+Needs `$DOCTOR_TOKEN` (Erik). Uses Erik's note for Anna; test 1 changes it,
+reseed afterwards or save the original again.
+
+```bash
+API=http://localhost:3001/api
+ANNA=$(curl -s "$API/patients?search=Anna%20Andersson" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[0].id')
+NOTE=$(curl -s $API/patients/$ANNA/notes -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[0].id')
+
+# 1. Valid values: 200, returned in content.vitals
+curl -s -X PUT $API/notes/$NOTE -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"reasonForVisit":"Check-up","vitals":{"systolic":138,"diastolic":86,"temperature":36.8}}' | jq .content.vitals
+
+# 2. Height 1670: 400 "Must be between 30 and 250 cm"
+curl -s -X PUT $API/notes/$NOTE -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"reasonForVisit":"Check-up","vitals":{"height":1670}}' | jq .error
+
+# 3. Only systolic: 400 "Enter both values"
+curl -s -X PUT $API/notes/$NOTE -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"reasonForVisit":"Check-up","vitals":{"systolic":138}}' | jq .error
+```
+
+## UI checklist: documentation (phase 3)
+
+Doctor (`erik@puls.test`):
+
+- [ ] Visit documentation: back to patient, a visit header with patient, date of birth and age, time, type, doctor and status
+- [ ] Sections numbered 1 Reason for visit, 2 Vital signs, 3–5; with the Vaccination template 1–4 without a gap
+- [ ] Height 1670: "Must be between 30 and 250 cm" at the field, nothing saved
+- [ ] Only systolic: "Enter both values"; 80/90: "Systolic must be higher than diastolic"
+- [ ] 36,8 °C is saved as 36.8; editing only the text keeps the vital signs
+- [ ] Previous documentation: a line such as "BP 138/86 mmHg · HR 72/min"; "Shared by …" on a shared note, without Open documentation
+- [ ] Patient page: Latest measurements with a date on each value; "No measurements recorded yet." for a patient without any
+- [ ] Admin: no Latest measurements on the patient page
+- [ ] 375 px: visit header, note, sharing, earlier documentation in that order

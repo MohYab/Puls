@@ -1472,27 +1472,56 @@ real phone, completed the quality phase.
   the decision: the duplicate warning in the file was not the version I had
   planned, and the test found it.
 
+### Entry 16: Documentation and vital signs (phase 3)
+
+**What I did**
+
+- Added eight optional vital signs to the clinical note, stored in the existing
+  JSON content with plausibility limits in the API and the same limits in the
+  form (decision #64).
+- Rebuilt the visit note with numbered sections and the documentation page
+  after the mockup: a visit header, the note in the main column, sharing and
+  earlier documentation with a line of vital signs in a side column.
+- Added Latest measurements to the patient page for doctors (decision #65).
+
+**What I learned**
+
+- Adding a field to a type can change what other code means. `keyof
+NoteContent` suddenly included `vitals`, and TypeScript stopped code that
+  assumed every key was text. A separate type for the text fields fixed it.
+- Dependencies should point one way: `types/` and `config/` never import from
+  `features/`. The limits moved to `config/vitals.ts` so the form schema and
+  the features can share them.
+- A form holds what the user typed, the API needs numbers. Validating the text
+  and converting it in one place keeps both sides simple.
+- I skipped a whole sub-step without noticing, because the page looked
+  finished. The checklist at the end of each step is there to catch that.
+
 ### Problems and solutions
 
-| Problem                                          | Cause                                                                 | Solution                                                         |
-| ------------------------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| All borders black                                | Tailwind v4 default border colour is `currentColor`                   | Base layer default (gray-200, gray-500 for controls)             |
-| Booking with unknown patient gave 500            | Ids in the body were not checked                                      | Check before writing; 400 for unknown ids (#42)                  |
-| "." accepted as a correction reason              | Only "not empty" was required                                         | Minimum 10 characters in both layers                             |
-| Every backend test failed with `ECONNREFUSED`    | PostgreSQL had not started after a restart                            | Start and enable the service; better hint in the test helper     |
-| Frontend tests: "Found multiple elements"        | No automatic cleanup without Vitest globals                           | `cleanup()` in `afterEach` in the setup file                     |
-| CI: "Cannot find module 'vitest'"                | Test dependencies, scripts and config not in the committed files      | Declared them again; read `git status` before every commit       |
-| Editor: unknown option `erasableSyntaxOnly`      | The editor used an older built-in TypeScript                          | Use the workspace TypeScript (`.vscode/settings.json`)           |
-| `hostname -I` not found                          | Not available on every Linux distribution                             | Use `ip route get` in the setup guide                            |
-| Booking from curl gave 400                       | `date --iso-8601` sends `+02:00`, the API only accepted `Z`           | The API accepts offsets; show the full response with `jq`        |
-| Two different 400s looked the same               | Only the status code was printed                                      | Print the error body                                             |
-| Test expected undocumented visits, found none    | Manual tests had documented them in the shared database               | Reseed; a message in the test; separate test database in phase 5 |
-| pg warning "client is already executing a query" | Prisma 7 sends a read with relations in parallel inside a transaction | No transaction for the read; pg stays on ^8                      |
-| Login test timed out only in the full run        | jsdom per file and typing character by character under load           | 15 s test timeout in the frontend                                |
-| 26 files not formatted                           | Prettier was only run by hand                                         | `format:check` script and a CI step                              |
-| `package.json` appeared in the repository root   | An npm command was run from the root                                  | Deleted; run npm commands inside `frontend/` or `backend/`       |
-| `hasNote` missing on `PatientAppointment`        | The type change went into the wrong interface                         | TypeScript pointed at every use; added it to the right type      |
-| Duplicate warning test failed                    | The component file held a different version than planned              | Replaced it with the planned version                             |
+| Problem                                             | Cause                                                                 | Solution                                                         |
+| --------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| All borders black                                   | Tailwind v4 default border colour is `currentColor`                   | Base layer default (gray-200, gray-500 for controls)             |
+| Booking with unknown patient gave 500               | Ids in the body were not checked                                      | Check before writing; 400 for unknown ids (#42)                  |
+| "." accepted as a correction reason                 | Only "not empty" was required                                         | Minimum 10 characters in both layers                             |
+| Every backend test failed with `ECONNREFUSED`       | PostgreSQL had not started after a restart                            | Start and enable the service; better hint in the test helper     |
+| Frontend tests: "Found multiple elements"           | No automatic cleanup without Vitest globals                           | `cleanup()` in `afterEach` in the setup file                     |
+| CI: "Cannot find module 'vitest'"                   | Test dependencies, scripts and config not in the committed files      | Declared them again; read `git status` before every commit       |
+| Editor: unknown option `erasableSyntaxOnly`         | The editor used an older built-in TypeScript                          | Use the workspace TypeScript (`.vscode/settings.json`)           |
+| `hostname -I` not found                             | Not available on every Linux distribution                             | Use `ip route get` in the setup guide                            |
+| Booking from curl gave 400                          | `date --iso-8601` sends `+02:00`, the API only accepted `Z`           | The API accepts offsets; show the full response with `jq`        |
+| Two different 400s looked the same                  | Only the status code was printed                                      | Print the error body                                             |
+| Test expected undocumented visits, found none       | Manual tests had documented them in the shared database               | Reseed; a message in the test; separate test database in phase 5 |
+| pg warning "client is already executing a query"    | Prisma 7 sends a read with relations in parallel inside a transaction | No transaction for the read; pg stays on ^8                      |
+| Login test timed out only in the full run           | jsdom per file and typing character by character under load           | 15 s test timeout in the frontend                                |
+| 26 files not formatted                              | Prettier was only run by hand                                         | `format:check` script and a CI step                              |
+| `package.json` appeared in the repository root      | An npm command was run from the root                                  | Deleted; run npm commands inside `frontend/` or `backend/`       |
+| `hasNote` missing on `PatientAppointment`           | The type change went into the wrong interface                         | TypeScript pointed at every use; added it to the right type      |
+| Duplicate warning test failed                       | The component file held a different version than planned              | Replaced it with the planned version                             |
+| Build errors after adding `vitals` to the note type | `keyof NoteContent` included the new field                            | A `NoteTextField` type for the four text fields                  |
+| `types/note.ts` imported from `features/`           | Types were placed where they were first used                          | Types to `types/`, limits to `config/vitals.ts`                  |
+| Documentation page had the old form                 | Sub-step 3 was skipped                                                | Done afterwards, follow each step's checklist                    |
+| Test query for `term` found two elements            | A `dt` gets no accessible name from its text                          | Compare the list of term texts instead                           |
 
 ### Feedback from supervisor
 

@@ -1159,3 +1159,43 @@ confirming) to be safe; left for future development.
 
 **Known limitation:** Two real people with the same name and date of birth
 cannot both be registered.
+
+---
+
+## 64. Vital signs in the note content
+
+**Decision:** A note can hold eight optional vital signs (blood pressure,
+heart rate, temperature, SpO₂, respiratory rate, weight, height) in
+`content.vitals`, as numbers with fixed SI units. The API checks plausibility
+limits; the frontend uses the same limits and messages, and accepts a comma as
+decimal separator. The section is shown for every template, as section 2.
+
+**Why:** Free text such as "BP 138/86" cannot be compared between visits.
+Structured values can, with the same units every time.
+Storing them in the existing JSON content needs no migration, and
+the note's access rules (author writes, shared doctors read, admins nothing)
+apply to the values automatically. The limits only catch typing mistakes such
+as 1670 cm; the app never interprets a value clinically.
+
+**Alternative considered:** A separate table with one column per measurement.
+Better for statistics and a future export in a standard format (FHIR, LOINC
+codes), but it needs a migration and a second life cycle next to the note.
+Left for future development.
+
+**Known limitation:** No trends or warnings; the limits are not reference
+ranges.
+
+## 65. Latest measurements on the patient page
+
+**Decision:** Doctors see the newest value of each measurement on the patient
+page, each with the date of the visit it comes from. The values are computed
+in the frontend from the notes the doctor can read (own and shared). Admins
+see nothing.
+
+**Why:** Before a visit the doctor wants the patient's latest values without
+opening every note. The notes are already loaded for Previous notes, so no new
+endpoint is needed. Values can come from different visits, so each one shows
+its own date. Vital signs are clinical data (#17, #56).
+
+**Alternative considered:** A server endpoint that returns the latest values;
+needed if the number of notes grows, or with a separate table (#64).

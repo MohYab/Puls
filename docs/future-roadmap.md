@@ -151,6 +151,10 @@ features are added:
 - **Configurable care types:** appointment types, templates, durations and
   form fields per clinic, without building a new screen for each.
 
+- **Vital signs in a standard format.** Move vital signs from the note's JSON
+  content to a table with one row per measurement, coded with LOINC, so they
+  can be exported with FHIR and shown as trends (decision #64).
+
 ## Operations and security for real use
 
 - Access log for every read of a clinical note, with regular review of the

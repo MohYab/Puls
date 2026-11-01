@@ -75,7 +75,7 @@ Based on the mockups in `docs/design/` and the decisions in
 | 3.3c | Details panel only when an appointment is chosen; Escape closes it; focus returns to the block                                             | SHOULD | Done   |
 | 3.4  | Dashboards: doctor (next patient, To document, today by status); admin shows operations only (today by status, doctors today)              | SHOULD | Done   |
 | 3.5  | Patients: list, patient page with Book appointment, age and next appointment                                                               | SHOULD | Done   |
-| 3.6  | correct wording (the template is locked, not the note); Latest measurements on the patient page (moved from 3.5)                           | SHOULD | Todo   |
+| 3.6  | correct wording (the template is locked, not the note); Latest measurements on the patient page (moved from 3.5)                           | SHOULD | Done   |
 | 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                                                              | SHOULD | Todo   |
 | 3.8  | Searchable select (combobox) for doctors and patients                                                                                      | SHOULD | Todo   |
 | 3.9  | Duplicate patient warning with "This is a different person"                                                                                | COULD  | Todo   |
@@ -115,6 +115,7 @@ the current design.
 | 39  | Recently added patients on the admin dashboard                                                        | COULD           | Todo   |
 | 40  | Separate test database, so manual tests never affect the automated ones                               | COULD           | Todo   |
 | 41  | One constant for the clinic's time zone (`CLINIC_TIME_ZONE`) in backend and frontend                  | COULD           | Todo   |
+| 42  | Trends for vital signs on the patient page (a small chart per measurement)                            | COULD           | Todo   |
 
 - `VITE_API_URL` from #33 is Done.
 
