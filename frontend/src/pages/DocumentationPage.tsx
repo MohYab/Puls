@@ -1,17 +1,18 @@
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Card } from "../components/Card";
-import { StatusBadge } from "../components/StatusBadge";
+import { LoadingMessage } from "../components/Feedback";
+import { StateMessage } from "../components/StateMessage";
 import { useAppointment } from "../features/appointments/useAppointments";
 import { useAuth } from "../features/auth/useAuth";
-import { DocumentationForm } from "../features/notes/DocumentationForm";
-import { useNote } from "../features/notes/useNotes";
-import { ApiError } from "../services/apiClient";
-import { formatDate, formatTime } from "../utils/date";
-import { PreviousNotes } from "../features/notes/PreviousNotes";
 import { useTemplates } from "../features/documentationTemplates/useTemplates";
-import { StateMessage } from "../components/StateMessage";
+import { DocumentationForm } from "../features/notes/DocumentationForm";
 import { NoteSharing } from "../features/notes/NoteSharing";
+import { PreviousNotes } from "../features/notes/PreviousNotes";
+import { useNote } from "../features/notes/useNotes";
+import { VisitHeader } from "../features/notes/VisitHeader";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { ApiError } from "../services/apiClient";
 
 export default function DocumentationPage() {
   usePageTitle("Documentation");
@@ -74,7 +75,7 @@ export default function DocumentationPage() {
   }
 
   if (appointmentQuery.isPending || noteQuery.isPending || templatesQuery.isPending) {
-    return <p className="text-sm text-gray-600">Loading documentation...</p>;
+    return <LoadingMessage>Loading documentation...</LoadingMessage>;
   }
 
   const appointment = appointmentQuery.data;
@@ -91,59 +92,35 @@ export default function DocumentationPage() {
 
   return (
     <div>
+      {/* The patient page is the right context whether the doctor came from the
+          dashboard, the calendar or the patient (decision ab). */}
       <Link
         to={`/patients/${appointment.patientId}`}
-        className="text-sm text-blue-700 hover:underline"
+        className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline"
       >
-        ← Back to patient
+        <ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />
+        Back to patient
       </Link>
 
-      <h1 className="mt-4 text-2xl font-semibold text-gray-900">Documentation</h1>
+      <h1 className="mb-5 font-display text-2xl font-bold text-ink md:text-[28px]">
+        Visit documentation
+      </h1>
 
-      {/*
-        DOM order = mobile order: appointment, form, previous notes.
-        On lg the form spans two rows on the right, and the previous notes
-        land under the appointment card in the left column.
-      */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr] lg:items-start">
-        <div className="lg:col-span-1">
-          <Card title="Appointment">
-            <dl className="grid grid-cols-[6rem_1fr] gap-y-2 text-sm">
-              <dt className="text-gray-500">Patient</dt>
-              <dd className="text-gray-900">
-                {appointment.patient.firstName} {appointment.patient.lastName}
-              </dd>
+      <VisitHeader appointment={appointment} />
 
-              <dt className="text-gray-500">Date</dt>
-              <dd className="text-gray-900">
-                {formatDate(appointment.startTime)} {formatTime(appointment.startTime)}
-              </dd>
+      {/* DOM order = phone order: the note before the earlier documentation. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
+        <Card title="Visit note">
+          <DocumentationForm
+            appointmentId={appointment.id}
+            note={note}
+            templates={templatesQuery.data}
+          />
+        </Card>
 
-              <dt className="text-gray-500">Type</dt>
-              <dd className="text-gray-900">{appointment.appointmentType.name}</dd>
-
-              <dt className="text-gray-500">Status</dt>
-              <dd>
-                <StatusBadge status={appointment.status} />
-              </dd>
-            </dl>
-          </Card>
-        </div>
-
-        <div className="flex flex-col gap-6 lg:col-span-2 lg:row-span-2">
-          <Card title="Visit note">
-            <DocumentationForm
-              appointmentId={appointment.id}
-              note={note}
-              templates={templatesQuery.data}
-            />
-          </Card>
-
+        <div className="flex min-w-0 flex-col gap-6">
           {/* A note can only be shared once it has been saved. */}
           {note && <NoteSharing note={note} />}
-        </div>
-
-        <div className="lg:col-span-1">
           <PreviousNotes patientId={appointment.patientId} excludeAppointmentId={appointment.id} />
         </div>
       </div>
