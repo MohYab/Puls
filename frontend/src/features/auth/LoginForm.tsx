@@ -7,6 +7,8 @@ import { loginRequest } from "./authService";
 import { useAuth } from "./useAuth";
 import { ApiError } from "../../services/apiClient";
 import { inputClassName } from "../../components/formStyles";
+import { FormError } from "../../components/Feedback";
+import { Button } from "../../components/Button";
 
 export function LoginForm() {
   const { login, sessionExpired } = useAuth();
@@ -47,7 +49,7 @@ export function LoginForm() {
         </p>
       )}
       <div>
-        <label htmlFor="email" className="mb-1 block text-sm font-medium">
+        <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink">
           Email
         </label>
         <input
@@ -61,14 +63,14 @@ export function LoginForm() {
           className={inputClassName}
         />
         {errors.email && (
-          <p id="email-error" className="mt-1 text-sm text-red-600">
+          <p id="email-error" className="mt-1 text-sm text-danger">
             {errors.email.message}
           </p>
         )}
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-1 block text-sm font-medium">
+        <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink">
           Password
         </label>
         <input
@@ -81,25 +83,17 @@ export function LoginForm() {
           className={inputClassName}
         />
         {errors.password && (
-          <p id="password-error" className="mt-1 text-sm text-red-600">
+          <p id="password-error" className="mt-1 text-sm text-danger">
             {errors.password.message}
           </p>
         )}
       </div>
 
-      {serverError && (
-        <p role="alert" className="text-sm text-red-600">
-          {serverError}
-        </p>
-      )}
+      <FormError message={serverError} />
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-      >
-        {isSubmitting ? "Signing in..." : "Log in"}
-      </button>
+      <Button type="submit" isPending={isSubmitting} pendingText="Signing in..." className="w-full">
+        Log in
+      </Button>
     </form>
   );
 }
