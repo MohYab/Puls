@@ -1,4 +1,15 @@
-import type { Vitals } from "../features/notes/vitals";
+export type VitalKey =
+  | "systolic"
+  | "diastolic"
+  | "heartRate"
+  | "temperature"
+  | "oxygenSaturation"
+  | "respiratoryRate"
+  | "weight"
+  | "height";
+
+/** Measured values only; a missing key was not measured. */
+export type Vitals = Partial<Record<VitalKey, number>>;
 
 /** The four text fields of a note; vital signs are a separate field. */
 export type NoteTextField = "reasonForVisit" | "observation" | "assessment" | "plan";

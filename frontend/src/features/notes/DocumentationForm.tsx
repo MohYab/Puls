@@ -6,23 +6,30 @@ import { inputClassName } from "../../components/formStyles";
 import { ApiError } from "../../services/apiClient";
 import { noteFormSchema, type NoteFormValues } from "../../schemas/noteSchemas";
 import type { DocumentationTemplate } from "../../types/documentationTemplate";
-import type { ClinicalNote } from "../../types/note";
+import type { ClinicalNote, NoteContent } from "../../types/note";
 import { formatDateTime } from "../../utils/date";
 import { NOTE_FIELDS, visibleFields } from "./noteFields";
+import { SectionNumber } from "./SectionNumber";
 import { useSaveNote } from "./useNotes";
+import { VitalSignsFields } from "./VitalSignsFields";
+import { fromVitalInputs, toVitalInputs } from "./vitals";
 
 const DEFAULT_TEMPLATE_NAME = "General consultation";
-
-const EMPTY_VALUES: NoteFormValues = {
-  reasonForVisit: "",
-  observation: "",
-  assessment: "",
-  plan: "",
-};
 
 function defaultTemplateId(templates: DocumentationTemplate[]): string {
   const preferred = templates.find((t) => t.name === DEFAULT_TEMPLATE_NAME) ?? templates[0];
   return preferred?.id ?? "";
+}
+
+/** The API's content (numbers) as form values (text). */
+function toFormValues(content: NoteContent | undefined): NoteFormValues {
+  return {
+    reasonForVisit: content?.reasonForVisit ?? "",
+    observation: content?.observation ?? "",
+    assessment: content?.assessment ?? "",
+    plan: content?.plan ?? "",
+    vitals: toVitalInputs(content?.vitals),
+  };
 }
 
 interface DocumentationFormProps {
@@ -48,13 +55,13 @@ export function DocumentationForm({ appointmentId, note, templates }: Documentat
     formState: { errors, isDirty },
   } = useForm<NoteFormValues>({
     resolver: zodResolver(noteFormSchema),
-    defaultValues: note?.content ?? EMPTY_VALUES,
+    defaultValues: toFormValues(note?.content),
   });
 
   function handleTemplateChange(templateId: string) {
     setSelectedTemplateId(templateId);
 
-    // Clear fields the new template does not have, so no hidden text is saved.
+    // Clear text fields the new template does not have, so no hidden text is saved.
     const sections = templates.find((t) => t.id === templateId)?.templateContent.sections;
     for (const { name } of NOTE_FIELDS) {
       if (sections && !sections.includes(name)) {
@@ -63,23 +70,46 @@ export function DocumentationForm({ appointmentId, note, templates }: Documentat
     }
   }
 
-  function onSubmit(values: NoteFormValues) {
+  function onSubmit({ vitals, ...text }: NoteFormValues) {
     saveNote.mutate(
-      { content: values, templateId: selectedTemplateId || undefined },
+      // vitals is always sent: PUT replaces the whole content.
+      {
+        content: { ...text, vitals: fromVitalInputs(vitals) },
+        templateId: selectedTemplateId || undefined,
+      },
       // Reset with the saved content so the form is "clean" again after a save.
-      { onSuccess: (saved) => reset(saved.content) }
+      { onSuccess: (saved) => reset(toFormValues(saved.content)) }
     );
   }
 
+  // Reason for visit first, then vital signs, then the template's other fields.
+  // Numbers follow the visible sections, so a hidden field leaves no gap.
+  const reason = fields.filter(({ name }) => name === "reasonForVisit");
+  const rest = fields.filter(({ name }) => name !== "reasonForVisit");
+  const vitalsNumber = reason.length + 1;
+
+  const textSection = ({ name, label }: (typeof fields)[number], number: number) => (
+    <div key={name} className="flex gap-3">
+      <SectionNumber number={number} />
+      <div className="min-w-0 flex-1">
+        <FormField id={name} label={label} error={errors[name]?.message}>
+          {(field) => (
+            <textarea {...field} rows={3} {...register(name)} className={inputClassName} />
+          )}
+        </FormField>
+      </div>
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-6">
       {note ? (
-        <p className="text-sm text-gray-600">
-          Template:{" "}
-          <span className="font-medium text-gray-900">{activeTemplate?.name ?? "None"}</span>
+        <p className="text-sm text-muted">
+          Template: <span className="font-medium text-ink">{activeTemplate?.name ?? "None"}</span> ·
+          Locked after the first save
         </p>
       ) : (
-        <FormField id="template" label="Template" hint={activeTemplate?.description ?? undefined}>
+        <FormField id="template" label="Template" hint="Locked after the first save">
           {(field) => (
             <select
               {...field}
@@ -97,35 +127,31 @@ export function DocumentationForm({ appointmentId, note, templates }: Documentat
         </FormField>
       )}
 
-      {fields.map(({ name, label }) => (
-        <FormField key={name} id={name} label={label} error={errors[name]?.message}>
-          {(field) => (
-            <textarea {...field} rows={4} {...register(name)} className={inputClassName} />
-          )}
-        </FormField>
-      ))}
+      {reason.map((field) => textSection(field, 1))}
+      <VitalSignsFields number={vitalsNumber} register={register} errors={errors} />
+      {rest.map((field, index) => textSection(field, vitalsNumber + 1 + index))}
 
       {saveNote.isError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger">
           {saveNote.error instanceof ApiError ? saveNote.error.message : "Something went wrong."}
         </p>
       )}
       {saveNote.isSuccess && !isDirty && (
-        <p role="status" className="text-sm text-green-700">
+        <p role="status" className="text-sm text-completed">
           Documentation saved.
         </p>
       )}
 
-      <div className="flex items-center justify-between gap-4 pt-2">
-        <p className="text-xs text-gray-500">
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+        <p className="text-xs text-muted">
           {note
-            ? `Created ${formatDateTime(note.createdAt)} · Last updated ${formatDateTime(note.updatedAt)}`
+            ? `Created ${formatDateTime(note.createdAt)} · Last saved ${formatDateTime(note.updatedAt)}`
             : "Not saved yet"}
         </p>
         <button
           type="submit"
           disabled={saveNote.isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {saveNote.isPending ? "Saving..." : note ? "Save changes" : "Save documentation"}
         </button>

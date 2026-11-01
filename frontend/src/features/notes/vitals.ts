@@ -1,36 +1,9 @@
-// Vital signs: one list of measurements, units and limits for the whole frontend.
-// The limits mirror backend/src/validators/noteValidators.ts; the backend decides.
+import { VITAL_KEYS } from "../../config/vitals";
+import { parseVital } from "../../schemas/noteSchemas";
+import type { VitalKey, Vitals } from "../../types/note";
 
-export type VitalKey =
-  | "systolic"
-  | "diastolic"
-  | "heartRate"
-  | "temperature"
-  | "oxygenSaturation"
-  | "respiratoryRate"
-  | "weight"
-  | "height";
-
-export type Vitals = Partial<Record<VitalKey, number>>;
-
-export interface VitalLimit {
-  min: number;
-  max: number;
-  /** 1 = whole numbers, 0.1 = one decimal. */
-  step: 1 | 0.1;
-  unit: string;
-}
-
-export const VITAL_LIMITS: Record<VitalKey, VitalLimit> = {
-  systolic: { min: 50, max: 260, step: 1, unit: "mmHg" },
-  diastolic: { min: 30, max: 160, step: 1, unit: "mmHg" },
-  heartRate: { min: 20, max: 250, step: 1, unit: "/min" },
-  temperature: { min: 30, max: 45, step: 0.1, unit: "°C" },
-  oxygenSaturation: { min: 50, max: 100, step: 1, unit: "%" },
-  respiratoryRate: { min: 4, max: 60, step: 1, unit: "/min" },
-  weight: { min: 0.5, max: 400, step: 0.1, unit: "kg" },
-  height: { min: 30, max: 250, step: 1, unit: "cm" },
-};
+// Vital signs in the frontend: display order, labels, units and form conversion.
+// Limits: config/vitals.ts.
 
 export type MeasureKey =
   | "bloodPressure"
@@ -147,4 +120,22 @@ export function latestMeasurements(notes: readonly NoteWithVitals[]): LatestMeas
     }
     return [];
   });
+}
+
+/** The form holds what the user typed: one string per field, "" = not measured. */
+export type VitalInputs = Record<VitalKey, string>;
+
+export function toVitalInputs(vitals: Vitals | undefined): VitalInputs {
+  return Object.fromEntries(
+    VITAL_KEYS.map((key) => [key, vitals?.[key] === undefined ? "" : String(vitals[key])])
+  ) as VitalInputs;
+}
+
+/** Numbers for the API; undefined when nothing was measured. Run after validation. */
+export function fromVitalInputs(inputs: VitalInputs): Vitals | undefined {
+  const measured = VITAL_KEYS.flatMap((key) => {
+    const value = parseVital(inputs[key]);
+    return value === null ? [] : [[key, value] as const];
+  });
+  return measured.length > 0 ? (Object.fromEntries(measured) as Vitals) : undefined;
 }

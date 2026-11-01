@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatVitals, latestMeasurements } from "./vitals";
+import { formatVitals, fromVitalInputs, latestMeasurements, toVitalInputs } from "./vitals";
 
 describe("formatVitals", () => {
   it("lists the measured values in a fixed order with units", () => {
@@ -48,5 +48,23 @@ describe("latestMeasurements", () => {
 
   it("returns nothing when no note has vital signs", () => {
     expect(latestMeasurements([note("2026-10-22T09:30:00.000Z")])).toEqual([]);
+  });
+});
+
+describe("form conversion", () => {
+  it("turns numbers into text and back, with a comma as decimal separator", () => {
+    const inputs = toVitalInputs({ systolic: 138, diastolic: 86 });
+    expect(inputs.systolic).toBe("138");
+    expect(inputs.height).toBe("");
+
+    expect(fromVitalInputs({ ...inputs, temperature: "36,8" })).toEqual({
+      systolic: 138,
+      diastolic: 86,
+      temperature: 36.8,
+    });
+  });
+
+  it("gives undefined when nothing was measured", () => {
+    expect(fromVitalInputs(toVitalInputs(undefined))).toBeUndefined();
   });
 });
