@@ -1,8 +1,14 @@
+import type { Vitals } from "../features/notes/vitals";
+
+/** The four text fields of a note; vital signs are a separate field. */
+export type NoteTextField = "reasonForVisit" | "observation" | "assessment" | "plan";
+
 export interface NoteContent {
   reasonForVisit: string;
   observation: string;
   assessment: string;
   plan: string;
+  vitals?: Vitals;
 }
 
 export interface ClinicalNote {
