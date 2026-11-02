@@ -98,11 +98,21 @@ describe("Appointment status rules", () => {
     expect(res.body.error.message).toContain("before it has started");
   });
 
-  it("does not let a doctor change a final status", async () => {
-    const res = await setStatus(completedId, erikToken, { status: "SCHEDULED" });
+  it("requires a reason when a doctor corrects a final status", async () => {
+    const res = await setStatus(completedId, erikToken, { status: "NO_SHOW" });
 
-    expect(res.status).toBe(409);
-    expect(res.body.error.message).toContain("Contact an administrator");
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toContain("reason is required");
+  });
+
+  it("does not let a doctor correct another doctor's appointment", async () => {
+    const sara = await loginAs(app, "sara@puls.test");
+    const res = await setStatus(completedId, sara.token, {
+      status: "NO_SHOW",
+      reason: "Should be rejected",
+    });
+
+    expect(res.status).toBe(403);
   });
 
   it("requires a reason when an admin corrects a final status", async () => {

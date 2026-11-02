@@ -7,6 +7,7 @@ import type {
 } from "../validators/appointmentValidators.js";
 import {
   canChangeStatus,
+  isCorrection,
   isFinalStatus,
   requiresStartedAppointment,
   statusLabel,
@@ -349,7 +350,7 @@ export async function updateAppointmentStatus(
   const existing = await assertOwnsAppointment(appointmentId, requestingUser);
   const from = existing.status;
   const to = input.status;
-  const isCorrection = isFinalStatus(from);
+  const correction = isCorrection(from, to);
 
   if (from === to) {
     throw new AppError(
@@ -359,15 +360,16 @@ export async function updateAppointmentStatus(
     );
   }
 
-  if (!canChangeStatus(from, to, requestingUser.role)) {
-    const message = isCorrection
-      ? `This appointment is ${statusLabel(from)} and can no longer be changed. Contact an administrator to correct it`
-      : `An appointment cannot go from ${statusLabel(from)} to ${statusLabel(to)}`;
-    throw new AppError(409, "INVALID_STATUS_TRANSITION", message);
+  if (!canChangeStatus(from, to)) {
+    throw new AppError(
+      409,
+      "INVALID_STATUS_TRANSITION",
+      `An appointment cannot go from ${statusLabel(from)} to ${statusLabel(to)}`
+    );
   }
 
   // Safeguards. A correction must not create new errors.
-  if (isCorrection && !input.reason) {
+  if (correction && !input.reason) {
     throw new ValidationError("A reason is required when correcting a final status");
   }
   if (requiresStartedAppointment(to) && existing.startTime > new Date()) {
