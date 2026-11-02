@@ -48,4 +48,12 @@ describe("Sidebar", () => {
 
     expect(logout).toHaveBeenCalled();
   });
+
+  it("links the user's name to My account", () => {
+    renderWithProviders(<Sidebar />, { user: testDoctor });
+
+    const link = screen.getByRole("link", { name: /My account/ });
+    expect(link).toHaveAttribute("href", "/account");
+    expect(link).toHaveTextContent(testDoctor.name);
+  });
 });

@@ -5,11 +5,15 @@ const paths = (role: Parameters<typeof navItemsForRole>[0]) =>
   navItemsForRole(role).map((item) => item.to);
 
 describe("navItemsForRole", () => {
-  it("shows the shared pages and My account to every role", () => {
+  it("shows the shared pages to every role", () => {
     for (const role of ["DOCTOR", "ADMIN"] as const) {
-      expect(paths(role)).toEqual(
-        expect.arrayContaining(["/dashboard", "/calendar", "/patients", "/account"])
-      );
+      expect(paths(role)).toEqual(expect.arrayContaining(["/dashboard", "/calendar", "/patients"]));
+    }
+  });
+
+  it("does not list My account, which is reached from the user's name", () => {
+    for (const role of ["DOCTOR", "ADMIN"] as const) {
+      expect(navItemsForRole(role).map((item) => item.to)).not.toContain("/account");
     }
   });
 

@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, ChevronRight } from "lucide-react";
 import { Avatar } from "../components/Avatar";
 import { useAuth } from "../features/auth/useAuth";
 import { useClinic } from "../features/clinic/useClinic";
@@ -47,7 +47,6 @@ export function Sidebar({ onNavigate }: SidebarProps) {
   const items = navItemsForRole(user?.role);
   const mainItems = navItemsInSection(items, "main");
   const adminItems = navItemsInSection(items, "admin");
-  const accountItems = navItemsInSection(items, "account");
 
   function handleLogout() {
     logout();
@@ -81,14 +80,29 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       {user && (
         <div className="border-t border-white/10 p-3">
-          <div className="flex items-center gap-3 px-3 py-2">
+          {/* The user's own page: reached from the name, like in most apps.
+              The arrow shows that the row is clickable. */}
+          <NavLink
+            to="/account"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors focus-visible:outline-white ${
+                isActive ? "bg-white/10" : "hover:bg-white/5"
+              }`
+            }
+          >
             <Avatar name={user.name} size="sm" />
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{user.name}</div>
-              <div className="text-xs text-slate-300">{ROLE_LABELS[user.role]}</div>
-            </div>
-          </div>
-          <NavList items={accountItems} onNavigate={onNavigate} />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">{user.name}</span>
+              <span className="block text-xs text-slate-300">{ROLE_LABELS[user.role]}</span>
+            </span>
+            <ChevronRight
+              aria-hidden="true"
+              className="size-4 shrink-0 text-slate-300 rtl:rotate-180"
+            />
+            {/* The visible text stays in the name (WCAG 2.5.3); this says where it goes. */}
+            <span className="sr-only">, My account</span>
+          </NavLink>
           <button
             type="button"
             onClick={handleLogout}

@@ -4,7 +4,6 @@ import {
   ClipboardList,
   LayoutDashboard,
   Stethoscope,
-  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -14,7 +13,7 @@ import type { Role } from "../types/auth";
 export type UserRole = Role;
 
 // main: everyday work. admin: configuration (only admins). account: the user's own.
-export type NavSection = "main" | "admin" | "account";
+export type NavSection = "main" | "admin";
 
 export interface NavItem {
   to: string;
@@ -45,7 +44,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
     section: "admin",
     roles: ["ADMIN"],
   },
-  { to: "/account", label: "My account", icon: UserRound, section: "account" },
 ];
 
 export function navItemsForRole(role: UserRole | undefined): NavItem[] {
