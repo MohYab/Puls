@@ -4,9 +4,9 @@ import { Avatar } from "../../components/Avatar";
 import { Badge } from "../../components/Badge";
 import { Card } from "../../components/Card";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
-import { StatusBadge } from "../../components/StatusBadge";
 import type { Appointment } from "../../types/appointment";
 import { birthDateAndAge, formatDuration, formatTime } from "../../utils/date";
+import { StatusMenu } from "../appointments/StatusMenu";
 
 interface TodayScheduleProps {
   appointments: Appointment[];
@@ -90,10 +90,13 @@ function ScheduleRow({ appointment, isNext, now }: ScheduleRowProps) {
       </span>
       <Avatar name={name} size="sm" />
       <span className="min-w-0 flex-[1_1_12rem] leading-snug">
-        <span
-          className={`block font-semibold ${isCancelled ? "text-muted line-through" : "text-ink"}`}
-        >
-          {name}
+        <span className="block font-semibold">
+          <Link
+            to={`/patients/${appointment.patientId}`}
+            className={`hover:underline ${isCancelled ? "text-muted line-through" : "text-ink"}`}
+          >
+            {name}
+          </Link>
           {/* Colour is never the only signal for the next appointment. */}
           {isNext && <span className="ms-2 text-xs font-semibold text-accent">Next</span>}
         </span>
@@ -101,36 +104,7 @@ function ScheduleRow({ appointment, isNext, now }: ScheduleRowProps) {
           {birthDateAndAge(patient.dateOfBirth, now)} · {appointment.appointmentType.name}
         </span>
       </span>
-      <StatusBadge status={status} />
-      <span className="w-36 text-end">
-        <RowAction appointment={appointment} name={name} />
-      </span>
+      <StatusMenu appointment={appointment} />
     </li>
   );
-}
-
-const linkClass = "font-semibold text-accent hover:underline";
-
-// Completed: documentation. Scheduled or confirmed: the patient. No-show, cancelled: nothing.
-function RowAction({ appointment, name }: { appointment: Appointment; name: string }) {
-  // Several rows share the same link text: the name makes each one clear (WCAG 2.4.4).
-  const forName = <span className="sr-only">, {name}</span>;
-
-  if (appointment.status === "COMPLETED") {
-    return (
-      <Link to={`/documentation/${appointment.id}`} className={linkClass}>
-        {appointment.hasNote ? "Open documentation" : "Document visit"}
-        {forName}
-      </Link>
-    );
-  }
-  if (appointment.status === "SCHEDULED" || appointment.status === "CONFIRMED") {
-    return (
-      <Link to={`/patients/${appointment.patientId}`} className={linkClass}>
-        Open
-        {forName}
-      </Link>
-    );
-  }
-  return null;
 }

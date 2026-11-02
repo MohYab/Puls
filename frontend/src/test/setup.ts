@@ -8,3 +8,11 @@ import "@testing-library/jest-dom/vitest";
 afterEach(() => {
   cleanup();
 });
+
+// jsdom has no ResizeObserver; Headless UI uses it to place menus.
+// The tests do not measure layout, so an empty stub is enough.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

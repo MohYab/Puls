@@ -85,14 +85,14 @@ describe("DoctorDashboard", () => {
     );
 
     const schedule = card("Today's schedule");
-    expect(within(schedule).getByRole("link", { name: "Document visit, Bo Berg" })).toHaveAttribute(
-      "href",
-      "/documentation/done"
-    );
-    expect(within(schedule).getByRole("link", { name: "Open, Cecilia Ek" })).toHaveAttribute(
+    // The patient's name is the link; the status is a menu.
+    expect(within(schedule).getByRole("link", { name: "Cecilia Ek" })).toHaveAttribute(
       "href",
       "/patients/p-cecilia"
     );
+    expect(
+      within(schedule).getByRole("button", { name: "Change status for Cecilia Ek, now Scheduled" })
+    ).toBeInTheDocument();
 
     expect(
       within(card("To document")).getByRole("link", { name: "Document, Folke Nyberg" })

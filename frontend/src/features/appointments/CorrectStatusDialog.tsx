@@ -5,23 +5,32 @@ import { FormField } from "../../components/FormField";
 import { inputClassName } from "../../components/formStyles";
 import { Modal } from "../../components/Modal";
 import { correctionFormSchema, type CorrectionFormValues } from "../../schemas/appointmentSchemas";
-import type { Appointment } from "../../types/appointment";
-import { STATUS_LABELS, correctionTargets } from "../../utils/appointmentStatus";
+import type { Appointment, AppointmentStatus } from "../../types/appointment";
+import { STATUS_LABELS, isCorrection, statusTargets } from "../../utils/appointmentStatus";
 import { useUpdateAppointmentStatus } from "./useAppointments";
 import { FormError } from "../../components/Feedback";
 import { FormActions } from "../../components/FormActions";
 
 interface CorrectStatusDialogProps {
   appointment: Appointment;
+  /** The status chosen in the status menu, already selected. */
+  defaultStatus?: AppointmentStatus;
   onClose: () => void;
   onDone: () => void;
 }
 
-// Admin only: correct a final status. The reason is saved in the status history.
-export function CorrectStatusDialog({ appointment, onClose, onDone }: CorrectStatusDialogProps) {
+// Correct a final status: doctors and admins.
+// The reason is saved in the status history.
+export function CorrectStatusDialog({
+  appointment,
+  defaultStatus,
+  onClose,
+  onDone,
+}: CorrectStatusDialogProps) {
   const formId = useId();
   const updateStatus = useUpdateAppointmentStatus(appointment.id);
-  const targets = correctionTargets(appointment.status, appointment.startTime);
+  // Only real corrections (not no-show → completed), with the same safeguards as the API.
+  const targets = statusTargets(appointment).filter((to) => isCorrection(appointment.status, to));
 
   const {
     register,
@@ -29,7 +38,7 @@ export function CorrectStatusDialog({ appointment, onClose, onDone }: CorrectSta
     formState: { errors },
   } = useForm<CorrectionFormValues>({
     resolver: zodResolver(correctionFormSchema),
-    defaultValues: { reason: "" },
+    defaultValues: { status: defaultStatus, reason: "" },
   });
 
   function onSubmit(values: CorrectionFormValues) {
