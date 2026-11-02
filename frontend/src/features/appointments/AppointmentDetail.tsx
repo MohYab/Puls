@@ -9,18 +9,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FormField } from "../../components/FormField";
 import { inputClassName } from "../../components/formStyles";
-import { StatusBadge } from "../../components/StatusBadge";
 import { ApiError } from "../../services/apiClient";
 import type { Appointment } from "../../types/appointment";
 import { STATUS_PHRASES, isFinalStatus } from "../../utils/appointmentStatus";
 import { formatDuration, formatTimeRange, formatWeekdayDate, toDateString } from "../../utils/date";
 import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
 import { useAuth } from "../auth/useAuth";
-import { AppointmentStatusActions } from "./AppointmentStatusActions";
-import { CorrectStatusDialog } from "./CorrectStatusDialog";
 import { updateAppointment } from "./appointmentService";
 import { appointmentTimeSchema } from "../../schemas/appointmentSchemas";
 import { CLOSING_TIME, OPENING_TIME } from "../../config/openingHours";
+import { StatusMenu } from "./StatusMenu";
 
 const editSchema = z.object({
   appointmentTypeId: z.string().min(1, "Appointment type is required"),
@@ -38,12 +36,10 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
   const { user } = useAuth();
   const formId = useId();
   const [isEditing, setIsEditing] = useState(false);
-  const [showCorrection, setShowCorrection] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const isDoctor = user?.role === "DOCTOR";
-  const isAdmin = user?.role === "ADMIN";
   const isLocked = isFinalStatus(appointment.status);
   // Unchanged rule: everything except cancelled appointments can be documented.
   const canDocument = isDoctor && appointment.status !== "CANCELLED";
@@ -161,7 +157,8 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
           </Link>
           <p className="mt-0.5 text-sm text-muted">{appointment.appointmentType.name}</p>
         </div>
-        <StatusBadge status={appointment.status} />
+        {/* The same status menu as on the dashboard: workflow changes and corrections. */}
+        <StatusMenu appointment={appointment} />
       </div>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -192,13 +189,11 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
       </dl>
 
       <div className="flex flex-col gap-3 border-t pt-4">
-        {isLocked ? (
+        {isLocked && (
           <p className="text-sm text-muted">
-            This appointment is {STATUS_PHRASES[appointment.status]} and can no longer be changed.
-            {isDoctor && " Contact an administrator to correct it."}
+            This appointment is {STATUS_PHRASES[appointment.status]}, so it can no longer be edited.
+            To correct the status, choose a new one in the status menu.
           </p>
-        ) : (
-          <AppointmentStatusActions appointment={appointment} onDone={onClose} />
         )}
 
         <div className="flex flex-wrap items-center gap-2">
@@ -211,28 +206,13 @@ export function AppointmentDetail({ appointment, onClose }: AppointmentDetailPro
               {appointment.hasNote ? "Open documentation" : "Document visit"}
             </Link>
           )}
-          <div className="ms-auto flex gap-2">
-            {isLocked && isAdmin && (
-              <Button variant="secondary" onClick={() => setShowCorrection(true)}>
-                Correct status
-              </Button>
-            )}
-            {!isLocked && (
-              <Button variant="secondary" onClick={() => setIsEditing(true)}>
-                Edit
-              </Button>
-            )}
-          </div>
+          {!isLocked && (
+            <Button variant="secondary" onClick={() => setIsEditing(true)} className="ms-auto">
+              Edit
+            </Button>
+          )}
         </div>
       </div>
-
-      {showCorrection && (
-        <CorrectStatusDialog
-          appointment={appointment}
-          onClose={() => setShowCorrection(false)}
-          onDone={onClose}
-        />
-      )}
     </div>
   );
 }

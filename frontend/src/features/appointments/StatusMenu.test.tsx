@@ -85,4 +85,23 @@ describe("StatusMenu", () => {
     expect(screen.getByLabelText(/New status/)).toHaveValue("NO_SHOW");
     expect(mutate).not.toHaveBeenCalled();
   });
+
+  it("offers completed and no-show once the appointment has started", async () => {
+    mockUpdate();
+    const started = "2020-01-15T09:00:00.000Z";
+    renderWithProviders(
+      <StatusMenu
+        appointment={makeAppointment({ status: "SCHEDULED", startTime: started, endTime: started })}
+      />
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /now Scheduled/ }));
+
+    expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+      "Confirmed",
+      "Completed",
+      "No-show",
+      "Cancelled",
+    ]);
+  });
 });
