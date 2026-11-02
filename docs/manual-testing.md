@@ -771,3 +771,35 @@ Doctor (`erik@puls.test`):
 - [ ] Patient page: Latest measurements with a date on each value; "No measurements recorded yet." for a patient without any
 - [ ] Admin: no Latest measurements on the patient page
 - [ ] 375 px: visit header, note, sharing, earlier documentation in that order
+
+## Status corrections (phase 3)
+
+Needs `$DOCTOR_TOKEN` (Erik). Changes data: reseed afterwards.
+
+```bash
+API=http://localhost:3001/api
+NOSHOW=$(curl -s $API/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '[.[] | select(.status=="NO_SHOW")][0].id')
+
+# 1. No-show → completed without a reason: 200
+curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"status":"COMPLETED"}' | jq .status
+
+# 2. Completed → no-show (a correction) without a reason: 400
+curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"status":"NO_SHOW"}' | jq .error
+
+# 3. With a reason: 200
+curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"status":"NO_SHOW","reason":"Marked completed by mistake"}' | jq .status
+```
+
+## UI checklist: remaining pages and status menu (phase 3)
+
+- [ ] `grep -rnE "(bg|text|border)-(blue|gray|red|green)-[0-9]" frontend/src` returns nothing
+- [ ] Login: brand, a card with "Log in", the prototype label below
+- [ ] Sidebar: no My account item; the user's name opens My account and is marked when active
+- [ ] My account, Doctors, Appointment types, Clinic settings: page header, dark save buttons, "Inactive" as a badge, Deactivate with a red border
+- [ ] Patients: ticking "Show inactive patients" does not move the columns
+- [ ] Today's schedule: no action column; the name opens the patient page
+- [ ] Status menu (dashboard and calendar): only allowed changes; Confirmed saves at once; Cancelled asks; a completed appointment offers corrections with a reason dialog; no-show → completed saves at once
+- [ ] Keyboard: Enter opens the menu, arrows move, Escape closes only the menu; focus returns to the button

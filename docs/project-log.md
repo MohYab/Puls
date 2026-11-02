@@ -1497,6 +1497,32 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
 - I skipped a whole sub-step without noticing, because the page looked
   finished. The checklist at the end of each step is there to catch that.
 
+### Entry 17: The remaining pages, and status changes from the schedule (phase 3)
+
+**What I did**
+
+- Moved the shared components, every form and dialog, the login page, My
+  account and the admin pages to the design system, with a grep for old
+  colour classes as the measurable "done" (decision #68).
+- Made the user's name in the sidebar the link to My account.
+- Let doctors change statuses from today's schedule and the calendar with one
+  status menu (decision #67), and changed the rules: no-show → completed is
+  part of the workflow, and doctors may correct their own final statuses with
+  a reason (decision #66, changes #43).
+
+**What I learned**
+
+- Rules belong in the backend. The frontend only mirrors them, to show the
+  right choices; "turning a rule off" in the frontend would only lead to
+  errors from the API.
+- A decision can be right for its time and wrong later. Locking final
+  statuses was safe, but a one-doctor clinic has no administrator to ask.
+- A browser computes table column widths from the content of every row, so
+  a badge in one row moved the other columns. A fixed table layout fixed it.
+- Where tests live is a convention: backend keeps them in `src/test/`, the
+  frontend next to the file. Following the convention that is already there
+  matters more than which one it is.
+
 ### Problems and solutions
 
 | Problem                                             | Cause                                                                 | Solution                                                         |
@@ -1522,6 +1548,8 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
 | `types/note.ts` imported from `features/`           | Types were placed where they were first used                          | Types to `types/`, limits to `config/vitals.ts`                  |
 | Documentation page had the old form                 | Sub-step 3 was skipped                                                | Done afterwards, follow each step's checklist                    |
 | Test query for `term` found two elements            | A `dt` gets no accessible name from its text                          | Compare the list of term texts instead                           |
+| Columns moved when inactive patients were shown     | Automatic table layout sizes columns from all rows                    | `table-fixed`, long names are cut with "…"                       |
+| An old test expected no changes from no-show        | The rule changed (no-show → completed)                                | Updated the test to the new rule                                 |
 
 ### Feedback from supervisor
 
@@ -1536,6 +1564,10 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
 - The redesign waits for the supervisor meeting.
 - Added phase 2b (patients, doctors, My account) before the redesign.
 - Clinic settings (name, address, phone) added as COULD (2b.7).
+- Phase 3.7 was meant to be visual only. Added after review: changing the
+  status from the schedule, and doctors correcting their own final statuses
+  (#66, #67).
+- Headless UI was added in 3.7 instead of 3.8.
 
 ### What I would do differently
 

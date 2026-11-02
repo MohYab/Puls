@@ -22,8 +22,9 @@ workplace UX before visual effects.
    under the Administration section of the menu.
 4. **The menu only shows modules that exist.** No empty "Reports" or
    "Tasks" pages. Main: Dashboard, Calendar, Patients. Administration (admin
-   only): Doctors, Appointment types, Clinic settings. The user's name, My
-   account and Log out are at the bottom of the sidebar.
+   only): Doctors, Appointment types, Clinic settings.
+   The user's name (which opens My account) and Log out are at the bottom of the
+   sidebar.
 5. **Say exactly what is locked.** The documentation template is locked after
    the first save; the note can still be edited by its author. Every save
    updates "Last saved".

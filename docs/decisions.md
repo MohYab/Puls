@@ -1199,3 +1199,62 @@ its own date. Vital signs are clinical data (#17, #56).
 
 **Alternative considered:** A server endpoint that returns the latest values;
 needed if the number of notes grows, or with a separate table (#64).
+
+---
+
+## 66. Doctors correct their own final statuses (changes #43)
+
+**Decision:** NO_SHOW → COMPLETED is part of the workflow and needs no
+reason: the patient arrived late. Any other change away from a final status
+is a correction, which doctors may make on their own appointments and admins
+on any appointment, with a reason of 10–300 characters and the same
+safeguards as before. The rules no longer depend on the role; who may touch
+an appointment at all is checked separately (own appointments for doctors).
+
+**Why:** A late patient is not a mistake but what happened, and asking for a
+reason would only slow the doctor down. Small private clinics, often with a
+single doctor (a target group, see future-roadmap.md), have no separate
+administrator to ask for a correction. Traceability, the reason for locking
+final statuses in #43, is kept: every change is stored with who, when and
+why.
+
+**Alternative considered:** Keeping corrections for admins only (#43). Safer
+in a large clinic with separate roles, but it leaves a one-doctor clinic
+without a way to fix a mistake.
+
+**Known limitation:** The status history cannot be read in the app yet.
+
+## 67. One status menu on the dashboard and in the calendar
+
+**Decision:** The status of an appointment is a button with a menu of the
+changes the rules allow, with short labels (Confirmed, Completed, No-show,
+Cancelled). Workflow changes are saved at once; cancelling asks first; a
+correction opens a dialog with the chosen status selected and a field for the
+reason. The same component replaces the status buttons and the "Correct
+status" button in the calendar. Headless UI (`Menu`) is used for keyboard
+navigation, focus and ARIA, and later for the searchable select (3.8).
+
+**Why:** Doctors change statuses during the day from the schedule, without
+opening each appointment. Asking before every final status made sense when it
+could not be undone (#43); with corrections possible (#66), only cancelling,
+which frees the time and affects the patient, still asks. One component keeps
+the rules, labels and dialogs the same everywhere.
+
+**Alternative considered:** A native `<select>`: simpler, but it cannot show
+the status badge or open a dialog for some choices without extra logic, and
+it saves on every change.
+
+## 68. Shared UI parts for the remaining pages
+
+**Decision:** The last pages use the design system: semantic colour tokens
+(`danger`, `danger-subtle`, `success`, `success-subtle`) instead of Tailwind's
+red and green, `FormActions` and `FormError` in every form, an
+`outlineDanger` button for destructive actions of secondary weight, shared
+table styles, and a sidebar where the user's name leads to My account. The
+check `grep -rnE "(bg|text|border)-(blue|gray|red|green)-[0-9]" frontend/src`
+returns nothing.
+
+**Why:** The same Cancel/Save row and error line were written eight times.
+Semantic tokens say what a colour means and change in one place. "Success"
+uses the completed colours but has its own name, since "saved" is not a
+booking status (design-direction.md, principle 1).

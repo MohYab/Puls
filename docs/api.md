@@ -146,15 +146,17 @@ Booking an inactive patient or doctor gives 400 `PATIENT_INACTIVE` or
 
 ## Appointment status
 
-| From                          | Allowed to           | Condition                   |
-| ----------------------------- | -------------------- | --------------------------- |
-| SCHEDULED                     | CONFIRMED, CANCELLED | –                           |
-| SCHEDULED, CONFIRMED          | COMPLETED, NO_SHOW   | The appointment has started |
-| CONFIRMED                     | CANCELLED            | –                           |
-| COMPLETED, NO_SHOW, CANCELLED | – (final)            | Admin correction only       |
+| From                 | Allowed to           | Condition                   |
+| -------------------- | -------------------- | --------------------------- |
+| SCHEDULED            | CONFIRMED, CANCELLED | –                           |
+| SCHEDULED, CONFIRMED | COMPLETED, NO_SHOW   | The appointment has started |
+| CONFIRMED            | CANCELLED            | –                           |
+| NO_SHOW              | COMPLETED            | The patient arrived late    |
 
-**Admin correction:** an admin can change a final status to any other status.
-`reason` (10–300 characters) is required. Safeguards:
+**Corrections:** any other change away from a final status (COMPLETED,
+NO_SHOW, CANCELLED) is a correction. Doctors may correct their own
+appointments, admins any appointment (decision #66). `reason` (10–300
+characters) is required. Safeguards:
 
 - COMPLETED and NO_SHOW still require that the appointment has started.
 - CANCELLED is not allowed when the appointment has a clinical note (also for
@@ -163,11 +165,14 @@ Booking an inactive patient or doctor gives 400 `PATIENT_INACTIVE` or
   `APPOINTMENT_CONFLICT`).
 
 Every status change is saved in the appointment's status history (from, to,
-who, when, reason). There is no endpoint to read the history yet.
+who, when, reason). There is no endpoint to read the history yet. An
+appointment with a final status cannot be edited (409 `APPOINTMENT_LOCKED`);
+only its status can change.
 
-Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason),
-403 `FORBIDDEN` (doctor and someone else's appointment), 404 `NOT_FOUND`,
-409 `INVALID_STATUS_TRANSITION`, 409 `APPOINTMENT_CONFLICT`.
+Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason for a
+correction), 403 `FORBIDDEN` (doctor and someone else's appointment), 404
+`NOT_FOUND`, 409 `INVALID_STATUS_TRANSITION` (e.g. confirmed back to
+scheduled, completed before the start), 409 `APPOINTMENT_CONFLICT`.
 
 ## Patients
 
