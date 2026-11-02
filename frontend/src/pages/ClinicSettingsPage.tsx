@@ -2,13 +2,15 @@ import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "../components/Card";
-import { ErrorMessage, LoadingMessage } from "../components/Feedback";
+import { ErrorMessage, LoadingMessage, FormError } from "../components/Feedback";
 import { FormField } from "../components/FormField";
 import { inputClassName } from "../components/formStyles";
 import { useClinic, useUpdateClinic } from "../features/clinic/useClinic";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { clinicFormSchema, type ClinicFormValues } from "../schemas/clinicSchemas";
 import type { Clinic } from "../types/clinic";
+import { Button } from "../components/Button";
+import { PageHeader } from "../components/PageHeader";
 
 function ClinicForm({ clinic }: { clinic: Clinic }) {
   const formId = useId();
@@ -94,25 +96,17 @@ function ClinicForm({ clinic }: { clinic: Clinic }) {
         </FormField>
       </div>
 
-      {update.isError && (
-        <p role="alert" className="text-sm text-red-600">
-          {update.error.message}
-        </p>
-      )}
+      <FormError message={update.isError ? update.error.message : null} />
       {saved && (
-        <p role="status" className="text-sm text-green-700">
+        <p role="status" className="text-sm text-success">
           Clinic details saved.
         </p>
       )}
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={update.isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {update.isPending ? "Saving..." : "Save"}
-        </button>
+        <Button type="submit" isPending={update.isPending}>
+          Save
+        </Button>
       </div>
     </form>
   );
@@ -124,12 +118,12 @@ export default function ClinicSettingsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold text-gray-900">Clinic settings</h1>
-      <p className="mt-1 text-sm text-gray-600">
-        Shown in the menu and on the login page. These details are public.
-      </p>
+      <PageHeader
+        title="Clinic settings"
+        description="Shown in the menu and on the login page. These details are public."
+      />
 
-      <div className="mt-6">
+      <div>
         {isPending && <LoadingMessage>Loading clinic details...</LoadingMessage>}
         {isError && <ErrorMessage message={error.message} onRetry={() => refetch()} />}
         {clinic && (

@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
-import { ErrorMessage, LoadingMessage } from "../components/Feedback";
+import { ErrorMessage, LoadingMessage, SuccessMessage } from "../components/Feedback";
 import { Modal } from "../components/Modal";
 import { StateMessage } from "../components/StateMessage";
 import { useAuth } from "../features/auth/useAuth";
@@ -114,12 +114,9 @@ export default function PatientDetailPage() {
           />
 
           {notice && (
-            <p
-              role="status"
-              className="mb-6 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-900"
-            >
-              {notice}
-            </p>
+            <div className="mb-6">
+              <SuccessMessage>{notice}</SuccessMessage>
+            </div>
           )}
           {reactivate.isError && (
             <div className="mb-6">
