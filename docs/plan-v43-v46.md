@@ -77,7 +77,7 @@ Based on the mockups in `docs/design/` and the decisions in
 | 3.5  | Patients: list, patient page with Book appointment, age and next appointment                                                               | SHOULD | Done             |
 | 3.6  | correct wording (the template is locked, not the note); Latest measurements on the patient page (moved from 3.5)                           | SHOULD | Done             |
 | 3.7  | Remaining pages in the new style: login, admin pages, My account, Add patient                                                              | SHOULD | Done             |
-| 3.8  | Searchable select (combobox) for doctors and patients                                                                                      | SHOULD | Todo             |
+| 3.8  | Searchable select (combobox) for doctors and patients                                                                                      | SHOULD | Done             |
 | 3.9  | Duplicate patient warning with "This is a different person"                                                                                | COULD  | Rejected (#63)   |
 | 3.10 | Quick actions in the header (Book appointment, Add patient)                                                                                | COULD  | Done (3.4)       |
 | 3.11 | Statistics for a period and appointments by type                                                                                           | COULD  | Moved to phase 5 |
@@ -118,6 +118,7 @@ the current design.
 | 42  | Trends for vital signs on the patient page (a small chart per measurement)                            | COULD           | Todo   |
 | 43  | `npm audit --omit=dev` in both projects, fix what reaches the browser or server                       | SHOULD          | Todo   |
 | 44  | The other lists use `tableStyles.ts` and a fixed layout where content changes (Doctors)               | COULD           | Todo   |
+| 45  | Server-side patient search for the select when lists grow (debounce, limit)                           | COULD           | Todo   |
 
 - `VITE_API_URL` from #33 is Done.
 

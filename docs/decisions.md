@@ -1258,3 +1258,31 @@ returns nothing.
 Semantic tokens say what a colour means and change in one place. "Success"
 uses the completed colours but has its own name, since "saved" is not a
 booking status (design-direction.md, principle 1).
+
+## 69. A searchable select for patients and doctors
+
+**Decision:** Patients and doctors are chosen with one shared component,
+`SearchSelect`, built on Headless UI `Combobox`: in the booking form, in the
+admin calendar and when sharing a note. The search ignores case and
+diacritics (å, é, Arabic vowel marks), matches every word in any order, and
+also searches a second line: a patient's date of birth (shown as "Born
+YYYY-MM-DD") and a doctor's specialization. The admin calendar's doctor
+select cannot be cleared, since the calendar always shows one doctor.
+Filtering happens in the browser on lists the app already loads.
+
+**Why:** Scrolling a long native select to find a patient is slow and makes
+it easy to pick the wrong person. Name plus date of birth is how staff check
+that they have the right patient (see #63). Headless UI gives keyboard
+navigation, focus handling and ARIA without custom code, and we already use
+it for the status menu (#67). Removing diacritics with Unicode normalization
+works for Swedish and Arabic without country-specific rules.
+
+**Alternative considered:** Searching on the server for each keystroke. It
+scales to large clinics but needs debouncing, loading states and an endpoint
+change, which the demo data does not need.
+
+**Known limitation:** All active patients are loaded into the browser. A
+clinic with thousands of patients would need server-side search (phase 5).
+Headless UI overwrites `aria-describedby` on the input, so `SearchSelect`
+sets it on the element itself; a test checks that the field's error is still
+read out.

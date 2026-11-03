@@ -803,3 +803,14 @@ curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOC
 - [ ] Today's schedule: no action column; the name opens the patient page
 - [ ] Status menu (dashboard and calendar): only allowed changes; Confirmed saves at once; Cancelled asks; a completed appointment offers corrections with a reason dialog; no-show → completed saves at once
 - [ ] Keyboard: Enter opens the menu, arrows move, Escape closes only the menu; focus returns to the button
+
+## UI checklist: searchable select (phase 3)
+
+- [ ] Booking (doctor): "anna" lists both Annas with "Born …"; "anna 1986" lists one; arrows and Enter choose
+- [ ] Booking: "zz" shows "No patients match "zz"."
+- [ ] Booking in a modal: Escape closes only the list, a second Escape closes the modal; a mouse click on an option keeps the modal open
+- [ ] Patient page → Book appointment: the patient is preselected
+- [ ] Booking (admin): the doctor can be searched by name or specialization
+- [ ] Admin calendar: choosing a doctor updates the calendar and `?doctor=`; clearing the field and leaving it shows the selected doctor again
+- [ ] Sharing: only colleagues without access are listed; after sharing, the field is empty and the colleague is under "Shared with"; when everyone has access the field and button are disabled with "No other doctors to share with"
+- [ ] Screen reader or dev tools: the field's error is in its accessible description

@@ -1523,33 +1523,56 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
   frontend next to the file. Following the convention that is already there
   matters more than which one it is.
 
+### Entry 18: A searchable select, and phase 3 done
+
+**What I did**
+
+- Built `SearchSelect` on Headless UI `Combobox`, with a search helper that
+  ignores case and diacritics, and used it for patients and doctors in
+  booking, the admin calendar and note sharing (decision #69).
+- Moved note sharing to the new style.
+- Finished phase 3: every page now follows the redesign.
+
+**What I learned**
+
+- An accessibility library can also break accessibility. Headless UI
+  replaced my `aria-describedby`, so a screen reader would not have read the
+  field's error. Only a test that checked the attribute found it.
+- Vitest removes types without checking them. A missing export (an unsaved
+  file) became `undefined` and a confusing runtime error, which `tsc` would
+  have named at once.
+- `register` in React Hook Form only works for native fields; a controlled
+  component needs `Controller`.
+
 ### Problems and solutions
 
-| Problem                                             | Cause                                                                 | Solution                                                         |
-| --------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| All borders black                                   | Tailwind v4 default border colour is `currentColor`                   | Base layer default (gray-200, gray-500 for controls)             |
-| Booking with unknown patient gave 500               | Ids in the body were not checked                                      | Check before writing; 400 for unknown ids (#42)                  |
-| "." accepted as a correction reason                 | Only "not empty" was required                                         | Minimum 10 characters in both layers                             |
-| Every backend test failed with `ECONNREFUSED`       | PostgreSQL had not started after a restart                            | Start and enable the service; better hint in the test helper     |
-| Frontend tests: "Found multiple elements"           | No automatic cleanup without Vitest globals                           | `cleanup()` in `afterEach` in the setup file                     |
-| CI: "Cannot find module 'vitest'"                   | Test dependencies, scripts and config not in the committed files      | Declared them again; read `git status` before every commit       |
-| Editor: unknown option `erasableSyntaxOnly`         | The editor used an older built-in TypeScript                          | Use the workspace TypeScript (`.vscode/settings.json`)           |
-| `hostname -I` not found                             | Not available on every Linux distribution                             | Use `ip route get` in the setup guide                            |
-| Booking from curl gave 400                          | `date --iso-8601` sends `+02:00`, the API only accepted `Z`           | The API accepts offsets; show the full response with `jq`        |
-| Two different 400s looked the same                  | Only the status code was printed                                      | Print the error body                                             |
-| Test expected undocumented visits, found none       | Manual tests had documented them in the shared database               | Reseed; a message in the test; separate test database in phase 5 |
-| pg warning "client is already executing a query"    | Prisma 7 sends a read with relations in parallel inside a transaction | No transaction for the read; pg stays on ^8                      |
-| Login test timed out only in the full run           | jsdom per file and typing character by character under load           | 15 s test timeout in the frontend                                |
-| 26 files not formatted                              | Prettier was only run by hand                                         | `format:check` script and a CI step                              |
-| `package.json` appeared in the repository root      | An npm command was run from the root                                  | Deleted; run npm commands inside `frontend/` or `backend/`       |
-| `hasNote` missing on `PatientAppointment`           | The type change went into the wrong interface                         | TypeScript pointed at every use; added it to the right type      |
-| Duplicate warning test failed                       | The component file held a different version than planned              | Replaced it with the planned version                             |
-| Build errors after adding `vitals` to the note type | `keyof NoteContent` included the new field                            | A `NoteTextField` type for the four text fields                  |
-| `types/note.ts` imported from `features/`           | Types were placed where they were first used                          | Types to `types/`, limits to `config/vitals.ts`                  |
-| Documentation page had the old form                 | Sub-step 3 was skipped                                                | Done afterwards, follow each step's checklist                    |
-| Test query for `term` found two elements            | A `dt` gets no accessible name from its text                          | Compare the list of term texts instead                           |
-| Columns moved when inactive patients were shown     | Automatic table layout sizes columns from all rows                    | `table-fixed`, long names are cut with "…"                       |
-| An old test expected no changes from no-show        | The rule changed (no-show → completed)                                | Updated the test to the new rule                                 |
+| Problem                                                          | Cause                                                                                        | Solution                                                                                     |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| All borders black                                                | Tailwind v4 default border colour is `currentColor`                                          | Base layer default (gray-200, gray-500 for controls)                                         |
+| Booking with unknown patient gave 500                            | Ids in the body were not checked                                                             | Check before writing; 400 for unknown ids (#42)                                              |
+| "." accepted as a correction reason                              | Only "not empty" was required                                                                | Minimum 10 characters in both layers                                                         |
+| Every backend test failed with `ECONNREFUSED`                    | PostgreSQL had not started after a restart                                                   | Start and enable the service; better hint in the test helper                                 |
+| Frontend tests: "Found multiple elements"                        | No automatic cleanup without Vitest globals                                                  | `cleanup()` in `afterEach` in the setup file                                                 |
+| CI: "Cannot find module 'vitest'"                                | Test dependencies, scripts and config not in the committed files                             | Declared them again; read `git status` before every commit                                   |
+| Editor: unknown option `erasableSyntaxOnly`                      | The editor used an older built-in TypeScript                                                 | Use the workspace TypeScript (`.vscode/settings.json`)                                       |
+| `hostname -I` not found                                          | Not available on every Linux distribution                                                    | Use `ip route get` in the setup guide                                                        |
+| Booking from curl gave 400                                       | `date --iso-8601` sends `+02:00`, the API only accepted `Z`                                  | The API accepts offsets; show the full response with `jq`                                    |
+| Two different 400s looked the same                               | Only the status code was printed                                                             | Print the error body                                                                         |
+| Test expected undocumented visits, found none                    | Manual tests had documented them in the shared database                                      | Reseed; a message in the test; separate test database in phase 5                             |
+| pg warning "client is already executing a query"                 | Prisma 7 sends a read with relations in parallel inside a transaction                        | No transaction for the read; pg stays on ^8                                                  |
+| Login test timed out only in the full run                        | jsdom per file and typing character by character under load                                  | 15 s test timeout in the frontend                                                            |
+| 26 files not formatted                                           | Prettier was only run by hand                                                                | `format:check` script and a CI step                                                          |
+| `package.json` appeared in the repository root                   | An npm command was run from the root                                                         | Deleted; run npm commands inside `frontend/` or `backend/`                                   |
+| `hasNote` missing on `PatientAppointment`                        | The type change went into the wrong interface                                                | TypeScript pointed at every use; added it to the right type                                  |
+| Duplicate warning test failed                                    | The component file held a different version than planned                                     | Replaced it with the planned version                                                         |
+| Build errors after adding `vitals` to the note type              | `keyof NoteContent` included the new field                                                   | A `NoteTextField` type for the four text fields                                              |
+| `types/note.ts` imported from `features/`                        | Types were placed where they were first used                                                 | Types to `types/`, limits to `config/vitals.ts`                                              |
+| Documentation page had the old form                              | Sub-step 3 was skipped                                                                       | Done afterwards, follow each step's checklist                                                |
+| Test query for `term` found two elements                         | A `dt` gets no accessible name from its text                                                 | Compare the list of term texts instead                                                       |
+| Columns moved when inactive patients were shown                  | Automatic table layout sizes columns from all rows                                           | `table-fixed`, long names are cut with "…"                                                   |
+| An old test expected no changes from no-show                     | The rule changed (no-show → completed)                                                       | Updated the test to the new rule                                                             |
+| The field's error was not in the select's accessible description | Headless UI sets `aria-describedby` from its own components and overwrote ours               | Set the attribute on the element with a ref after each render, a test checks the description |
+| "undefined is not a function" in the booking form                | The new file was not saved, so the named import was `undefined`; Vitest does not check types | Saved the file; run `tsc -b` when an error looks strange; auto-save on focus change          |
 
 ### Feedback from supervisor
 
@@ -1568,6 +1591,8 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
   status from the schedule, and doctors correcting their own final statuses
   (#66, #67).
 - Headless UI was added in 3.7 instead of 3.8.
+- The doctor in the booking form (admin) also got the searchable select, so
+  the form uses one kind of select for people.
 
 ### What I would do differently
 
