@@ -1,9 +1,10 @@
 import { useId, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FormField } from "../../components/FormField";
 import { inputClassName } from "../../components/formStyles";
+import { SearchSelect } from "../../components/SearchSelect";
 import {
   appointmentFormSchema,
   type AppointmentFormValues,
@@ -15,9 +16,11 @@ import { ApiError } from "../../services/apiClient";
 import { toDateString } from "../../utils/date";
 import { OPENING_TIME, CLOSING_TIME } from "../../config/openingHours";
 import { usePatients } from "../patients/usePatients";
+import { toPatientOption } from "../patients/patientOptions";
 import { useAppointmentTypes } from "../appointmentTypes/useAppointmentTypes";
 import { useDoctors } from "../doctors/useDoctors";
-import { FormError } from "../../components/Feedback";
+import { toDoctorOption } from "../doctors/doctorOptions";
+import { ErrorMessage, FormError } from "../../components/Feedback";
 import { FormActions } from "../../components/FormActions";
 
 interface AppointmentFormProps {
@@ -43,13 +46,17 @@ export function AppointmentForm({
   const [serverError, setServerError] = useState<string | null>(null);
 
   const isAdmin = user?.role === "ADMIN";
-  const { data: patients } = usePatients("");
+  const patientsQuery = usePatients("");
   // Doctors always book for themselves, so only admins need the list.
-  const { data: doctors } = useDoctors(isAdmin);
+  const doctorsQuery = useDoctors(isAdmin);
   const { data: appointmentTypes } = useAppointmentTypes();
+
+  const patientOptions = patientsQuery.data?.map(toPatientOption) ?? [];
+  const doctorOptions = doctorsQuery.data?.map(toDoctorOption) ?? [];
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<AppointmentFormValues>({
@@ -85,32 +92,65 @@ export function AppointmentForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+      {patientsQuery.isError && (
+        <ErrorMessage
+          message="Could not load the list of patients."
+          onRetry={() => patientsQuery.refetch()}
+        />
+      )}
+
       <FormField id={`${formId}-patient`} label="Patient" error={errors.patientId?.message}>
-        {(field) => (
-          <select {...field} {...register("patientId")} className={inputClassName}>
-            <option value="">Select patient</option>
-            {patients?.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.firstName} {p.lastName}
-              </option>
-            ))}
-          </select>
+        {(control_) => (
+          <Controller
+            name="patientId"
+            control={control}
+            render={({ field }) => (
+              <SearchSelect
+                {...control_}
+                options={patientOptions}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                placeholder={
+                  patientsQuery.data ? "Search name or date of birth" : "Loading patients..."
+                }
+                disabled={!patientsQuery.data}
+                noMatchLabel="No patients match"
+              />
+            )}
+          />
         )}
       </FormField>
 
       {isAdmin && (
-        <FormField id={`${formId}-doctor`} label="Doctor" error={errors.doctorId?.message}>
-          {(field) => (
-            <select {...field} {...register("doctorId")} className={inputClassName}>
-              <option value="">Select doctor</option>
-              {doctors?.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.user.name}
-                </option>
-              ))}
-            </select>
+        <>
+          {doctorsQuery.isError && (
+            <ErrorMessage
+              message="Could not load the list of doctors."
+              onRetry={() => doctorsQuery.refetch()}
+            />
           )}
-        </FormField>
+          <FormField id={`${formId}-doctor`} label="Doctor" error={errors.doctorId?.message}>
+            {(control_) => (
+              <Controller
+                name="doctorId"
+                control={control}
+                render={({ field }) => (
+                  <SearchSelect
+                    {...control_}
+                    options={doctorOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder={doctorsQuery.data ? "Search doctor" : "Loading doctors..."}
+                    disabled={!doctorsQuery.data}
+                    noMatchLabel="No doctors match"
+                  />
+                )}
+              />
+            )}
+          </FormField>
+        </>
       )}
 
       <FormField
