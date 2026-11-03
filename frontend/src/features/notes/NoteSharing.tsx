@@ -1,17 +1,18 @@
 import { useId, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card } from "../../components/Card";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { EmptyMessage, ErrorMessage, FormError, LoadingMessage } from "../../components/Feedback";
 import { FormField } from "../../components/FormField";
-import { inputClassName } from "../../components/formStyles";
+import { SearchSelect } from "../../components/SearchSelect";
+import { Button } from "../../components/Button";
 import { shareNoteFormSchema, type ShareNoteFormValues } from "../../schemas/noteSchemas";
 import type { ClinicalNote, NoteShare } from "../../types/note";
 import { formatDate } from "../../utils/date";
 import { useDoctors } from "../doctors/useDoctors";
+import { toDoctorOption } from "../doctors/doctorOptions";
 import { useNoteShares, useRevokeNoteShare, useShareNote } from "./useNotes";
-import { Button } from "../../components/Button";
 
 // Shown on the documentation page for a saved note. Only the author gets here,
 // because the page requires that the doctor owns the appointment.
@@ -25,6 +26,7 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -37,6 +39,13 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
   const sharedDoctorIds = new Set(sharesQuery.data?.map((s) => s.doctor.id));
   const availableDoctors =
     doctorsQuery.data?.filter((d) => d.id !== note.doctorId && !sharedDoctorIds.has(d.id)) ?? [];
+  const noDoctorsLeft = Boolean(doctorsQuery.data) && availableDoctors.length === 0;
+
+  function doctorPlaceholder() {
+    if (!doctorsQuery.data) return "Loading doctors...";
+    if (noDoctorsLeft) return "No other doctors to share with";
+    return "Search doctor";
+  }
 
   function onSubmit(values: ShareNoteFormValues) {
     share.mutate(values.doctorId, { onSuccess: () => reset() });
@@ -62,7 +71,7 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
       </p>
 
       <div className="mt-4">
-        <h3 className="text-sm font-semibold text-ink">Shared with</h3>{" "}
+        <h3 className="text-sm font-semibold text-ink">Shared with</h3>
         <div className="mt-2" aria-live="polite">
           {sharesQuery.isPending && <LoadingMessage>Loading...</LoadingMessage>}
           {sharesQuery.isError && (
@@ -75,21 +84,18 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
             <EmptyMessage>Not shared with anyone.</EmptyMessage>
           )}
           {sharesQuery.data && sharesQuery.data.length > 0 && (
-            <ul className="divide-y rounded-lg border">
+            <ul className="divide-y rounded-lg border bg-surface">
               {sharesQuery.data.map((s) => (
-                <li
-                  key={s.id}
-                  className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
-                >
-                  <span>
-                    <span className="font-medium text-ink">{s.doctor.user.name}</span>{" "}
-                    <span className="ms-2 text-xs text-muted">since {formatDate(s.createdAt)}</span>
-                  </span>
+                <li key={s.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-ink">{s.doctor.user.name}</p>
+                    <p className="text-xs text-muted">Shared {formatDate(s.createdAt)}</p>
+                  </div>
                   <Button
                     variant="outlineDanger"
                     size="sm"
                     onClick={() => setToRevoke(s)}
-                    aria-label={`Stop sharing with ${s.doctor.user.name}`}
+                    aria-label={`Revoke sharing with ${s.doctor.user.name}`}
                   >
                     Revoke
                   </Button>
@@ -115,22 +121,23 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
         )}
 
         <FormField id={`${formId}-doctor`} label="Doctor" error={errors.doctorId?.message}>
-          {(field) => (
-            <select
-              {...field}
-              {...register("doctorId")}
-              disabled={!doctorsQuery.data}
-              className={inputClassName}
-            >
-              <option value="">
-                {doctorsQuery.isPending ? "Loading doctors..." : "Select doctor"}
-              </option>
-              {availableDoctors.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.user.name}
-                </option>
-              ))}
-            </select>
+          {(control_) => (
+            <Controller
+              name="doctorId"
+              control={control}
+              render={({ field }) => (
+                <SearchSelect
+                  {...control_}
+                  options={availableDoctors.map(toDoctorOption)}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder={doctorPlaceholder()}
+                  disabled={!doctorsQuery.data || noDoctorsLeft}
+                  noMatchLabel="No doctors match"
+                />
+              )}
+            />
           )}
         </FormField>
 
@@ -158,7 +165,7 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
           </p>
         </div>
 
-        {share.isError && <FormError message={share.isError ? share.error.message : null} />}
+        <FormError message={share.isError ? share.error.message : null} />
         {share.isSuccess && (
           <p role="status" className="text-sm text-success">
             Note shared.
@@ -171,6 +178,7 @@ export function NoteSharing({ note }: { note: ClinicalNote }) {
             variant="secondary"
             isPending={share.isPending}
             pendingText="Sharing..."
+            disabled={noDoctorsLeft}
           >
             Share note
           </Button>
