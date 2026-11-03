@@ -75,8 +75,10 @@ export default function PatientsPage() {
         )}
 
         {patients && patients.length > 0 && (
-          <div className="overflow-x-auto rounded-lg border bg-surface shadow-card">
-            <table className="w-full text-sm">
+          <div className="w-auto overflow-x-auto rounded-lg border bg-surface shadow-card">
+            {/* Fixed layout: the columns keep their width when the content changes
+                (e.g. "Inactive" badges). min-w: on a phone the table scrolls instead. */}
+            <table className="w-full min-w-xl table-fixed text-sm">
               <thead>
                 <tr className="border-b text-xs font-semibold uppercase tracking-wide text-muted">
                   <th scope="col" className={`${cell} text-start`}>
@@ -96,16 +98,20 @@ export default function PatientsPage() {
                   return (
                     <tr key={patient.id} className="hover:bg-subtle">
                       <td className={cell}>
-                        <span className="flex items-center gap-3">
+                        <span className="flex min-w-0 items-center gap-3">
                           <Avatar name={name} size="sm" />
                           <Link
                             to={`/patients/${patient.id}`}
-                            className={`font-semibold hover:underline ${patient.isActive ? "text-ink" : "text-muted"}`}
+                            className={`truncate font-semibold hover:underline ${patient.isActive ? "text-ink" : "text-muted"}`}
                           >
                             {name}
                           </Link>
                           {/* Not grey text alone: the badge says it in words. */}
-                          {!patient.isActive && <Badge>Inactive</Badge>}
+                          {!patient.isActive && (
+                            <span className="shrink-0">
+                              <Badge>Inactive</Badge>
+                            </span>
+                          )}
                         </span>
                       </td>
                       <td className={`${cell} whitespace-nowrap tabular-nums`}>
