@@ -13,11 +13,24 @@ describe("formatVitals", () => {
         oxygenSaturation: 98,
         weight: 68.5,
       })
-    ).toBe("BP 138/86 mmHg · HR 72/min · Temp 36.8 °C · SpO₂ 98 % · 68.5 kg · 167 cm");
+    ).toBe(
+      "BP\u00A0138/86\u00A0mmHg\u00A0· HR\u00A072/min\u00A0· Temp\u00A036.8\u00A0°C\u00A0· " +
+        "SpO₂\u00A098\u00A0%\u00A0· 68.5\u00A0kg\u00A0· 167\u00A0cm"
+    );
+  });
+
+  it("only allows a line break after a separator", () => {
+    const text = formatVitals({ systolic: 138, diastolic: 86, temperature: 36.8, weight: 68.5 });
+    // Splitting on ordinary spaces gives whole measurements, each ending with "·" but the last.
+    expect(text.split(" ")).toEqual([
+      "BP\u00A0138/86\u00A0mmHg\u00A0·",
+      "Temp\u00A036.8\u00A0°C\u00A0·",
+      "68.5\u00A0kg",
+    ]);
   });
 
   it("shows blood pressure only when both values exist", () => {
-    expect(formatVitals({ systolic: 138, heartRate: 72 })).toBe("HR 72/min");
+    expect(formatVitals({ systolic: 138, heartRate: 72 })).toBe("HR\u00A072/min");
   });
 
   it("is empty when nothing was measured", () => {

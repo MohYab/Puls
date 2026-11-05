@@ -62,10 +62,12 @@ export const MEASURES: readonly Measure[] = [
   { key: "weight", label: "Weight", short: "", unit: "kg", read: single("weight") },
   { key: "height", label: "Height", short: "", unit: "cm", read: single("height") },
 ];
+/** A no-break space: a line never breaks between a value and its unit or label. */
+const NBSP = "\u00A0";
 
 /** "72/min" but "36.8 °C" and "98 %": SI puts a space before units, not before "/min". */
 export function withUnit(value: string, unit: string): string {
-  return unit.startsWith("/") ? `${value}${unit}` : `${value} ${unit}`;
+  return unit.startsWith("/") ? `${value}${unit}` : `${value}${NBSP}${unit}`;
 }
 
 /** "BP 138/86 mmHg · HR 72/min · Temp 36.8 °C · 68.5 kg", or "" when nothing was measured. */
@@ -75,8 +77,8 @@ export function formatVitals(vitals: Vitals | undefined): string {
     const value = measure.read(vitals);
     if (value === null) return [];
     const text = withUnit(value, measure.unit);
-    return [measure.short ? `${measure.short} ${text}` : text];
-  }).join(" · ");
+    return [measure.short ? `${measure.short}${NBSP}${text}` : text];
+  }).join(`${NBSP}· `);
 }
 
 export interface LatestMeasurement {
