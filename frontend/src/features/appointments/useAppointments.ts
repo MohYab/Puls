@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { retryUnlessClientError } from "../../utils/queryRetry";
-import { getAppointment, getAppointments, updateAppointmentStatus } from "./appointmentService";
+import {
+  getAppointment,
+  getAppointments,
+  getAppointmentsToDocument,
+  updateAppointmentStatus,
+} from "./appointmentService";
 import type { AppointmentStatus } from "../../types/appointment";
 
 interface UseAppointmentsOptions {
@@ -15,8 +20,31 @@ export function useAppointments(
   return useQuery({
     // doctorId must be part of the key, otherwise all doctors would share one cache entry.
     queryKey: ["appointments", "list", { date, doctorId }],
-    queryFn: () => getAppointments(date, doctorId),
+    queryFn: () => getAppointments({ date, doctorId }),
     enabled,
+    retry: retryUnlessClientError,
+  });
+}
+
+/** The calendar: a day (from = to) or a week. */
+export function useAppointmentsInRange(
+  from: string,
+  to: string,
+  { doctorId, enabled = true }: UseAppointmentsOptions = {}
+) {
+  return useQuery({
+    queryKey: ["appointments", "list", { from, to, doctorId }],
+    queryFn: () => getAppointments({ from, to, doctorId }),
+    enabled,
+    retry: retryUnlessClientError,
+  });
+}
+
+/** Doctors only. The key starts with "appointments", so status changes refresh it too. */
+export function useAppointmentsToDocument() {
+  return useQuery({
+    queryKey: ["appointments", "to-document"],
+    queryFn: () => getAppointmentsToDocument(),
     retry: retryUnlessClientError,
   });
 }

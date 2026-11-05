@@ -1,9 +1,11 @@
 import type { AppointmentStatus } from "../../types/appointment";
 
+// Same colours as StatusBadge (design tokens). Colour shows the booking
+// status only; whether a note exists is shown separately (design decision 1).
 export const statusBorderColors: Record<AppointmentStatus, string> = {
-  SCHEDULED: "border-l-blue-500 bg-blue-50",
-  CONFIRMED: "border-l-green-500 bg-green-50",
-  COMPLETED: "border-l-gray-400 bg-gray-50",
-  CANCELLED: "border-l-red-400 bg-red-50 opacity-60",
-  NO_SHOW: "border-l-yellow-500 bg-yellow-50",
+  SCHEDULED: "border-s-scheduled bg-scheduled-bg",
+  CONFIRMED: "border-s-confirmed bg-confirmed-bg",
+  COMPLETED: "border-s-completed bg-completed-bg",
+  NO_SHOW: "border-s-no-show bg-no-show-bg",
+  CANCELLED: "border-s-cancelled bg-cancelled-bg",
 };

@@ -7,6 +7,8 @@ import { MIN_PASSWORD_LENGTH } from "../../schemas/doctorSchemas";
 import { passwordFormSchema, type PasswordFormValues } from "../../schemas/accountSchemas";
 import { ApiError } from "../../services/apiClient";
 import { useChangePassword } from "./useAccount";
+import { FormError } from "../../components/Feedback";
+import { Button } from "../../components/Button";
 
 export function PasswordForm() {
   const formId = useId();
@@ -96,25 +98,19 @@ export function PasswordForm() {
         )}
       </FormField>
 
-      {change.isError && !isCurrentPasswordError && (
-        <p role="alert" className="text-sm text-red-600">
-          {change.error.message}
-        </p>
-      )}
+      <FormError
+        message={change.isError && !isCurrentPasswordError ? change.error.message : null}
+      />
       {changed && (
-        <p role="status" className="text-sm text-green-700">
+        <p role="status" className="text-sm text-success">
           Password changed.
         </p>
       )}
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={change.isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {change.isPending ? "Saving..." : "Change password"}
-        </button>
+        <Button type="submit" isPending={change.isPending}>
+          Change password
+        </Button>
       </div>
     </form>
   );

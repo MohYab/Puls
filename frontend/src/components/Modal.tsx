@@ -1,15 +1,14 @@
 import { useEffect, useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { isTopmostModal, registerModal, unregisterModal } from "./modalStack";
+import { X } from "lucide-react";
 
 interface ModalProps {
   title: string;
   onClose: () => void;
   children: ReactNode;
 }
-
-// Open modals, topmost last. Escape only closes the topmost one.
-const openModals: symbol[] = [];
 
 export function Modal({ title, onClose, children }: ModalProps) {
   const titleId = useId();
@@ -23,14 +22,14 @@ export function Modal({ title, onClose, children }: ModalProps) {
   });
 
   useEffect(() => {
-    const id = Symbol("modal");
-    openModals.push(id);
+    const id = registerModal();
 
     const previouslyFocused = document.activeElement;
     dialogRef.current?.focus();
 
+    // Escape only closes the topmost modal.
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && openModals[openModals.length - 1] === id) {
+      if (event.key === "Escape" && isTopmostModal(id)) {
         onCloseRef.current();
       }
     }
@@ -38,7 +37,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      openModals.splice(openModals.indexOf(id), 1);
+      unregisterModal(id);
       if (previouslyFocused instanceof HTMLElement) {
         previouslyFocused.focus();
       }
@@ -46,26 +45,26 @@ export function Modal({ title, onClose, children }: ModalProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="bg-white rounded-lg shadow-lg w-full max-w-md max-h-[90dvh] overflow-y-auto outline-none"
+        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl bg-surface shadow-pop outline-none"
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b">
-          <h2 id={titleId} className="font-semibold">
+        <div className="flex items-center justify-between gap-3 border-b px-5 py-3.5">
+          <h2 id={titleId} className="font-display text-lg font-semibold text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+            className="rounded-lg p-1.5 text-muted hover:bg-subtle hover:text-ink"
           >
-            ×
+            <X aria-hidden="true" className="size-5" />
           </button>
         </div>
         <div className="p-5">{children}</div>

@@ -14,11 +14,18 @@ export interface Appointment {
   patient: {
     firstName: string;
     lastName: string;
+    /** Stored as UTC midnight: the first ten characters are the date. */
+    dateOfBirth: string;
   };
   appointmentType: {
     name: string;
     duration: number;
   };
+  doctor: {
+    user: { name: string };
+  };
+  /** Only sent to doctors (decision #56). Missing for admins and in create/update responses. */
+  hasNote?: boolean;
 }
 
 // Shape returned by GET /api/patients/:id/appointments (patient history).
@@ -35,4 +42,6 @@ export interface PatientAppointment {
     id: string;
     name: string;
   };
+  /** Only sent to doctors (decision #56). */
+  hasNote?: boolean;
 }

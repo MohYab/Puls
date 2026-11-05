@@ -105,15 +105,12 @@ describe("Patient management", () => {
     });
 
     it("rejects an invalid email", async () => {
-      const res = await request(app)
-        .put(`/api/patients/${annaId}`)
-        .set(auth(erikToken))
-        .send({
-          firstName: "Anna",
-          lastName: "Andersson",
-          dateOfBirth: "1985-03-12",
-          email: "nope",
-        });
+      const res = await request(app).put(`/api/patients/${annaId}`).set(auth(erikToken)).send({
+        firstName: "Anna",
+        lastName: "Andersson",
+        dateOfBirth: "1985-03-12",
+        email: "nope",
+      });
 
       expect(res.status).toBe(400);
     });

@@ -5,6 +5,8 @@ import { Modal } from "../../components/Modal";
 import type { Patient, PatientDeactivationReason, PatientStatusResult } from "../../types/patient";
 import { PATIENT_DEACTIVATION_LABELS, PATIENT_DEACTIVATION_REASONS } from "./patientLabels";
 import { useSetPatientStatus } from "./usePatients";
+import { FormError } from "../../components/Feedback";
+import { FormActions } from "../../components/FormActions";
 
 interface DeactivatePatientDialogProps {
   patient: Patient;
@@ -35,7 +37,7 @@ export function DeactivatePatientDialog({
   return (
     <Modal title="Deactivate patient" onClose={onClose}>
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-ink">
           {patient.firstName} {patient.lastName} will no longer appear in the patient list and
           cannot be booked. Future appointments are cancelled. Earlier appointments and clinical
           notes are kept.
@@ -63,30 +65,16 @@ export function DeactivatePatientDialog({
           )}
         </FormField>
 
-        {setStatus.isError && (
-          <p role="alert" className="text-sm text-red-600">
-            {setStatus.error.message}
-          </p>
-        )}
-
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={setStatus.isPending}
-            className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={deactivate}
-            disabled={setStatus.isPending}
-            className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            {setStatus.isPending ? "Deactivating..." : "Deactivate patient"}
-          </button>
-        </div>
+        <FormError message={setStatus.isError ? setStatus.error.message : null} />
+        <FormActions
+          variant="danger"
+          submitLabel="Deactivate patient"
+          pendingLabel="Deactivating..."
+          cancelLabel="Back"
+          isPending={setStatus.isPending}
+          onCancel={onClose}
+          onConfirm={deactivate}
+        />
       </div>
     </Modal>
   );

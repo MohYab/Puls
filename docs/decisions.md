@@ -735,6 +735,11 @@ features and sharing gave more value, and the day view covers the main
 workflow (today's patients, booking, one doctor at a time). Can be revisited in
 week 14 if time allows, reusing `DayView` per column.
 
+**Update (v.44):** Revisited during the redesign. Since the calendar is rebuilt
+in step 3.3 anyway, the week view is built right after it (3.3b), reusing the
+new appointment blocks and side panel. The project brief listed day and week
+views, so it is placed before the remaining COULD items.
+
 ---
 
 ## 42. Unknown ids in the request body give 400, not 404
@@ -1005,3 +1010,279 @@ is logged in, and a clinic's name and address are public.
 **Alternative considered:** Opening hours as a setting too. Left as future
 development: the calendar and the booking validation would then read the hours
 from the API instead of a constant.
+
+## 56. Appointment responses: doctor's name, and a note flag for doctors only
+
+**Decision:** `GET /api/appointments` and `GET /api/appointments/:id` include the doctor's name. Doctors also get `hasNote: boolean`; admins get no note information at all. The note's content is never part of an appointment response.
+
+**Why:** The redesigned calendar shows whether a visit is documented. Admins have no access to clinical notes (decision #17), and even the existence of a note is information about the care given, so least privilege applies. A doctor only sees her own appointments, so the flag only ever describes her own notes.
+
+**How:** A separate include for reads selects only the note's id; `toAppointmentResponse` replaces it with `hasNote` for doctors and removes it for admins. Create and update responses use the include without the note relation. Tested in `appointments.response.test.ts`.
+
+---
+
+## 57. Calendar date ranges: local calendar days, at most 7
+
+**Decision:** `GET /api/appointments` takes `from` and `to` (`YYYY-MM-DD`,
+both inclusive) next to the older `date`. The dates are calendar days in the
+clinic's time zone. The backend turns `from` into midnight Swedish time and
+`to` into midnight of the following day (exclusive end), and filters
+`startTime`, which is stored in UTC, between the two. A range is at most 7
+days. The backend runs with `TZ=Europe/Stockholm`, set in `backend/.env`
+(see `.env.example`) and in the CI workflow; the server refuses to start in
+any other time zone (`assertClinicTimeZone`).
+
+**Why:** The calendar thinks in days and weeks, not in UTC instants, so the
+frontend sends the days it shows and the backend owns the conversion. The end
+is "next calendar day", not "+24 hours", so a week with a daylight saving
+change (e.g. 25 October 2026) still ends at midnight. The number of days is
+counted from the date strings alone (`Date.parse` reads `YYYY-MM-DD` as UTC
+midnight), so a 23- or 25-hour day does not change the count. Seven days is
+exactly one week view in one request; the limit stops anyone fetching a whole
+year at once, since the API has no pagination. `date` is kept, as a one-day
+range, so the dashboard and older calls keep working.
+
+**Alternative considered:** The frontend sends UTC instants (`from` and `to`
+as ISO date-times). More flexible, but every client would have to get the
+time zone right, and a browser in another time zone would show a different
+"day". Converting with an explicit time zone in code (a library such as
+`date-fns-tz`, or `Temporal` later) instead of the server's `TZ` would not
+depend on the server setup; it is the better choice if Puls ever serves
+clinics in more than one time zone.
+
+**Known limitation:** Results depend on the server's time zone. A missing
+`TZ` is caught at startup, but the time zone is still a setting, not part of
+the code. The frontend sends the browser's local dates, so a user in another time zone sees the clinic's days under her own dates. One clinic,
+one time zone is assumed (decision #55).
+
+---
+
+## 58. Visits to document: own endpoint, oldest first
+
+**Decision:** `GET /api/appointments/to-document` (doctors only) returns the
+doctor's completed visits without a note, oldest first, at most 20, with a
+`total`. The list and the count are read without a transaction.
+
+**Why:** Filtering the last days in the frontend would lose exactly the visit
+that matters most: one that has waited for weeks. The oldest is the most
+urgent, and 20 is enough for a card while `total` still shows the size of the
+backlog. Inside a transaction, a read with relations made the pg driver
+adapter send several queries at once on one connection (a known Prisma 7
+issue: a deprecation warning in pg 8, an error in pg 9). Outside a
+transaction each query gets its own connection.
+
+**Alternative considered:** Reading both in a transaction (the list and the
+count can differ for a moment without it). Not worth it for a dashboard that
+refetches; `pg` stays on `^8` until Prisma fixes the issue.
+
+**Known limitation:** A visit that has passed but is still Scheduled or
+Confirmed (the status was never updated) is not listed.
+
+## 59. The patient's date of birth in appointment responses
+
+**Decision:** Every appointment response includes `patient.dateOfBirth`.
+
+**Why:** Name and date of birth together identify the patient, so a doctor
+does not mix up two patients with the same name on the dashboard. No role gets
+new data: admins already see dates of birth on the patient pages, and doctors
+only see their own appointments.
+
+**Alternative considered:** A separate request per patient; more requests for
+the same information.
+
+## 60. One dashboard per role
+
+**Decision:** Doctors see their next patient, today's schedule, visits to
+document and today by status. Admins see operations only: today by status for
+the whole clinic and the doctors working today. The admin dashboard never
+requests `/appointments/to-document`, and no colour other than the booking
+status colours is used for counts.
+
+**Why:** The two roles have different questions ("who is next for me?" and
+"how is the clinic's day going?"). Admins have no access to notes (#17, #56).
+Configuration (doctors, appointment types, clinic settings) stays under
+Administration in the menu (design-direction.md, principle 3).
+
+**Alternative considered:** Statistics over 30 days and recently added
+patients on the admin dashboard (in the mockup). Moved to phase 5 as COULD:
+they need new endpoints and are not needed for the daily work.
+
+## 61. A doctor's calendar from the URL
+
+**Decision:** `/calendar?doctor=<id>` opens that doctor's calendar for admins.
+Changing doctor writes the id back to the URL with `replace`. An unknown or
+inactive id falls back to the first doctor; doctors ignore the parameter.
+
+**Why:** The admin dashboard links each doctor to their calendar, and a link
+that survives a reload can be shared. `replace` keeps the back button from
+stepping through every doctor change.
+
+**Alternative considered:** Navigation state (`useNavigate` with `state`);
+lost on reload and cannot be shared.
+
+---
+
+## 62. The patient page
+
+**Decision:** The patient page shows the patient's age and contact details,
+the next appointment and Book appointment (with the patient preselected) in
+one header. The history comes from `GET /patients/:id/appointments`, where
+doctors get `hasNote` and a link per visit: "Open note" when a note exists
+(whatever the status), "Document" for a completed visit without one. A doctor
+still sees only their own visits with the patient. Inactive patients get no
+booking button and no next appointment.
+
+**Why:** Before a visit the doctor wants the context in one place. The note
+link uses the same rule as the dashboard (#56), in the same function
+(`toAppointmentResponse`). Showing other doctors' visits would show bookings
+the doctor has no part in; shared notes are already listed under Previous
+notes. An inactive patient cannot be booked (400 `PATIENT_INACTIVE`), so the
+button would only lead to an error.
+
+**Alternative considered:** Other doctors' visits marked "Shared note" (in the
+mockup); rejected for the reason above.
+
+## 63. A duplicate patient cannot be accepted from the form
+
+**Decision:** When a patient with the same name and date of birth exists, the
+API keeps answering 409 `PATIENT_EXISTS`. The form explains why and links to
+the existing patient. There is no "This is a different person" option.
+
+**Why:** Two records for one person split their history: a doctor may miss
+earlier notes or book on the wrong record. Without a personal identity number
+the check cannot be certain, so accepting a duplicate should not be one click
+away in a prototype.
+
+**Alternative considered:** The mockup's checkbox "This is a different person"
+with an override flag in the API. It would need a review step (another person
+confirming) to be safe; left for future development.
+
+**Known limitation:** Two real people with the same name and date of birth
+cannot both be registered.
+
+---
+
+## 64. Vital signs in the note content
+
+**Decision:** A note can hold eight optional vital signs (blood pressure,
+heart rate, temperature, SpO₂, respiratory rate, weight, height) in
+`content.vitals`, as numbers with fixed SI units. The API checks plausibility
+limits; the frontend uses the same limits and messages, and accepts a comma as
+decimal separator. The section is shown for every template, as section 2.
+
+**Why:** Free text such as "BP 138/86" cannot be compared between visits.
+Structured values can, with the same units every time.
+Storing them in the existing JSON content needs no migration, and
+the note's access rules (author writes, shared doctors read, admins nothing)
+apply to the values automatically. The limits only catch typing mistakes such
+as 1670 cm; the app never interprets a value clinically.
+
+**Alternative considered:** A separate table with one column per measurement.
+Better for statistics and a future export in a standard format (FHIR, LOINC
+codes), but it needs a migration and a second life cycle next to the note.
+Left for future development.
+
+**Known limitation:** No trends or warnings; the limits are not reference
+ranges.
+
+## 65. Latest measurements on the patient page
+
+**Decision:** Doctors see the newest value of each measurement on the patient
+page, each with the date of the visit it comes from. The values are computed
+in the frontend from the notes the doctor can read (own and shared). Admins
+see nothing.
+
+**Why:** Before a visit the doctor wants the patient's latest values without
+opening every note. The notes are already loaded for Previous notes, so no new
+endpoint is needed. Values can come from different visits, so each one shows
+its own date. Vital signs are clinical data (#17, #56).
+
+**Alternative considered:** A server endpoint that returns the latest values;
+needed if the number of notes grows, or with a separate table (#64).
+
+---
+
+## 66. Doctors correct their own final statuses (changes #43)
+
+**Decision:** NO_SHOW → COMPLETED is part of the workflow and needs no
+reason: the patient arrived late. Any other change away from a final status
+is a correction, which doctors may make on their own appointments and admins
+on any appointment, with a reason of 10–300 characters and the same
+safeguards as before. The rules no longer depend on the role; who may touch
+an appointment at all is checked separately (own appointments for doctors).
+
+**Why:** A late patient is not a mistake but what happened, and asking for a
+reason would only slow the doctor down. Small private clinics, often with a
+single doctor (a target group, see future-roadmap.md), have no separate
+administrator to ask for a correction. Traceability, the reason for locking
+final statuses in #43, is kept: every change is stored with who, when and
+why.
+
+**Alternative considered:** Keeping corrections for admins only (#43). Safer
+in a large clinic with separate roles, but it leaves a one-doctor clinic
+without a way to fix a mistake.
+
+**Known limitation:** The status history cannot be read in the app yet.
+
+## 67. One status menu on the dashboard and in the calendar
+
+**Decision:** The status of an appointment is a button with a menu of the
+changes the rules allow, with short labels (Confirmed, Completed, No-show,
+Cancelled). Workflow changes are saved at once; cancelling asks first; a
+correction opens a dialog with the chosen status selected and a field for the
+reason. The same component replaces the status buttons and the "Correct
+status" button in the calendar. Headless UI (`Menu`) is used for keyboard
+navigation, focus and ARIA, and later for the searchable select (3.8).
+
+**Why:** Doctors change statuses during the day from the schedule, without
+opening each appointment. Asking before every final status made sense when it
+could not be undone (#43); with corrections possible (#66), only cancelling,
+which frees the time and affects the patient, still asks. One component keeps
+the rules, labels and dialogs the same everywhere.
+
+**Alternative considered:** A native `<select>`: simpler, but it cannot show
+the status badge or open a dialog for some choices without extra logic, and
+it saves on every change.
+
+## 68. Shared UI parts for the remaining pages
+
+**Decision:** The last pages use the design system: semantic colour tokens
+(`danger`, `danger-subtle`, `success`, `success-subtle`) instead of Tailwind's
+red and green, `FormActions` and `FormError` in every form, an
+`outlineDanger` button for destructive actions of secondary weight, shared
+table styles, and a sidebar where the user's name leads to My account. The
+check `grep -rnE "(bg|text|border)-(blue|gray|red|green)-[0-9]" frontend/src`
+returns nothing.
+
+**Why:** The same Cancel/Save row and error line were written eight times.
+Semantic tokens say what a colour means and change in one place. "Success"
+uses the completed colours but has its own name, since "saved" is not a
+booking status (design-direction.md, principle 1).
+
+## 69. A searchable select for patients and doctors
+
+**Decision:** Patients and doctors are chosen with one shared component,
+`SearchSelect`, built on Headless UI `Combobox`: in the booking form, in the
+admin calendar and when sharing a note. The search ignores case and
+diacritics (å, é, Arabic vowel marks), matches every word in any order, and
+also searches a second line: a patient's date of birth (shown as "Born
+YYYY-MM-DD") and a doctor's specialization. The admin calendar's doctor
+select cannot be cleared, since the calendar always shows one doctor.
+Filtering happens in the browser on lists the app already loads.
+
+**Why:** Scrolling a long native select to find a patient is slow and makes
+it easy to pick the wrong person. Name plus date of birth is how staff check
+that they have the right patient (see #63). Headless UI gives keyboard
+navigation, focus handling and ARIA without custom code, and we already use
+it for the status menu (#67). Removing diacritics with Unicode normalization
+works for Swedish and Arabic without country-specific rules.
+
+**Alternative considered:** Searching on the server for each keystroke. It
+scales to large clinics but needs debouncing, loading states and an endpoint
+change, which the demo data does not need.
+
+**Known limitation:** All active patients are loaded into the browser. A
+clinic with thousands of patients would need server-side search (phase 5).
+Headless UI overwrites `aria-describedby` on the input, so `SearchSelect`
+sets it on the element itself; a test checks that the field's error is still
+read out.

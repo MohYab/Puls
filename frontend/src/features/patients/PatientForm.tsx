@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormField } from "../../components/FormField";
@@ -7,6 +7,10 @@ import { patientFormSchema, type PatientFormValues } from "../../schemas/patient
 import type { Patient } from "../../types/patient";
 import { toDateString } from "../../utils/date";
 import { useSavePatient } from "./usePatients";
+import { ApiError } from "../../services/apiClient";
+import { DuplicatePatientNotice } from "./DuplicatePatientNotice";
+import { FormError } from "../../components/Feedback";
+import { FormActions } from "../../components/FormActions";
 
 interface PatientFormProps {
   patient: Patient | null; // null = new patient
@@ -17,6 +21,9 @@ interface PatientFormProps {
 export function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) {
   const formId = useId();
   const save = useSavePatient(patient?.id);
+  // What was sent, so the duplicate notice searches for that and not for later edits.
+  const [submitted, setSubmitted] = useState<PatientFormValues | null>(null);
+  const isDuplicate = save.error instanceof ApiError && save.error.code === "PATIENT_EXISTS";
 
   const {
     register,
@@ -35,6 +42,7 @@ export function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) 
   });
 
   function onSubmit(values: PatientFormValues) {
+    setSubmitted(values);
     save.mutate(values, { onSuccess });
   }
 
@@ -62,7 +70,6 @@ export function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) 
           )}
         </FormField>
       </div>
-
       <FormField id={`${formId}-dob`} label="Date of birth" error={errors.dateOfBirth?.message}>
         {(field) => (
           <input
@@ -75,7 +82,6 @@ export function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) 
           />
         )}
       </FormField>
-
       <FormField id={`${formId}-phone`} label="Phone (optional)" error={errors.phone?.message}>
         {(field) => (
           <input
@@ -87,7 +93,6 @@ export function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) 
           />
         )}
       </FormField>
-
       <FormField id={`${formId}-email`} label="Email (optional)" error={errors.email?.message}>
         {(field) => (
           <input
@@ -99,31 +104,22 @@ export function PatientForm({ patient, onSuccess, onCancel }: PatientFormProps) 
           />
         )}
       </FormField>
-
       {/* A duplicate concerns the whole patient, not one field, so it is shown here. */}
-      {save.isError && (
-        <p role="alert" className="text-sm text-red-600">
-          {save.error.message}
-        </p>
+      {isDuplicate && submitted && (
+        <DuplicatePatientNotice
+          firstName={submitted.firstName}
+          lastName={submitted.lastName}
+          dateOfBirth={submitted.dateOfBirth}
+          excludeId={patient?.id}
+          onOpen={onCancel}
+        />
       )}
-
-      <div className="flex justify-end gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={save.isPending}
-          className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={save.isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {save.isPending ? "Saving..." : patient ? "Save changes" : "Create patient"}
-        </button>
-      </div>
+      <FormError message={save.isError && !isDuplicate ? save.error.message : null} />
+      <FormActions
+        submitLabel={patient ? "Save changes" : "Create patient"}
+        isPending={save.isPending}
+        onCancel={onCancel}
+      />
     </form>
   );
 }

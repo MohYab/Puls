@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
+import { Badge } from "../../components/Badge";
 import { Card } from "../../components/Card";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
-import { formatDateTime } from "../../utils/date";
+import { formatDate } from "../../utils/date";
+import { useAuth } from "../auth/useAuth";
 import { NOTE_FIELDS } from "./noteFields";
 import { usePatientNotes } from "./useNotes";
-import { useAuth } from "../auth/useAuth";
+import { formatVitals } from "./vitals";
 
 interface PreviousNotesProps {
   patientId: string;
@@ -20,49 +22,60 @@ export function PreviousNotes({ patientId, excludeAppointmentId }: PreviousNotes
   return (
     <Card title="Previous documentation">
       {isPending && <LoadingMessage>Loading documentation...</LoadingMessage>}
-
       {isError && <ErrorMessage message={error.message} onRetry={() => refetch()} />}
-
       {notes && notes.length === 0 && (
         <EmptyMessage>No earlier documentation for this patient.</EmptyMessage>
       )}
 
       {notes && notes.length > 0 && (
         <ul className="flex flex-col gap-3">
-          {notes.map((note, index) => (
-            <li key={note.id}>
-              <details open={index === 0} className="rounded border">
-                <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-gray-900">
-                  {formatDateTime(note.appointment.startTime)} ·{" "}
-                  {note.appointment.appointmentType.name}
-                  {note.doctorId !== user?.doctorId && (
-                    <span className="ml-2 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
-                      Shared by {note.doctor.user.name}
+          {notes.map((note, index) => {
+            const isOwn = note.doctorId === user?.doctorId;
+            const vitals = formatVitals(note.content.vitals);
+            return (
+              <li key={note.id}>
+                <details open={index === 0} className="rounded-lg border px-3.5 py-3">
+                  <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2">
+                    <span className="flex flex-wrap items-center gap-2 font-semibold text-ink">
+                      {note.appointment.appointmentType.name}
+                      {/* Neutral: colour only means booking status (design-direction.md, 1). */}
+                      {!isOwn && <Badge>Shared by {note.doctor.user.name}</Badge>}
                     </span>
+                    <span className="text-sm tabular-nums text-muted">
+                      {formatDate(note.appointment.startTime)} · {note.doctor.user.name}
+                    </span>
+                  </summary>
+
+                  {vitals && (
+                    <p className="mt-2.5 rounded-md bg-subtle px-2.5 py-1.5 text-sm tabular-nums text-ink">
+                      {vitals}
+                    </p>
                   )}
-                </summary>
-                <div className="border-t px-3 py-3">
-                  <dl className="flex flex-col gap-3 text-sm">
+
+                  <dl className="mt-2.5 flex flex-col gap-2 text-sm">
                     {NOTE_FIELDS.filter(({ name }) => note.content[name]).map(({ name, label }) => (
                       <div key={name}>
-                        <dt className="text-gray-500">{label}</dt>
-                        <dd className="whitespace-pre-wrap text-gray-900">{note.content[name]}</dd>
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                          {label}
+                        </dt>
+                        <dd className="whitespace-pre-wrap text-ink">{note.content[name]}</dd>
                       </div>
                     ))}
                   </dl>
-                  {/* Shared notes are read-only and live on another doctor's appointment. */}
-                  {note.doctorId === user?.doctorId && (
+
+                  {/* Shared notes are read-only and belong to another doctor's appointment. */}
+                  {isOwn && (
                     <Link
                       to={`/documentation/${note.appointmentId}`}
-                      className="mt-3 inline-block text-sm text-blue-700 hover:underline"
+                      className="mt-2.5 inline-block text-sm font-semibold text-accent hover:underline"
                     >
                       Open documentation
                     </Link>
                   )}
-                </div>
-              </details>
-            </li>
-          ))}
+                </details>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Card>

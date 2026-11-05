@@ -338,7 +338,7 @@ const w = document.documentElement.clientWidth;
 [...document.querySelectorAll("body *")]
   .filter((el) => el.getBoundingClientRect().right > w + 1)
   .map(
-    (el) => `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 60)}`
+    (el) => `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 60)}`,
   );
 ```
 
@@ -592,3 +592,225 @@ TYPE=$(curl -s $API/appointment-types -H "Authorization: Bearer $ERIK" | jq -r '
 - My account: the name in the header links there; saving the name updates the
   header; a wrong current password shows at the field without logging out;
   admins have no specialization field
+
+## Appointments in a date range (phase 3)
+
+Needs `$DOCTOR_TOKEN` and `$ADMIN_TOKEN` (see "Tokens for both roles").
+`date -d` is GNU date (Linux).
+
+```bash
+API=http://localhost:3001/api
+FROM=$(date +%F)
+TO=$(date -d "+6 days" +%F)
+
+# 1. Seven days: 200, the doctor's own appointments in the week
+curl -s "$API/appointments?from=$FROM&to=$TO" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq length
+
+# 2. Eight days: 400 "At most 7 days at a time"
+curl -s "$API/appointments?from=$FROM&to=$(date -d "+7 days" +%F)" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 3. to before from: 400 "from must be on or before to"
+curl -s "$API/appointments?from=$TO&to=$FROM" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 4. Only from: 400 "from and to must be used together"
+curl -s "$API/appointments?from=$FROM" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 5. date together with from/to: 400 "Use either date or from/to, not both"
+curl -s "$API/appointments?date=$FROM&from=$FROM&to=$TO" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 6. Not a real date: 400 "Dates must be valid ..."
+curl -s "$API/appointments?from=2026-13-01&to=2026-13-02" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .error
+
+# 7. Admin, one doctor: only that doctor's appointments
+DOCTOR_ID=$(curl -s "$API/doctors" -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id')
+curl -s "$API/appointments?from=$FROM&to=$TO&doctorId=$DOCTOR_ID" -H "Authorization: Bearer $ADMIN_TOKEN" \
+  | jq '[.[].doctorId] | unique'
+```
+
+Expected: 1 a number, 2–6 an error object with code `VALIDATION_ERROR`,
+7 a list with one doctor id.
+
+Daylight saving: `from=2026-10-19&to=2026-10-25` (DST ends 25 October) is
+7 days and is accepted.
+
+## UI checklist: week view and details panel (phase 3)
+
+Window at least 1280 px, logged in as a doctor:
+
+- [ ] Day/Week switch; the week shows Monday–Sunday, previous/next move a whole week
+- [ ] Today button marks the current week; the now line only in today's column
+- [ ] Clicking a day header opens that day in the day view
+- [ ] No details panel until an appointment is chosen; the calendar has full width
+- [ ] Choosing an appointment opens the panel and moves focus to its heading
+- [ ] Escape and ✕ close the panel; focus goes back to the appointment block
+- [ ] With the cancel confirmation open, Escape closes only the confirmation
+- [ ] Changing day, week, view or doctor closes the panel
+- [ ] Under 1280 px the details open in a modal; Escape returns focus to the block
+- [ ] Under 768 px there is no Day/Week switch and the day view is shown
+
+Known edge case: if an open appointment disappears from the list (an admin
+moves it to another day or doctor), the panel closes without returning focus.
+
+## Visits to document (phase 3)
+
+Needs `$DOCTOR_TOKEN` and `$ADMIN_TOKEN` (see "Tokens for both roles").
+
+```bash
+API=http://localhost:3001/api
+
+# 1. Doctor: total and the oldest visits, all COMPLETED with hasNote false
+curl -s $API/appointments/to-document -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq '{total, items: [.appointments[] | {startTime, status, hasNote}]}'
+
+# 2. Admin: 403 FORBIDDEN
+curl -s $API/appointments/to-document -H "Authorization: Bearer $ADMIN_TOKEN" | jq .error
+
+# 3. No token: 401
+curl -s $API/appointments/to-document | jq .error
+
+# 4. Document the oldest one: total drops by one (writes a note; reseed afterwards)
+ID=$(curl -s $API/appointments/to-document -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.appointments[0].id')
+curl -s -X POST $API/appointments/$ID/notes -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"reasonForVisit":"Test note"}' | jq '{id}'
+curl -s $API/appointments/to-document -H "Authorization: Bearer $DOCTOR_TOKEN" | jq .total
+
+# 5. Every appointment has the patient's date of birth
+curl -s "$API/appointments?date=$(date +%F)" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq '.[0].patient'
+```
+
+The automated tests run against the same database. If test 4 has documented
+every completed visit of Erik's, `appointments.toDocument.test.ts` fails until
+the database is seeded again (`npx prisma db seed`).
+
+## UI checklist: dashboards (phase 3)
+
+Doctor (`erik@puls.test`):
+
+- [ ] Date, greeting after the time of day, and "N appointments today · N visits to document"
+- [ ] Two columns from 1024 px; on a phone: next patient, schedule, to document, status
+- [ ] Next patient: dark card with "Starts in …", date of birth and age; the focus ring is visible
+- [ ] Schedule: the next appointment marked "Next"; Document visit / Open documentation for completed, Open for upcoming, nothing for no-show and cancelled
+- [ ] To document: oldest first, "Today 08:30" or "Yesterday …"; saving a note removes the visit
+- [ ] Book appointment opens the form with the doctor preselected; Escape returns focus to the button
+- [ ] Backend stopped: an error with Try again in each card, never "No more patients today"
+
+Admin (`admin@puls.test`):
+
+- [ ] "Today at the clinic", a summary, Add patient and Book appointment
+- [ ] Five status tiles in a row, then Doctors today with centred counts
+- [ ] A doctor's name opens their calendar (`/calendar?doctor=…`); changing doctor updates the URL; a reload keeps the doctor
+- [ ] `/calendar?doctor=unknown` shows the first doctor without an error
+- [ ] At 375 px the table scrolls inside its card
+- [ ] Network tab: no request to `to-document`
+
+## Patient history with note flags (phase 3)
+
+```bash
+API=http://localhost:3001/api
+ANNA=$(curl -s "$API/patients?search=Anna%20Andersson" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[0].id')
+
+# 1. Doctor: hasNote on every row, at least one true
+curl -s $API/patients/$ANNA/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  | jq '[.[] | {startTime, status, hasNote}]'
+
+# 2. Admin: no hasNote and no note
+curl -s $API/patients/$ANNA/appointments -H "Authorization: Bearer $ADMIN_TOKEN" | jq '.[0] | keys'
+```
+
+## UI checklist: patients (phase 3)
+
+Doctor (`erik@puls.test`):
+
+- [ ] Patient list: Add patient as the main button, date of birth with age, inactive patients marked "Inactive" (with Show inactive)
+- [ ] Search narrows the list; "No patients match …" when nothing is found
+- [ ] Patient page: name, "1985-03-12 · 41 y", phone and email (or "No phone", "No email")
+- [ ] Book appointment opens the form with the patient preselected; "Next: …" updates after booking
+- [ ] History: "Open note" for documented visits, "Document" for completed ones without a note
+- [ ] Previous notes beside the history from 1024 px, below it on a phone
+- [ ] Add patient with the name and date of birth of an existing patient: a warning with a link to that patient; the link closes the dialog
+
+Admin (`admin@puls.test`):
+
+- [ ] No documentation column in the history; "Clinical notes are only visible to doctors."
+- [ ] Next names the doctor
+- [ ] Deactivating a patient (use one you created): "Inactive", "Deactivated … (…)", no Book appointment and no Next
+
+## Vital signs (phase 3)
+
+Needs `$DOCTOR_TOKEN` (Erik). Uses Erik's note for Anna; test 1 changes it,
+reseed afterwards or save the original again.
+
+```bash
+API=http://localhost:3001/api
+ANNA=$(curl -s "$API/patients?search=Anna%20Andersson" -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[0].id')
+NOTE=$(curl -s $API/patients/$ANNA/notes -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '.[0].id')
+
+# 1. Valid values: 200, returned in content.vitals
+curl -s -X PUT $API/notes/$NOTE -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"reasonForVisit":"Check-up","vitals":{"systolic":138,"diastolic":86,"temperature":36.8}}' | jq .content.vitals
+
+# 2. Height 1670: 400 "Must be between 30 and 250 cm"
+curl -s -X PUT $API/notes/$NOTE -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"reasonForVisit":"Check-up","vitals":{"height":1670}}' | jq .error
+
+# 3. Only systolic: 400 "Enter both values"
+curl -s -X PUT $API/notes/$NOTE -H "Authorization: Bearer $DOCTOR_TOKEN" -H "Content-Type: application/json" \
+  -d '{"reasonForVisit":"Check-up","vitals":{"systolic":138}}' | jq .error
+```
+
+## UI checklist: documentation (phase 3)
+
+Doctor (`erik@puls.test`):
+
+- [ ] Visit documentation: back to patient, a visit header with patient, date of birth and age, time, type, doctor and status
+- [ ] Sections numbered 1 Reason for visit, 2 Vital signs, 3–5; with the Vaccination template 1–4 without a gap
+- [ ] Height 1670: "Must be between 30 and 250 cm" at the field, nothing saved
+- [ ] Only systolic: "Enter both values"; 80/90: "Systolic must be higher than diastolic"
+- [ ] 36,8 °C is saved as 36.8; editing only the text keeps the vital signs
+- [ ] Previous documentation: a line such as "BP 138/86 mmHg · HR 72/min"; "Shared by …" on a shared note, without Open documentation
+- [ ] Patient page: Latest measurements with a date on each value; "No measurements recorded yet." for a patient without any
+- [ ] Admin: no Latest measurements on the patient page
+- [ ] 375 px: visit header, note, sharing, earlier documentation in that order
+
+## Status corrections (phase 3)
+
+Needs `$DOCTOR_TOKEN` (Erik). Changes data: reseed afterwards.
+
+```bash
+API=http://localhost:3001/api
+NOSHOW=$(curl -s $API/appointments -H "Authorization: Bearer $DOCTOR_TOKEN" | jq -r '[.[] | select(.status=="NO_SHOW")][0].id')
+
+# 1. No-show → completed without a reason: 200
+curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"status":"COMPLETED"}' | jq .status
+
+# 2. Completed → no-show (a correction) without a reason: 400
+curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"status":"NO_SHOW"}' | jq .error
+
+# 3. With a reason: 200
+curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOCTOR_TOKEN" \
+  -H "Content-Type: application/json" -d '{"status":"NO_SHOW","reason":"Marked completed by mistake"}' | jq .status
+```
+
+## UI checklist: remaining pages and status menu (phase 3)
+
+- [ ] `grep -rnE "(bg|text|border)-(blue|gray|red|green)-[0-9]" frontend/src` returns nothing
+- [ ] Login: brand, a card with "Log in", the prototype label below
+- [ ] Sidebar: no My account item; the user's name opens My account and is marked when active
+- [ ] My account, Doctors, Appointment types, Clinic settings: page header, dark save buttons, "Inactive" as a badge, Deactivate with a red border
+- [ ] Patients: ticking "Show inactive patients" does not move the columns
+- [ ] Today's schedule: no action column; the name opens the patient page
+- [ ] Status menu (dashboard and calendar): only allowed changes; Confirmed saves at once; Cancelled asks; a completed appointment offers corrections with a reason dialog; no-show → completed saves at once
+- [ ] Keyboard: Enter opens the menu, arrows move, Escape closes only the menu; focus returns to the button
+
+## UI checklist: searchable select (phase 3)
+
+- [ ] Booking (doctor): "anna" lists both Annas with "Born …"; "anna 1986" lists one; arrows and Enter choose
+- [ ] Booking: "zz" shows "No patients match "zz"."
+- [ ] Booking in a modal: Escape closes only the list, a second Escape closes the modal; a mouse click on an option keeps the modal open
+- [ ] Patient page → Book appointment: the patient is preselected
+- [ ] Booking (admin): the doctor can be searched by name or specialization
+- [ ] Admin calendar: choosing a doctor updates the calendar and `?doctor=`; clearing the field and leaving it shows the selected doctor again
+- [ ] Sharing: only colleagues without access are listed; after sharing, the field is empty and the colleague is under "Shared with"; when everyone has access the field and button are disabled with "No other doctors to share with"
+- [ ] Screen reader or dev tools: the field's error is in its accessible description

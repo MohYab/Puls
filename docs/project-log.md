@@ -1392,20 +1392,187 @@ real phone, completed the quality phase.
 - Tests that change seed users cannot run in parallel with the other test
   files, so those changes are tested manually.
 
+### Entry 13: Calendar week view and the details panel (phase 3)
+
+**What I did**
+
+- Added `from`/`to` to `GET /api/appointments` (inclusive calendar days, at
+  most 7, validated with Zod) so the week view needs one request
+  (decision #57).
+- Built the week view with a Day/Week switch, on screens from 768 px. The
+  time axis, hour lines, now line and appointment list moved to a shared
+  `CalendarGrid.tsx` used by both views.
+- Made the details panel appear only when an appointment is chosen. Escape
+  closes it, unless a modal is open, and focus goes back to the block that
+  opened it.
+
+**What I learned**
+
+- Time zones belong in one place. The frontend sends the days it shows; the
+  backend turns them into UTC limits. "Next calendar day" and "+24 hours" are
+  not the same in a week with a daylight saving change.
+- Two components listening for Escape on `document` run in the order they
+  were registered, so the panel cannot rely on a modal stopping the event.
+  Sharing the stack of open modals (`modalStack.ts`) solved it.
+- Accessibility for a side panel is mostly about focus: where it goes when
+  the panel opens, and where it comes back when it closes.
+
+### Entry 14: Dashboards for doctors and admins (phase 3)
+
+**What I did**
+
+- Added `GET /api/appointments/to-document`: a doctor's completed visits
+  without a note, oldest first (decision #58), and the patient's date of birth
+  in every appointment response (decision #59).
+- Rebuilt the doctor's dashboard after the mockup: a greeting, the next
+  patient in a dark card with "Starts in …", today's schedule with date of
+  birth and age, visits to document and today by status.
+- Built the admin dashboard: today by status for the whole clinic and a table
+  of the doctors working today. Each doctor links to their calendar through
+  `/calendar?doctor=<id>` (decisions #60 and #61).
+- Moved the dashboard logic into pure functions with unit tests, and added a
+  Prettier check to CI.
+
+**What I learned**
+
+- A hypothesis must be tested. I first thought the array form of
+  `$transaction` caused a warning from the database driver; the stack trace
+  showed that any transaction with relations did, a known issue in Prisma 7.
+- Automated and manual tests should not share a database. A test failed
+  because I had documented the visits it expected while testing by hand.
+- A test that is fine alone can time out when every file runs in parallel.
+  This happened twice, so the frontend got a longer timeout for all tests.
+- Where a component belongs depends on what it knows, not on how many pages
+  use it: `components/` for building blocks, `features/` for anything that
+  knows about appointments or patients.
+- Formatting is only consistent when a machine checks it.
+
+### Entry 15: Patients (phase 3)
+
+**What I did**
+
+- Added `hasNote` for doctors to a patient's appointment history, with the
+  same function as the appointment list, so the rule lives in one place.
+- Rebuilt the patient page after the mockup: a header with age, contact
+  details, Book appointment with the patient preselected and the next
+  appointment; the history as a table with links to notes (decision #62).
+- Rebuilt the patient list, and made the duplicate warning explain the risk
+  and link to the existing patient instead of letting it be accepted
+  (decision #63).
+- Moved "Latest measurements" to the documentation step, since the values do
+  not exist until notes have vital signs.
+
+**What I learned**
+
+- A function that two features need belongs in `utils/`, not in one of the
+  features.
+- Two components can call the same query hook: TanStack Query sends one
+  request and both read the same cache.
+- A test describes what I decided, so it also catches code that drifted from
+  the decision: the duplicate warning in the file was not the version I had
+  planned, and the test found it.
+
+### Entry 16: Documentation and vital signs (phase 3)
+
+**What I did**
+
+- Added eight optional vital signs to the clinical note, stored in the existing
+  JSON content with plausibility limits in the API and the same limits in the
+  form (decision #64).
+- Rebuilt the visit note with numbered sections and the documentation page
+  after the mockup: a visit header, the note in the main column, sharing and
+  earlier documentation with a line of vital signs in a side column.
+- Added Latest measurements to the patient page for doctors (decision #65).
+
+**What I learned**
+
+- Adding a field to a type can change what other code means. `keyof
+NoteContent` suddenly included `vitals`, and TypeScript stopped code that
+  assumed every key was text. A separate type for the text fields fixed it.
+- Dependencies should point one way: `types/` and `config/` never import from
+  `features/`. The limits moved to `config/vitals.ts` so the form schema and
+  the features can share them.
+- A form holds what the user typed, the API needs numbers. Validating the text
+  and converting it in one place keeps both sides simple.
+- I skipped a whole sub-step without noticing, because the page looked
+  finished. The checklist at the end of each step is there to catch that.
+
+### Entry 17: The remaining pages, and status changes from the schedule (phase 3)
+
+**What I did**
+
+- Moved the shared components, every form and dialog, the login page, My
+  account and the admin pages to the design system, with a grep for old
+  colour classes as the measurable "done" (decision #68).
+- Made the user's name in the sidebar the link to My account.
+- Let doctors change statuses from today's schedule and the calendar with one
+  status menu (decision #67), and changed the rules: no-show → completed is
+  part of the workflow, and doctors may correct their own final statuses with
+  a reason (decision #66, changes #43).
+
+**What I learned**
+
+- Rules belong in the backend. The frontend only mirrors them, to show the
+  right choices; "turning a rule off" in the frontend would only lead to
+  errors from the API.
+- A decision can be right for its time and wrong later. Locking final
+  statuses was safe, but a one-doctor clinic has no administrator to ask.
+- A browser computes table column widths from the content of every row, so
+  a badge in one row moved the other columns. A fixed table layout fixed it.
+- Where tests live is a convention: backend keeps them in `src/test/`, the
+  frontend next to the file. Following the convention that is already there
+  matters more than which one it is.
+
+### Entry 18: A searchable select, and phase 3 done
+
+**What I did**
+
+- Built `SearchSelect` on Headless UI `Combobox`, with a search helper that
+  ignores case and diacritics, and used it for patients and doctors in
+  booking, the admin calendar and note sharing (decision #69).
+- Moved note sharing to the new style.
+- Finished phase 3: every page now follows the redesign.
+
+**What I learned**
+
+- An accessibility library can also break accessibility. Headless UI
+  replaced my `aria-describedby`, so a screen reader would not have read the
+  field's error. Only a test that checked the attribute found it.
+- Vitest removes types without checking them. A missing export (an unsaved
+  file) became `undefined` and a confusing runtime error, which `tsc` would
+  have named at once.
+- `register` in React Hook Form only works for native fields; a controlled
+  component needs `Controller`.
+
 ### Problems and solutions
 
-| Problem                                       | Cause                                                            | Solution                                                     |
-| --------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| All borders black                             | Tailwind v4 default border colour is `currentColor`              | Base layer default (gray-200, gray-500 for controls)         |
-| Booking with unknown patient gave 500         | Ids in the body were not checked                                 | Check before writing; 400 for unknown ids (#42)              |
-| "." accepted as a correction reason           | Only "not empty" was required                                    | Minimum 10 characters in both layers                         |
-| Every backend test failed with `ECONNREFUSED` | PostgreSQL had not started after a restart                       | Start and enable the service; better hint in the test helper |
-| Frontend tests: "Found multiple elements"     | No automatic cleanup without Vitest globals                      | `cleanup()` in `afterEach` in the setup file                 |
-| CI: "Cannot find module 'vitest'"             | Test dependencies, scripts and config not in the committed files | Declared them again; read `git status` before every commit   |
-| Editor: unknown option `erasableSyntaxOnly`   | The editor used an older built-in TypeScript                     | Use the workspace TypeScript (`.vscode/settings.json`)       |
-| `hostname -I` not found                       | Not available on every Linux distribution                        | Use `ip route get` in the setup guide                        |
-| Booking from curl gave 400                    | `date --iso-8601` sends `+02:00`, the API only accepted `Z`      | The API accepts offsets; show the full response with `jq`    |
-| Two different 400s looked the same            | Only the status code was printed                                 | Print the error body                                         |
+| Problem                                                          | Cause                                                                                        | Solution                                                                                     |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| All borders black                                                | Tailwind v4 default border colour is `currentColor`                                          | Base layer default (gray-200, gray-500 for controls)                                         |
+| Booking with unknown patient gave 500                            | Ids in the body were not checked                                                             | Check before writing; 400 for unknown ids (#42)                                              |
+| "." accepted as a correction reason                              | Only "not empty" was required                                                                | Minimum 10 characters in both layers                                                         |
+| Every backend test failed with `ECONNREFUSED`                    | PostgreSQL had not started after a restart                                                   | Start and enable the service; better hint in the test helper                                 |
+| Frontend tests: "Found multiple elements"                        | No automatic cleanup without Vitest globals                                                  | `cleanup()` in `afterEach` in the setup file                                                 |
+| CI: "Cannot find module 'vitest'"                                | Test dependencies, scripts and config not in the committed files                             | Declared them again; read `git status` before every commit                                   |
+| Editor: unknown option `erasableSyntaxOnly`                      | The editor used an older built-in TypeScript                                                 | Use the workspace TypeScript (`.vscode/settings.json`)                                       |
+| `hostname -I` not found                                          | Not available on every Linux distribution                                                    | Use `ip route get` in the setup guide                                                        |
+| Booking from curl gave 400                                       | `date --iso-8601` sends `+02:00`, the API only accepted `Z`                                  | The API accepts offsets; show the full response with `jq`                                    |
+| Two different 400s looked the same                               | Only the status code was printed                                                             | Print the error body                                                                         |
+| Test expected undocumented visits, found none                    | Manual tests had documented them in the shared database                                      | Reseed; a message in the test; separate test database in phase 5                             |
+| pg warning "client is already executing a query"                 | Prisma 7 sends a read with relations in parallel inside a transaction                        | No transaction for the read; pg stays on ^8                                                  |
+| Login test timed out only in the full run                        | jsdom per file and typing character by character under load                                  | 15 s test timeout in the frontend                                                            |
+| 26 files not formatted                                           | Prettier was only run by hand                                                                | `format:check` script and a CI step                                                          |
+| `package.json` appeared in the repository root                   | An npm command was run from the root                                                         | Deleted; run npm commands inside `frontend/` or `backend/`                                   |
+| `hasNote` missing on `PatientAppointment`                        | The type change went into the wrong interface                                                | TypeScript pointed at every use; added it to the right type                                  |
+| Duplicate warning test failed                                    | The component file held a different version than planned                                     | Replaced it with the planned version                                                         |
+| Build errors after adding `vitals` to the note type              | `keyof NoteContent` included the new field                                                   | A `NoteTextField` type for the four text fields                                              |
+| `types/note.ts` imported from `features/`                        | Types were placed where they were first used                                                 | Types to `types/`, limits to `config/vitals.ts`                                              |
+| Documentation page had the old form                              | Sub-step 3 was skipped                                                                       | Done afterwards, follow each step's checklist                                                |
+| Test query for `term` found two elements                         | A `dt` gets no accessible name from its text                                                 | Compare the list of term texts instead                                                       |
+| Columns moved when inactive patients were shown                  | Automatic table layout sizes columns from all rows                                           | `table-fixed`, long names are cut with "…"                                                   |
+| An old test expected no changes from no-show                     | The rule changed (no-show → completed)                                                       | Updated the test to the new rule                                                             |
+| The field's error was not in the select's accessible description | Headless UI sets `aria-describedby` from its own components and overwrote ours               | Set the attribute on the element with a ref after each render, a test checks the description |
+| "undefined is not a function" in the booking form                | The new file was not saved, so the named import was `undefined`; Vitest does not check types | Saved the file; run `tsc -b` when an error looks strange; auto-save on focus change          |
 
 ### Feedback from supervisor
 
@@ -1420,6 +1587,12 @@ real phone, completed the quality phase.
 - The redesign waits for the supervisor meeting.
 - Added phase 2b (patients, doctors, My account) before the redesign.
 - Clinic settings (name, address, phone) added as COULD (2b.7).
+- Phase 3.7 was meant to be visual only. Added after review: changing the
+  status from the schedule, and doctors correcting their own final statuses
+  (#66, #67).
+- Headless UI was added in 3.7 instead of 3.8.
+- The doctor in the booking form (admin) also got the searchable select, so
+  the form uses one kind of select for people.
 
 ### What I would do differently
 

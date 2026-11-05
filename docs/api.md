@@ -51,13 +51,80 @@ active"), even with a token that has not expired.
 
 ## Appointments
 
-| Method | Path                          | Role | Notes                                                                                                                  |
-| ------ | ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------- |
-| GET    | /appointments?date=&doctorId= | any  | Doctor sees own only. Admin sees all, or one doctor with `doctorId` (ignored for doctors)                              |
-| GET    | /appointments/:id             | any  | 404 if not found, 403 if doctor doesn't own it                                                                         |
-| POST   | /appointments                 | any  | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
-| PUT    | /appointments/:id             | any  | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
-| PATCH  | /appointments/:id/status      | any  | Body: `{ status, reason? }`; see Appointment status                                                                    |
+| Method | Path                      | Role   | Notes                                                                                                                  |
+| ------ | ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| GET    | /appointments             | any    | Filters: `date` or `from`+`to`, and `doctorId` (see below). Doctor sees own only; admin sees all or one doctor         |
+| GET    | /appointments/to-document | DOCTOR | Own completed visits without a note, oldest first, at most 20 (see below)                                              |
+| GET    | /appointments/:id         | any    | 404 if not found, 403 if doctor doesn't own it                                                                         |
+| POST   | /appointments             | any    | 400 for unknown patient, doctor or type; 400 `APPOINTMENT_TYPE_INACTIVE`, 409 on conflict                              |
+| PUT    | /appointments/:id         | any    | Only owner doctor or admin; 409 `APPOINTMENT_LOCKED` for a final status; booked length is kept unless the type changes |
+| PATCH  | /appointments/:id/status  | any    | Body: `{ status, reason? }`; see Appointment status                                                                    |
+
+**Response:** every appointment response has the patient's name and date of
+birth, the type and the doctor's name. Doctors also get `hasNote` (decision #56).
+
+```json
+{
+  "id": "…",
+  "startTime": "2026-10-30T09:30:00.000Z",
+  "endTime": "2026-10-30T10:15:00.000Z",
+  "status": "SCHEDULED",
+  "patient": {
+    "firstName": "Anna",
+    "lastName": "Andersson",
+    "dateOfBirth": "1985-03-12T00:00:00.000Z"
+  },
+  "appointmentType": { "name": "General consultation", "duration": 45 },
+  "doctor": { "user": { "name": "Dr. Erik Lindqvist" } },
+  "hasNote": false
+}
+```
+
+**Visits to document (doctors only):** `GET /appointments/to-document` returns
+the doctor's own appointments with status `COMPLETED` that have no clinical
+note, oldest first. At most 20 are listed; `total` counts all of them. Only the
+existence of a note is checked, never its content (decision #58).
+
+```json
+{ "appointments": [{ "…": "same shape as above" }], "total": 34 }
+```
+
+Errors: 401 `UNAUTHORIZED`, 403 `FORBIDDEN` (admins).
+
+**Filters on `GET /appointments`:**
+
+| Query      | Format       | Meaning                                                               |
+| ---------- | ------------ | --------------------------------------------------------------------- |
+| `date`     | `YYYY-MM-DD` | One day                                                               |
+| `from`     | `YYYY-MM-DD` | First day of a range (inclusive)                                      |
+| `to`       | `YYYY-MM-DD` | Last day of a range (inclusive)                                       |
+| `doctorId` | id           | Admin only: one doctor. Ignored for doctors, who always see their own |
+
+- Dates are calendar days in the clinic's time zone (`Europe/Stockholm`):
+  `from=2026-10-26&to=2026-11-01` returns appointments that start from
+  00:00 Swedish time on 26 October up to (not including) 00:00 on 2 November
+  (decision #57).
+- A range is at most 7 days (one week in the calendar).
+- `date=X` is the same as `from=X&to=X`.
+- Without `date` or `from`/`to`, every appointment the user may see is
+  returned (no pagination).
+
+Example:
+
+```bash
+curl -s "http://localhost:3001/api/appointments?from=2026-10-26&to=2026-11-01" \
+  -H "Authorization: Bearer $DOCTOR_TOKEN" | jq length
+```
+
+400 `VALIDATION_ERROR` when:
+
+| Case                                | Message                                          |
+| ----------------------------------- | ------------------------------------------------ |
+| Not a real date, or wrong format    | Dates must be valid and in the format YYYY-MM-DD |
+| `date` together with `from` or `to` | Use either date or from/to, not both             |
+| Only one of `from` and `to`         | from and to must be used together                |
+| `to` before `from`                  | from must be on or before to                     |
+| More than 7 days                    | At most 7 days at a time                         |
 
 On `PUT`, `APPOINTMENT_TYPE_INACTIVE` is only returned when the type is
 changed. Editing the time of an appointment whose type was deactivated later
@@ -79,15 +146,17 @@ Booking an inactive patient or doctor gives 400 `PATIENT_INACTIVE` or
 
 ## Appointment status
 
-| From                          | Allowed to           | Condition                   |
-| ----------------------------- | -------------------- | --------------------------- |
-| SCHEDULED                     | CONFIRMED, CANCELLED | –                           |
-| SCHEDULED, CONFIRMED          | COMPLETED, NO_SHOW   | The appointment has started |
-| CONFIRMED                     | CANCELLED            | –                           |
-| COMPLETED, NO_SHOW, CANCELLED | – (final)            | Admin correction only       |
+| From                 | Allowed to           | Condition                   |
+| -------------------- | -------------------- | --------------------------- |
+| SCHEDULED            | CONFIRMED, CANCELLED | –                           |
+| SCHEDULED, CONFIRMED | COMPLETED, NO_SHOW   | The appointment has started |
+| CONFIRMED            | CANCELLED            | –                           |
+| NO_SHOW              | COMPLETED            | The patient arrived late    |
 
-**Admin correction:** an admin can change a final status to any other status.
-`reason` (10–300 characters) is required. Safeguards:
+**Corrections:** any other change away from a final status (COMPLETED,
+NO_SHOW, CANCELLED) is a correction. Doctors may correct their own
+appointments, admins any appointment (decision #66). `reason` (10–300
+characters) is required. Safeguards:
 
 - COMPLETED and NO_SHOW still require that the appointment has started.
 - CANCELLED is not allowed when the appointment has a clinical note (also for
@@ -96,11 +165,14 @@ Booking an inactive patient or doctor gives 400 `PATIENT_INACTIVE` or
   `APPOINTMENT_CONFLICT`).
 
 Every status change is saved in the appointment's status history (from, to,
-who, when, reason). There is no endpoint to read the history yet.
+who, when, reason). There is no endpoint to read the history yet. An
+appointment with a final status cannot be edited (409 `APPOINTMENT_LOCKED`);
+only its status can change.
 
-Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason),
-403 `FORBIDDEN` (doctor and someone else's appointment), 404 `NOT_FOUND`,
-409 `INVALID_STATUS_TRANSITION`, 409 `APPOINTMENT_CONFLICT`.
+Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason for a
+correction), 403 `FORBIDDEN` (doctor and someone else's appointment), 404
+`NOT_FOUND`, 409 `INVALID_STATUS_TRANSITION` (e.g. confirmed back to
+scheduled, completed before the start), 409 `APPOINTMENT_CONFLICT`.
 
 ## Patients
 
@@ -111,7 +183,7 @@ Errors: 400 `VALIDATION_ERROR` (unknown status, missing or short reason),
 | GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                             |
 | PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                              |
 | PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                       |
-| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient; admin sees all                                                              |
+| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient and gets `hasNote`; admin sees all, without note information                 |
 | GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                             |
 
 Body for POST and PUT:
@@ -305,8 +377,8 @@ the frontend treats every 401 as an expired session.
 
 ## Clinic
 
-| Method | Path    | Role  | Notes                                                       |
-| ------ | ------- | ----- | ----------------------------------------------------------- |
+| Method | Path    | Role  | Notes                                                        |
+| ------ | ------- | ----- | ------------------------------------------------------------ |
 | GET    | /clinic | none  | Public: shown on the login page. Name, address, phone, email |
 | PUT    | /clinic | ADMIN | `{ name, addressLine, postalCode, city, phone, email }`      |
 

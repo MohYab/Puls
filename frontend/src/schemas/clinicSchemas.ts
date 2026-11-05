@@ -2,7 +2,10 @@ import { z } from "zod";
 
 // Mirrors backend/src/validators/clinicValidators.ts.
 const optionalMatching = (pattern: RegExp, message: string) =>
-  z.string().trim().refine((value) => value === "" || pattern.test(value), message);
+  z
+    .string()
+    .trim()
+    .refine((value) => value === "" || pattern.test(value), message);
 
 export const clinicFormSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name can be at most 100 characters"),

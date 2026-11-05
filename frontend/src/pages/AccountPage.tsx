@@ -1,5 +1,6 @@
 import { Card } from "../components/Card";
 import { ErrorMessage, LoadingMessage } from "../components/Feedback";
+import { PageHeader } from "../components/PageHeader";
 import { PasswordForm } from "../features/account/PasswordForm";
 import { ProfileForm } from "../features/account/ProfileForm";
 import { useAccount } from "../features/account/useAccount";
@@ -11,24 +12,21 @@ export default function AccountPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900">My account</h1>
-      <p className="mt-1 text-sm text-gray-600">Your own details and password.</p>
+      <PageHeader title="My account" description="Your own details and password." />
 
-      <div className="mt-6">
-        {isPending && <LoadingMessage>Loading your account...</LoadingMessage>}
-        {isError && <ErrorMessage message={error.message} onRetry={() => refetch()} />}
+      {isPending && <LoadingMessage>Loading your account...</LoadingMessage>}
+      {isError && <ErrorMessage message={error.message} onRetry={() => refetch()} />}
 
-        {account && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Card title="Profile">
-              <ProfileForm account={account} />
-            </Card>
-            <Card title="Password">
-              <PasswordForm />
-            </Card>
-          </div>
-        )}
-      </div>
+      {account && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+          <Card title="Profile">
+            <ProfileForm account={account} />
+          </Card>
+          <Card title="Password">
+            <PasswordForm />
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import type {
 } from "../validators/appointmentValidators.js";
 import {
   canChangeStatus,
+  isCorrection,
   isFinalStatus,
   requiresStartedAppointment,
   statusLabel,
@@ -18,9 +19,29 @@ import type { RequestingUser } from "../types/requestingUser.js";
 
 // Shape of an appointment in lists and details.
 const appointmentInclude = {
-  patient: { select: { firstName: true, lastName: true } },
+  // Name and date of birth together identify the patient (avoids mixing up namesakes).
+  patient: { select: { firstName: true, lastName: true, dateOfBirth: true } },
   appointmentType: { select: { name: true, duration: true } },
+  doctor: { select: { user: { select: { name: true } } } },
 } as const;
+
+// Reads only: adds the note's id so we know whether it exists. The content is never selected.
+const appointmentReadInclude = {
+  ...appointmentInclude,
+  note: { select: { id: true } },
+} as const;
+
+/**
+ * Replaces the note relation with a hasNote flag. Only doctors get the flag:
+ * admins have no access to clinical notes, not even to whether one exists (decision #56).
+ */
+function toAppointmentResponse<T extends { note: { id: string } | null }>(
+  appointment: T,
+  requestingUser: RequestingUser
+) {
+  const { note, ...rest } = appointment;
+  return requestingUser.role === "DOCTOR" ? { ...rest, hasNote: note !== null } : rest;
+}
 
 /**
  * Where-filter that limits a query to the requesting doctor's own rows.
@@ -83,42 +104,96 @@ async function assertOwnsAppointment(appointmentId: string, requestingUser: Requ
 interface GetAppointmentsParams {
   requestingUser: RequestingUser;
   date?: string;
+  /** Inclusive range (YYYY-MM-DD), at most 7 days. Validated in the controller. */
+  from?: string;
+  to?: string;
   /** Admin only: limit to one doctor. Ignored for doctors, who always see their own. */
   doctorId?: string;
 }
 
-export async function getAppointments({ requestingUser, date, doctorId }: GetAppointmentsParams) {
+// Midnight in the server's time zone, which must be the clinic's (TZ=Europe/Stockholm, decision #57).
+function startOfDay(isoDate: string): Date {
+  return new Date(`${isoDate}T00:00:00`);
+}
+
+export async function getAppointments({
+  requestingUser,
+  date,
+  from,
+  to,
+  doctorId,
+}: GetAppointmentsParams) {
   const doctorFilter =
     requestingUser.role === "ADMIN" && doctorId ? { doctorId } : ownDoctorFilter(requestingUser);
 
-  const startTimeFilter = date
-    ? {
-        startTime: {
-          gte: new Date(`${date}T00:00:00`),
-          lte: new Date(`${date}T23:59:59.999`),
-        },
-      }
-    : {};
+  // One day is a range from and to the same date.
+  const range = from && to ? { from, to } : date ? { from: date, to: date } : null;
 
-  return prisma.appointment.findMany({
+  let startTimeFilter = {};
+  if (range) {
+    const end = startOfDay(range.to);
+    end.setDate(end.getDate() + 1); // calendar day, not +24 h (safe across DST)
+    startTimeFilter = { startTime: { gte: startOfDay(range.from), lt: end } };
+  }
+
+  const appointments = await prisma.appointment.findMany({
     where: { ...doctorFilter, ...startTimeFilter },
-    include: appointmentInclude,
+    include: appointmentReadInclude,
     orderBy: { startTime: "asc" },
   });
+  return appointments.map((appointment) => toAppointmentResponse(appointment, requestingUser));
+}
+
+/** How many undocumented visits the dashboard lists; `total` tells how many there are. */
+export const TO_DOCUMENT_LIMIT = 20;
+
+/**
+ * The doctor's completed visits that have no clinical note yet, oldest first
+ * (the longest-waiting visit is the most urgent). Only the note's existence is
+ * checked; its content is never read.
+ */
+export async function getAppointmentsToDocument(requestingUser: RequestingUser) {
+  const where = {
+    ...ownDoctorFilter(requestingUser),
+    status: "COMPLETED" as const,
+    note: { is: null },
+  };
+
+  // No transaction: with the pg driver adapter, a read with includes inside a
+  // transaction sends its queries at once on one connection (a known Prisma 7
+  // issue; pg warns, and pg 9 will reject it). Outside a transaction each query
+  // gets its own pooled connection. The list and the total may differ for a
+  // moment if a note is saved in between; the dashboard refetches, so that is fine.
+  const [appointments, total] = await Promise.all([
+    prisma.appointment.findMany({
+      where,
+      include: appointmentInclude,
+      orderBy: { startTime: "asc" },
+      take: TO_DOCUMENT_LIMIT,
+    }),
+    prisma.appointment.count({ where }),
+  ]);
+
+  // Same shape as other appointment responses for doctors (decision #56).
+  return {
+    appointments: appointments.map((appointment) => ({ ...appointment, hasNote: false })),
+    total,
+  };
 }
 
 export async function getAppointmentById(appointmentId: string, requestingUser: RequestingUser) {
   const appointment = await assertOwnsAppointment(appointmentId, requestingUser);
-  return prisma.appointment.findUnique({
+  const result = await prisma.appointment.findUnique({
     where: { id: appointment.id },
-    include: appointmentInclude,
+    include: appointmentReadInclude,
   });
+  return result && toAppointmentResponse(result, requestingUser);
 }
 
 export async function getPatientAppointments(patientId: string, requestingUser: RequestingUser) {
   await getPatientById(patientId); // 404 if the patient does not exist
 
-  return prisma.appointment.findMany({
+  const appointments = await prisma.appointment.findMany({
     where: {
       patientId,
       // Doctors only see their own visits with the patient; admins see all.
@@ -132,8 +207,12 @@ export async function getPatientAppointments(patientId: string, requestingUser: 
       status: true,
       doctor: { select: { id: true, user: { select: { name: true } } } },
       appointmentType: { select: { id: true, name: true } },
+      // Only the id, to know whether a note exists. The content is never selected.
+      note: { select: { id: true } },
     },
   });
+  // hasNote for doctors, nothing about notes for admins (decision #56).
+  return appointments.map((appointment) => toAppointmentResponse(appointment, requestingUser));
 }
 
 // --- Booking and editing ------------------------------------------------------
@@ -271,7 +350,7 @@ export async function updateAppointmentStatus(
   const existing = await assertOwnsAppointment(appointmentId, requestingUser);
   const from = existing.status;
   const to = input.status;
-  const isCorrection = isFinalStatus(from);
+  const correction = isCorrection(from, to);
 
   if (from === to) {
     throw new AppError(
@@ -281,15 +360,16 @@ export async function updateAppointmentStatus(
     );
   }
 
-  if (!canChangeStatus(from, to, requestingUser.role)) {
-    const message = isCorrection
-      ? `This appointment is ${statusLabel(from)} and can no longer be changed. Contact an administrator to correct it`
-      : `An appointment cannot go from ${statusLabel(from)} to ${statusLabel(to)}`;
-    throw new AppError(409, "INVALID_STATUS_TRANSITION", message);
+  if (!canChangeStatus(from, to)) {
+    throw new AppError(
+      409,
+      "INVALID_STATUS_TRANSITION",
+      `An appointment cannot go from ${statusLabel(from)} to ${statusLabel(to)}`
+    );
   }
 
   // Safeguards. A correction must not create new errors.
-  if (isCorrection && !input.reason) {
+  if (correction && !input.reason) {
     throw new ValidationError("A reason is required when correcting a final status");
   }
   if (requiresStartedAppointment(to) && existing.startTime > new Date()) {

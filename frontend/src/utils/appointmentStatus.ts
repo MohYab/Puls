@@ -17,7 +17,8 @@ const ALLOWED_TRANSITIONS: Record<AppointmentStatus, readonly AppointmentStatus[
   SCHEDULED: ["CONFIRMED", "COMPLETED", "NO_SHOW", "CANCELLED"],
   CONFIRMED: ["COMPLETED", "NO_SHOW", "CANCELLED"],
   COMPLETED: [],
-  NO_SHOW: [],
+  // The patient arrived late (decision ak).
+  NO_SHOW: ["COMPLETED"],
   CANCELLED: [],
 };
 
@@ -63,5 +64,34 @@ export function correctionTargets(
 ): AppointmentStatus[] {
   return ALL_STATUSES.filter(
     (to) => to !== status && (!requiresStarted(to) || hasStarted(startTime))
+  );
+}
+
+/**
+ * A change away from a final status that is not part of the workflow: a correction,
+ * which needs a reason. Doctors (own appointments) and admins (decision al).
+ */
+export function isCorrection(from: AppointmentStatus, to: AppointmentStatus): boolean {
+  return isFinalStatus(from) && !ALLOWED_TRANSITIONS[from].includes(to);
+}
+
+/**
+ * Every status the appointment can change to, for the status menu. Applies the same
+ * safeguards as the API, so the menu never offers a change that would be rejected.
+ */
+export function statusTargets(
+  appointment: { status: AppointmentStatus; startTime: string; hasNote?: boolean },
+  now: Date = new Date()
+): AppointmentStatus[] {
+  const { status, startTime, hasNote = false } = appointment;
+  const candidates = isFinalStatus(status)
+    ? ALL_STATUSES.filter((to) => to !== status)
+    : ALLOWED_TRANSITIONS[status];
+
+  return candidates.filter(
+    (to) =>
+      (!requiresStarted(to) || hasStarted(startTime, now)) &&
+      // An appointment with a clinical note cannot be cancelled.
+      !(to === "CANCELLED" && hasNote)
   );
 }

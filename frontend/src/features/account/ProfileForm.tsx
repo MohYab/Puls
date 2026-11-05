@@ -7,6 +7,8 @@ import { accountFormSchema, type AccountFormValues } from "../../schemas/account
 import type { Account } from "../../types/account";
 import { useAuth } from "../auth/useAuth";
 import { useUpdateAccount } from "./useAccount";
+import { FormError } from "../../components/Feedback";
+import { Button } from "../../components/Button";
 
 export function ProfileForm({ account }: { account: Account }) {
   const formId = useId();
@@ -47,9 +49,9 @@ export function ProfileForm({ account }: { account: Account }) {
       </FormField>
 
       <div>
-        <p className="mb-1 text-sm font-medium">Email</p>
-        <p className="text-sm text-gray-900">{account.email}</p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mb-1 text-sm font-medium text-ink">Email</p>
+        <p className="text-sm text-ink">{account.email}</p>
+        <p className="mt-1 text-xs text-muted">
           Your email is used to log in. Contact an administrator to change it.
         </p>
       </div>
@@ -78,25 +80,17 @@ export function ProfileForm({ account }: { account: Account }) {
         </FormField>
       )}
 
-      {update.isError && (
-        <p role="alert" className="text-sm text-red-600">
-          {update.error.message}
-        </p>
-      )}
+      <FormError message={update.isError ? update.error.message : null} />
       {saved && (
-        <p role="status" className="text-sm text-green-700">
+        <p role="status" className="text-sm text-success">
           Profile saved.
         </p>
       )}
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={update.isPending}
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {update.isPending ? "Saving..." : "Save profile"}
-        </button>
+        <Button type="submit" isPending={update.isPending}>
+          Save profile
+        </Button>
       </div>
     </form>
   );

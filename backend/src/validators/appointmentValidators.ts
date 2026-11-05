@@ -30,3 +30,37 @@ export const updateStatusSchema = z.object({
 
 export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+
+// Week view: one request per week. The limit stops anyone fetching a whole year at once.
+export const MAX_RANGE_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const isoDate = z.iso.date({ message: "Dates must be valid and in the format YYYY-MM-DD" });
+
+export const listAppointmentsQuerySchema = z
+  .object({
+    date: isoDate.optional(),
+    from: isoDate.optional(),
+    to: isoDate.optional(),
+    doctorId: z.string().min(1).optional(),
+  })
+  .superRefine((query, ctx) => {
+    const issue = (message: string) => ctx.addIssue({ code: "custom", message });
+
+    if (query.date && (query.from || query.to)) {
+      issue("Use either date or from/to, not both");
+      return;
+    }
+    if ((query.from === undefined) !== (query.to === undefined)) {
+      issue("from and to must be used together");
+      return;
+    }
+    if (query.from && query.to) {
+      // Date.parse reads YYYY-MM-DD as UTC midnight, so daylight saving time does not matter here.
+      const days = (Date.parse(query.to) - Date.parse(query.from)) / DAY_MS + 1;
+      if (days < 1) issue("from must be on or before to");
+      else if (days > MAX_RANGE_DAYS) issue(`At most ${MAX_RANGE_DAYS} days at a time`);
+    }
+  });
+
+export type ListAppointmentsQuery = z.infer<typeof listAppointmentsQuerySchema>;
