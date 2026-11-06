@@ -1681,13 +1681,14 @@ that opens a page.
 
 ### Problems and solutions
 
-| Problem                                                   | Cause                                                                | Solution                                                                        |
-| --------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| A unit stuck out of its measurement box at 1280 px        | Seven fixed columns at `xl`, about 125 px each                       | Auto-fill grid with `minmax(10rem, 1fr)`, wrapping unit, non-breaking space     |
-| A wrapped unit was indented                               | The `ms-1` margin followed the unit to the next line                 | `gap-x-1` on the flex row                                                       |
-| A test could not find the role `status`                   | Headless UI hides everything outside an open list by default (modal) | `modal={false}` on `ComboboxOptions`                                            |
-| Tab opened the first patient                              | Headless UI selects the active option on Tab                         | Stop Tab in the capture phase and keep the browser's default, so focus moves on |
-| Ctrl+K opened the browser's search while a modal was open | The handler returned before `preventDefault`                         | `preventDefault` on every Ctrl+K; only the focus move is skipped                |
+| Problem                                                   | Cause                                                                                 | Solution                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| A unit stuck out of its measurement box at 1280 px        | Seven fixed columns at `xl`, about 125 px each                                        | Auto-fill grid with `minmax(10rem, 1fr)`, wrapping unit, non-breaking space     |
+| A wrapped unit was indented                               | The `ms-1` margin followed the unit to the next line                                  | `gap-x-1` on the flex row                                                       |
+| A test could not find the role `status`                   | Headless UI hides everything outside an open list by default (modal)                  | `modal={false}` on `ComboboxOptions`                                            |
+| Tab opened the first patient                              | Headless UI selects the active option on Tab                                          | Stop Tab in the capture phase and keep the browser's default, so focus moves on |
+| Ctrl+K opened the browser's search while a modal was open | The handler returned before `preventDefault`                                          | `preventDefault` on every Ctrl+K; only the focus move is skipped                |
+| `SearchSelect` lost its label while the list was open     | Same Headless UI modal default; the old tests found the field before opening the list | `modal={false}` and a test that checks the name with the list open              |
 
 ### Feedback from supervisor
 
