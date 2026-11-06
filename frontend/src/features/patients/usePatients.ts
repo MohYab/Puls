@@ -12,12 +12,18 @@ import {
 
 interface UsePatientsOptions {
   includeInactive?: boolean;
+  /** Set to false to skip fetching, e.g. while a search term is too short. */
+  enabled?: boolean;
 }
 
-export function usePatients(search?: string, { includeInactive = false }: UsePatientsOptions = {}) {
+export function usePatients(
+  search?: string,
+  { includeInactive = false, enabled = true }: UsePatientsOptions = {}
+) {
   return useQuery({
     queryKey: ["patients", "list", search ?? "", includeInactive],
     queryFn: () => getPatients(search, includeInactive),
+    enabled,
     placeholderData: keepPreviousData,
     retry: retryUnlessClientError,
   });
