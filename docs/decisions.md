@@ -1286,3 +1286,45 @@ clinic with thousands of patients would need server-side search (phase 5).
 Headless UI overwrites `aria-describedby` on the input, so `SearchSelect`
 sets it on the element itself; a test checks that the field's error is still
 read out.
+
+## 70. Patient quick search in the dashboard header
+
+**Decision:** The dashboard header (doctor and admin) has a quick search for
+patients, `PatientQuickSearch`. It uses the existing patient search on the
+server, inactive patients included, which matches a name, a birth year
+(`1985`) or a date of birth (`1985-03-12`), word by word. The search starts
+at two characters, waits 250 ms after the last keystroke and shows at most
+eight results with "Born YYYY-MM-DD" and an "Inactive" badge. Enter or a
+click opens the patient's page. Ctrl+K (⌘K on Mac) moves focus to the field.
+The search is only on the dashboard; there is no global search.
+
+**Why:** Finding a patient took two steps (open Patients, then search), and
+staff often know the date of birth or the birth year (#63, #69). The quick
+search is its own component and not `SearchSelect` (#69): it fetches results
+from the server and navigates, instead of filtering a loaded list and setting
+a form value. The Patients page and the quick search use the same server
+search, so the matching rules are the same in both places. Ctrl+K was chosen
+over "/" because a single-character shortcut can be triggered by screen
+reader and speech input commands (WCAG 2.1.4).
+
+Keyboard and screen reader behaviour:
+
+- Tab moves focus on. By default Headless UI selects the active option on
+  Tab, which here would open the first patient.
+- Escape closes the list and clears the text but keeps focus in the field
+  (WAI-ARIA APG combobox pattern), so keyboard users do not lose their place.
+- While a modal is open, Ctrl+K is swallowed: focus stays in the modal's
+  focus trap and the browser's own Ctrl+K does not run either.
+- `ComboboxOptions` uses `modal={false}`. By default Headless UI hides
+  everything outside the open list from assistive technology, which hid the
+  field's label and the status message. A component test found it.
+
+**Alternative considered:** The search in the app's top bar on every page.
+Rejected: the Patients page is one click away, and the mobile menu would need
+room for another field. Reusing `SearchSelect` was rejected for the reasons
+above.
+
+**Known limitation:** The limit of eight results is applied in the browser;
+the API still returns every match. The "Showing 8 of N" message sits under
+the field and is covered by the open list, so mainly screen reader users get
+it. The shortcut only works on the dashboard.

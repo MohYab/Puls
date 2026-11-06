@@ -814,3 +814,19 @@ curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOC
 - [ ] Admin calendar: choosing a doctor updates the calendar and `?doctor=`; clearing the field and leaving it shows the selected doctor again
 - [ ] Sharing: only colleagues without access are listed; after sharing, the field is empty and the colleague is under "Shared with"; when everyone has access the field and button are disabled with "No other doctors to share with"
 - [ ] Screen reader or dev tools: the field's error is in its accessible description
+
+## UI checklist: patient quick search (phase 5)
+
+- [ ] Doctor and admin dashboard: the search field with "Ctrl K" (or "⌘K") is in the header; in a narrow window it is full width above the buttons and the shortcut hint is hidden
+- [ ] Ctrl+K / ⌘K anywhere on the dashboard moves focus to the field; the browser's own search does not open
+- [ ] With Book appointment open, Ctrl+K does nothing and focus stays in the modal
+- [ ] "a" shows "Type at least 2 characters to search." and the heading does not move
+- [ ] "an" lists at most eight patients with "Born …"; an inactive patient ("nord") has the "Inactive" badge
+- [ ] "1985" and a full date of birth from a result both find the patient; "anna 1986" lists one
+- [ ] "zz" shows "No patients match "zz"."
+- [ ] Arrow down and Enter open the patient page; back on the dashboard the field is empty
+- [ ] Tab moves focus to the next button and does not open a patient
+- [ ] Escape closes the list and clears the text; focus stays in the field
+- [ ] The page can still scroll while the list is open
+- [ ] Patients page: "1985" finds patients born that year (same server search)
+- [ ] Screen reader or dev tools: the field is named "Search patients", also while the list is open, and the status message is in its accessible description

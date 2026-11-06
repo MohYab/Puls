@@ -119,6 +119,7 @@ the current design.
 | 43  | `npm audit --omit=dev` in both projects, fix what reaches the browser or server                       | SHOULD          | Todo   |
 | 44  | The other lists use `tableStyles.ts` and a fixed layout where content changes (Doctors)               | COULD           | Todo   |
 | 45  | Server-side patient search for the select when lists grow (debounce, limit)                           | COULD           | Todo   |
+| 46  | Patient quick search in the dashboard header, also by birth year or date of birth (decision #70)      | COULD           | Done   |
 
 - `VITE_API_URL` from #33 is Done.
 

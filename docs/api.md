@@ -176,15 +176,15 @@ scheduled, completed before the start), 409 `APPOINTMENT_CONFLICT`.
 
 ## Patients
 
-| Method | Path                               | Role   | Notes                                                                                                                      |
-| ------ | ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /patients?search=&includeInactive= | any    | Active patients by default; `includeInactive=true` also returns inactive ones. Match the first or last name; Swedish order |
-| POST   | /patients                          | any    | Create. 201; 409 `PATIENT_EXISTS`                                                                                          |
-| GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                             |
-| PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                              |
-| PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                       |
-| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient and gets `hasNote`; admin sees all, without note information                 |
-| GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                             |
+| Method | Path                               | Role   | Notes                                                                                                                                                                                          |
+| ------ | ---------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /patients?search=&includeInactive= | any    | Active patients by default; `includeInactive=true` also returns inactive ones. `search` must match a first or last name, a birth year (`1985`) or a date of birth (`1985-03-12`);Swedish order |
+| POST   | /patients                          | any    | Create. 201; 409 `PATIENT_EXISTS`                                                                                                                                                              |
+| GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                                                                                                 |
+| PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                                                                                                  |
+| PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                                                                                           |
+| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient and gets `hasNote`; admin sees all, without note information                                                                                     |
+| GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                                                                                                 |
 
 Body for POST and PUT:
 
