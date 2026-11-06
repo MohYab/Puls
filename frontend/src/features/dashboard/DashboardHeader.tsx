@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { formatLongDate } from "../../utils/date";
+import { PatientQuickSearch } from "../patients/PatientQuickSearch";
 
 interface DashboardHeaderProps {
   date: Date;
@@ -8,7 +9,8 @@ interface DashboardHeaderProps {
   actions?: ReactNode;
 }
 
-// Date, greeting or title, one line of summary, and the main actions (mockup).
+// Date, greeting or title, one line of summary, patient quick search and the
+// main actions (mockup). Both the doctor's and the admin's dashboard use it.
 export function DashboardHeader({ date, title, summary, actions }: DashboardHeaderProps) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -17,11 +19,13 @@ export function DashboardHeader({ date, title, summary, actions }: DashboardHead
         <h1 className="font-display text-2xl font-bold text-ink md:text-[28px]">{title}</h1>
         {summary && <p className="text-muted">{summary}</p>}
       </div>
-      {actions && (
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto *:flex-1 sm:*:flex-none">
-          {actions}
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="w-full sm:w-72">
+          <PatientQuickSearch />
         </div>
-      )}
+
+        {actions && <div className="flex flex-wrap gap-2 *:flex-1 sm:*:flex-none">{actions}</div>}
+      </div>
     </div>
   );
 }

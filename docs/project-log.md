@@ -1603,3 +1603,108 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
 ### Next
 
 - Polish and MVP freeze.
+
+## Week 13 – Polish: measurements fix and patient quick search (phase 5)
+
+**Period:** 5 November 2026 –
+
+### Summary
+
+Phase 5 started with two smaller pieces of work. The first was a layout bug on
+the patient page: at exactly 1280 px the blood pressure value and its unit
+stuck out of their box in "Latest measurements". The fix let the browser
+decide the number of columns and made sure a number and its unit never break
+apart.
+
+The second was a patient quick search in the dashboard header for doctors
+and admins (plan #46, decision #70). The server search now also matches a
+birth year or a full date of birth, and the dashboard can find and open a
+patient without going through the Patients page. Most of the time went to
+keyboard and screen reader behaviour: the component library's defaults for
+Tab and for hiding the rest of the page fit a form field, but not a search
+that opens a page.
+
+### Entry 1: Latest measurements overflowed their boxes
+
+**What I did**
+
+- Found that "138/86 mmHg" stuck out of its box on the patient page at a
+  window width of exactly 1280 px, where `xl:grid-cols-7` split the main area
+  into seven columns of about 125 px even when only five measurements existed.
+- Replaced the fixed columns with an auto-fill grid
+  (`repeat(auto-fill, minmax(10rem, 1fr))`), so the browser fits as many
+  columns as there is room for, without breakpoints.
+- Let the unit wrap below the value when a box is still too narrow
+  (`flex-wrap` with `gap-x-1` instead of a margin), and put a non-breaking
+  space between a number and its unit in `formatVitals`.
+
+**What I learned**
+
+- A layout bug can show up at a single width only. Checking exactly at the
+  breakpoints finds what "desktop" and "mobile" checks miss.
+- jsdom has no layout engine, so the width can only be checked by hand. The
+  non-breaking space rule is covered by a unit test instead.
+- A margin moves with an element to the next line; a gap only sits between
+  items on the same line.
+
+### Entry 2: Patient quick search on the dashboard
+
+**What I did**
+
+- Made the patient search on the server match a birth year (`1985`) or a date
+  of birth (`1985-03-12`) as well as names, word by word, with a test that
+  only reads data.
+- Built `PatientQuickSearch` on Headless UI `Combobox` and placed it in the
+  dashboard header: at least two characters, a 250 ms debounce, at most eight
+  results with "Born YYYY-MM-DD", an "Inactive" badge, and Enter opens the
+  patient's page (decision #70).
+- Added Ctrl+K / ⌘K to move focus to the field, swallowed while a modal is
+  open.
+- Fixed three keyboard problems found in the browser and in tests: Tab opened
+  the first patient, the shortcut opened the browser's own search while a
+  modal was open, and the label and status message were hidden from screen
+  readers while the list was open.
+- Wrote 12 component tests, and checked that the new ones fail without their
+  fix.
+
+**What I learned**
+
+- Library defaults are made for the common case. Headless UI selects the
+  active option on Tab and hides the rest of the page while a list is open.
+  Both suit a form field, but not a search that opens a page.
+- A test that looks for elements by role (`getByRole("status")`) only finds
+  what is in the accessibility tree. That is how it found the hidden status
+  message.
+- A shortcut handler has to decide every time whether the app or the browser
+  owns the key. Returning early before `preventDefault` hands the key back to
+  the browser.
+
+### Problems and solutions
+
+| Problem                                                   | Cause                                                                | Solution                                                                        |
+| --------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| A unit stuck out of its measurement box at 1280 px        | Seven fixed columns at `xl`, about 125 px each                       | Auto-fill grid with `minmax(10rem, 1fr)`, wrapping unit, non-breaking space     |
+| A wrapped unit was indented                               | The `ms-1` margin followed the unit to the next line                 | `gap-x-1` on the flex row                                                       |
+| A test could not find the role `status`                   | Headless UI hides everything outside an open list by default (modal) | `modal={false}` on `ComboboxOptions`                                            |
+| Tab opened the first patient                              | Headless UI selects the active option on Tab                         | Stop Tab in the capture phase and keep the browser's default, so focus moves on |
+| Ctrl+K opened the browser's search while a modal was open | The handler returned before `preventDefault`                         | `preventDefault` on every Ctrl+K; only the focus move is skipped                |
+
+### Feedback from supervisor
+
+### Scope changes
+
+- Added: a patient quick search on the dashboard (plan #46, COULD) and search
+  by birth year or date of birth on the server.
+- Rejected: a global search in the app's top bar on every page.
+
+### What I would do differently
+
+- Test the keyboard (Tab, Escape, shortcuts with a modal open) in the first
+  checklist, not after the feature works with the mouse.
+
+### Next
+
+- `SearchSelect` most likely has the same hidden-label problem while its list
+  is open; check and fix it with `modal={false}` and a test.
+- Screenshots (#36), usability test (#35b), documentation (#35) and the MVP
+  freeze after v.46.

@@ -64,23 +64,47 @@ async function assertNotDuplicate(input: PatientInput, excludeId?: string) {
   }
 }
 
+const YEAR = /^\d{4}$/;
+const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** A date of birth from "1985" (the whole year) or "1985-03-12" (that day), else null. */
+function dateOfBirthRange(term: string): { gte: Date; lt: Date } | null {
+  if (YEAR.test(term)) {
+    const year = Number(term);
+    return { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) };
+  }
+
+  const match = DATE.exec(term);
+  if (!match) return null;
+  const [year, month, day] = match.slice(1).map(Number);
+  const start = new Date(Date.UTC(year, month - 1, day));
+  // Date.UTC rolls 1985-02-31 over to 3 March, so check that the day came back unchanged.
+  if (start.getUTCMonth() !== month - 1 || start.getUTCDate() !== day) return null;
+  return { gte: start, lt: new Date(Date.UTC(year, month - 1, day + 1)) };
+}
+
+/** One search word: a year or date matches the date of birth, anything else the names. */
+function termFilter(term: string) {
+  const range = dateOfBirthRange(term);
+  if (range) return { dateOfBirth: range };
+  return {
+    OR: [
+      { firstName: { contains: term, mode: "insensitive" as const } },
+      { lastName: { contains: term, mode: "insensitive" as const } },
+    ],
+  };
+}
 // --- Queries -----------------------------------------------------------------
 
 export async function getAllPatients(search?: string, includeInactive = false) {
-  // Every word must match the first or the last name, so "anna andersson" finds Anna Andersson.
+  // Every word must match: a name, a birth year ("1985") or a date of birth ("1985-03-12"),
+  // so "anna 1985" finds the Anna born in 1985.
   const terms = search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
   const patients = await prisma.patient.findMany({
     where: {
       ...(!includeInactive && { isActive: true }),
-      ...(terms.length > 0 && {
-        AND: terms.map((term) => ({
-          OR: [
-            { firstName: { contains: term, mode: "insensitive" as const } },
-            { lastName: { contains: term, mode: "insensitive" as const } },
-          ],
-        })),
-      }),
+      ...(terms.length > 0 && { AND: terms.map(termFilter) }),
     },
     select: patientSelect,
   });
