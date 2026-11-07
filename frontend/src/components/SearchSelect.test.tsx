@@ -68,6 +68,18 @@ describe("SearchSelect", () => {
     expect(input).toHaveAttribute("aria-describedby", "patient-no-match");
   });
 
+  it("keeps the field's label while the list is open", async () => {
+    const user = userEvent.setup();
+    const { input } = renderSelect();
+
+    await user.type(input, "anna");
+    expect(screen.getAllByRole("option")).toHaveLength(2);
+
+    // Headless UI hides everything outside an open list by default (modal),
+    // which would remove the <label> from the accessibility tree.
+    expect(screen.getByRole("combobox", { name: "Patient" })).toBe(input);
+  });
+
   it("keeps the field's error description", async () => {
     const user = userEvent.setup();
     const { input } = renderSelect("", "patient-error");

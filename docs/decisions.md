@@ -1285,7 +1285,9 @@ change, which the demo data does not need.
 clinic with thousands of patients would need server-side search (phase 5).
 Headless UI overwrites `aria-describedby` on the input, so `SearchSelect`
 sets it on the element itself; a test checks that the field's error is still
-read out.
+read out. The options list uses `modal={false}`: by default Headless UI hid
+the field's label from screen readers while the list was open (found in
+phase 5, see #70).
 
 ## 70. Patient quick search in the dashboard header
 
