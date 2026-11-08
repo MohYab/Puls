@@ -102,45 +102,91 @@ the current design.
 
 ## Phase 5 – Polish and freeze (v.46)
 
-| #   | Task                                                                                                  | Class           | Status |
-| --- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
-| 32  | Decide on deployment (yes or no) at the start of the week: yes, Render and Neon (decision #71)        | MUST (decision) | Done   |
-| 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone, demo mode (#72)        | COULD           | Done   |
-| 34  | Calendar week view (decisions #41). moved to 3.3b                                                     | COULD           | Done   |
-| 35  | Docs: project log, decisions, README, ER diagram, api.md                                              | MUST            | Todo   |
-| 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md` | SHOULD          | Todo   |
-| 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video                    | MUST            | Todo   |
-| 37  | **MVP freeze**: no new features after v.46                                                            | MUST            | Todo   |
-| 38  | Admin statistics: appointments, no-show and cancellation rate, appointments by type (decision #60)    | COULD           | Todo   |
-| 39  | Recently added patients on the admin dashboard                                                        | COULD           | Todo   |
-| 40  | Separate test database, so manual tests never affect the automated ones                               | COULD           | Todo   |
-| 41  | One constant for the clinic's time zone (`CLINIC_TIME_ZONE`) in backend and frontend                  | COULD           | Todo   |
-| 42  | Trends for vital signs on the patient page (a small chart per measurement)                            | COULD           | Todo   |
-| 43  | `npm audit --omit=dev` in both projects, fix what reaches the browser or server                       | SHOULD          | Todo   |
-| 44  | The other lists use `tableStyles.ts` and a fixed layout where content changes (Doctors)               | COULD           | Todo   |
-| 45  | Server-side patient search for the select when lists grow (debounce, limit)                           | COULD           | Todo   |
-| 46  | Patient quick search in the dashboard header, also by birth year or date of birth (decision #70)      | COULD           | Done   |
+| #   | Task                                                                                                                   | Class           | Status |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | --------------- | ------ |
+| 32  | Decide on deployment (yes or no) at the start of the week: yes, Render and Neon (decision #71)                         | MUST (decision) | Done   |
+| 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone, demo mode (#72)                         | COULD           | Done   |
+| 34  | Calendar week view (decisions #41). moved to 3.3b                                                                      | COULD           | Done   |
+| 35  | Docs: project log, decisions, README, ER diagram, api.md                                                               | MUST            | Todo   |
+| 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md`                  | SHOULD          | Todo   |
+| 36  | Screenshots of the new design (`docs/screenshots/after/`) and a 2–3 min demo video                                     | MUST            | Todo   |
+| 37  | **MVP freeze**: no new features after v.46                                                                             | MUST            | Todo   |
+| 38  | Admin statistics: appointments, no-show and cancellation rate, appointments by type (decision #60). Future development | COULD           | Moved  |
+| 39  | Recently added patients on the admin dashboard. Future development                                                     | COULD           | Moved  |
+| 40  | Separate test database, so manual tests never affect the automated ones. Future development                            | COULD           | Moved  |
+| 41  | One constant for the clinic's time zone (`CLINIC_TIME_ZONE`) in backend and frontend. Future development               | COULD           | Moved  |
+| 42  | Trends for vital signs on the patient page (a small chart per measurement). Future development                         | COULD           | Moved  |
+| 43  | `npm audit --omit=dev` in both projects, fix what reaches the browser or server                                        | SHOULD          | Todo   |
+| 44  | The other lists use `tableStyles.ts` and a fixed layout where content changes (Doctors). Time box 1 h                  | COULD           | Todo   |
+| 45  | Server-side patient search for the select when lists grow (debounce, limit). Future development                        | COULD           | Moved  |
+| 46  | Patient quick search in the dashboard header, also by birth year or date of birth (decision #70)                       | COULD           | Done   |
 
 - `VITE_API_URL` from #33 is Done.
 
-## Out of scope (future development in the report)
+**Scope before the freeze (decided 8 November):** the week before the MVP
+freeze is reserved for screenshots and the demo video (#36), the usability
+test (#35b), documentation (#35) and the freeze itself (#37). Only work that
+makes the public demo safer (#43) or fixes something that looks broken on the
+screenshots (#44) is kept. New features (#38, #39, #42) are out of scope;
+preparation for a later version (#40, #41, #45) moves to future development.
 
-- Shared types between frontend and backend (monorepo)
-- Patient login, patient-controlled sharing and consent, access logging
-- External connection pooling (PgBouncer)
-- Live updates with websockets
-- Dark mode and animations
-- Pages without any styling classes.
-- `/admin/users`
-- Deleting doctors or patients (deactivated instead; journals must be kept)
-- A patient's own request to delete data (would be a request, not a deletion)
-- More than one role per user
-- Login with e-identification (e.g. SITHS)
+**Plan for v.46:** Monday #43, #44 and screenshots; Tuesday prepare the
+usability test; Wednesday usability test and small fixes; Thursday demo
+video; Friday documentation, tag `v1.0-mvp` and the freeze.
+
+## Out of scope
+
+Deliberately not built, for legal, privacy or design reasons:
+
+- Deleting doctors or patients: they are deactivated, since patient records
+  must be kept (normally ten years; only IVO can decide to destroy them)
 - Collecting staff home addresses (not needed: data minimisation)
-- More than one clinic in the same installation (multi-tenancy)
-- Access log for reading clinical notes (future roadmap, phase B)
+- Decorative animations (a clinical tool should be calm and fast)
 
-## Open decisions
+## Future development
 
-- Combobox: Headless UI (recommended) or own component
-- Design direction: colours and style, examples of apps that feel modern
+**Before real patient data (legal and security)**
+
+1. Access control required by the Patient Data Act: an access log for
+   clinical notes, blocking (spärr) and patient consent
+2. Staff login with e-identification (for example SITHS)
+3. The session token in an httpOnly cookie instead of `localStorage` (#13)
+4. Hosting for real data: a paid plan without cold starts, backups,
+   monitoring and data processing agreements with the providers
+5. A personal identity number or verified identity instead of name and date
+   of birth for duplicate checks
+
+**Product**
+
+6. Permissions instead of fixed roles: each user gets a set of permissions
+   (for example writing notes, managing the schedule, registering patients,
+   handling payments, managing users), and a role is a named set of them. A
+   doctor in a small clinic can then also administer, and a reception role
+   can register patients without reading clinical notes. Includes managing
+   admin accounts (`/admin/users`).
+7. Patient login (with BankID), patient-controlled sharing and consent, and a
+   patient's own request to delete data (a request, not a deletion)
+8. More than one clinic in the same installation, and sharing notes between
+   clinics
+9. The schedule updates when someone else books (websockets or polling)
+10. A warning about unsaved changes and automatically saved drafts (#27)
+11. Admin statistics, recently added patients (#38, #39) and trends for vital
+    signs (#42)
+12. Dark mode
+
+**Other countries and languages**
+
+13. Arabic and right-to-left: translations, plural rules, a font with Arabic
+    letters, and time zone, week start and opening hours per clinic (#41)
+
+**Larger clinics**
+
+14. Pagination of lists and server-side search in the patient select (#45),
+    connection pooling when running more than one server, and code splitting
+    so the first page loads less JavaScript
+
+**Development**
+
+15. One source for validation rules shared by frontend and backend (vital
+    sign limits and status rules are mirrored today)
+16. A separate database for automated tests (#40)
