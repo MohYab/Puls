@@ -104,8 +104,8 @@ the current design.
 
 | #   | Task                                                                                                  | Class           | Status |
 | --- | ----------------------------------------------------------------------------------------------------- | --------------- | ------ |
-| 32  | Decide on deployment (yes or no) at the start of the week                                             | MUST (decision) | Todo   |
-| 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone                         | COULD           | Todo   |
+| 32  | Decide on deployment (yes or no) at the start of the week: yes, Render and Neon (decision #71)        | MUST (decision) | Done   |
+| 33  | If deploying: `VITE_API_URL`, CORS origin, demo data in production, time zone, demo mode (#72)        | COULD           | Done   |
 | 34  | Calendar week view (decisions #41). moved to 3.3b                                                     | COULD           | Done   |
 | 35  | Docs: project log, decisions, README, ER diagram, api.md                                              | MUST            | Todo   |
 | 35b | Usability test: 2–3 people do four tasks; time, mistakes and observations in `docs/usability-test.md` | SHOULD          | Todo   |

@@ -830,3 +830,17 @@ curl -s -X PATCH $API/appointments/$NOSHOW/status -H "Authorization: Bearer $DOC
 - [ ] The page can still scroll while the list is open
 - [ ] Patients page: "1985" finds patients born that year (same server search)
 - [ ] Screen reader or dev tools: the field is named "Search patients", also while the list is open, and the status message is in its accessible description
+
+## Public demo (phase 5)
+
+Run against https://puls-web.onrender.com after a deploy and before a demo.
+
+- [ ] `https://puls-api-bazo.onrender.com/api/health` answers `{"status":"ok"}`
+- [ ] Log in as `erik@puls.test`: dashboard with today's schedule (first login after a pause can take 30–60 s)
+- [ ] Quick search "1985" finds patients; Enter opens the patient page
+- [ ] Reload on `/patients/<id>` shows the page, not "Not Found"
+- [ ] Calendar times are in Swedish time
+- [ ] My account: "Password changes are turned off in the public demo."
+- [ ] Admin: changing a doctor's email or deactivating a doctor shows the demo message
+- [ ] Dev tools: requests go to `puls-api-bazo.onrender.com/api`, no CORS errors in the Console
+- [ ] Log in on a phone
