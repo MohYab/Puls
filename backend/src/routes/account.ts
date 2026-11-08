@@ -6,6 +6,7 @@ import {
 } from "../controllers/accountController.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { validate } from "../middleware/validate.js";
+import { blockInDemoMode } from "../utils/demoMode.js";
 import { accountSchema, passwordChangeSchema } from "../validators/accountValidators.js";
 
 // The logged-in user's own account. Every route acts on req.user only, so
@@ -14,6 +15,12 @@ const router = Router();
 
 router.get("/", authenticate, getAccountHandler);
 router.put("/", authenticate, validate(accountSchema), updateAccountHandler);
-router.put("/password", authenticate, validate(passwordChangeSchema), changePasswordHandler);
+router.put(
+  "/password",
+  authenticate,
+  blockInDemoMode("Changing passwords"),
+  validate(passwordChangeSchema),
+  changePasswordHandler
+);
 
 export default router;
