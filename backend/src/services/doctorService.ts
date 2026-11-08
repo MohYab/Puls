@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../utils/prisma.js";
 import { AppError, NotFoundError } from "../utils/errors.js";
+import { assertNotDemoMode } from "../utils/demoMode.js";
 import type { CreateDoctorInput, UpdateDoctorInput } from "../validators/doctorValidators.js";
 
 const BCRYPT_ROUNDS = 10;
@@ -17,7 +18,7 @@ const doctorSelect = {
 async function getDoctorOrThrow(id: string) {
   const doctor = await prisma.doctor.findUnique({
     where: { id },
-    select: { id: true, userId: true, user: { select: { isActive: true } } },
+    select: { id: true, userId: true, user: { select: { isActive: true, email: true } } },
   });
   if (!doctor) {
     throw new NotFoundError("Doctor not found");
@@ -57,6 +58,11 @@ export async function createDoctor(input: CreateDoctorInput) {
 
 export async function updateDoctor(id: string, input: UpdateDoctorInput) {
   const doctor = await getDoctorOrThrow(id);
+  // The email is the login identity listed for the demo. Name and
+  // specialization can still be edited.
+  if (input.email !== doctor.user.email) {
+    assertNotDemoMode("Changing a user's email");
+  }
   await assertEmailAvailable(input.email, doctor.userId);
 
   return prisma.doctor.update({
@@ -81,6 +87,8 @@ export async function setDoctorActive(id: string, isActive: boolean) {
   }
 
   if (!isActive) {
+    // A deactivated demo account could no longer log in. Reactivating is fine.
+    assertNotDemoMode("Deactivating users");
     // A doctor who leaves usually has patients who should be moved to a
     // colleague, one by one, so the admin does that first.
     const futureAppointments = await prisma.appointment.count({
