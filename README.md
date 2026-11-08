@@ -8,24 +8,39 @@ Built as a degree project during an internship.
 > ⚠️ **Prototype.** This project uses test data only. It is not approved for
 > real healthcare use and must never contain real patient information.
 
+## Live demo
+
+**[puls-web.onrender.com](https://puls-web.onrender.com)**: log in with one of
+the [test accounts](#test-login), for example `erik@puls.test` / `password123`.
+
+- Hosted on Render and Neon in the EU (Frankfurt). After about 15 minutes without visitors the API sleeps, so the first login can take 30–60 seconds.
+- Public demo mode: password changes, email changes and deactivating users are
+  turned off, so visitors cannot lock each other out. Everything else can be
+  tried, and the data is reset before demos.
+- Never enter real personal data.
+
 ## Status
 
-Weeks 1–12 of 17 are done, ahead of the original plan. The MVP works end to
+Weeks 1–13 of 17 are done, ahead of the original plan. The redesign is
+finished and the app is deployed as a public demo. The MVP works end to
 end: a doctor can log in, see the dashboard and calendar, book, edit and
 cancel appointments, mark what happened at a visit, search patients, view a
 patient's history, and write, edit, read and share visit notes using
 documentation templates. Admins manage appointment types and the schedule,
 and can correct an appointment's status, but have no access to clinical notes.
 
-Current work: quality and design before the MVP freeze (calendar week 46).
+Current work: polish, screenshots and a usability test before the MVP freeze
+(calendar week 46).
 See [docs/plan-v43-v46.md](docs/plan-v43-v46.md).
 
 ### What works
 
 **Booking and calendar**
 
-- Calendar day view with booking, editing and cancelling, conflict checking
-  and opening hours (07:00–17:00, Swedish time)
+- Dashboards: doctors see the next patient, today's schedule and visits to
+  document; admins see which doctors work today
+- Calendar day and week view with a details panel, booking, editing and cancelling, conflict checking
+  and opening hours (07:00–17:00)
 - Appointment status: confirm, completed, no-show and cancelled, with
   confirmation before a final status
 - Admins can correct a final status with a reason; every status change is
@@ -34,7 +49,7 @@ See [docs/plan-v43-v46.md](docs/plan-v43-v46.md).
 
 **Patients and documentation**
 
-- Patient list with name search in Swedish alphabetical order, patient page
+- Patient list with search by name, birth year or date of birth in Swedish alphabetical order, patient page
   and appointment history
 - Visit documentation with structured fields and templates (General
   consultation, Follow-up visit, Annual check-up, Vaccination), and previous
@@ -43,6 +58,8 @@ See [docs/plan-v43-v46.md](docs/plan-v43-v46.md).
   (simulated patient consent, history kept)
 - Doctors and admins register and edit patients; admins deactivate patients
   (records are kept, future appointments are cancelled)
+- Quick search for patients in the dashboard header (Ctrl+K / ⌘K)
+- Vital signs in visit notes, and the latest measurements on the patient page
 
 **Administration**
 
@@ -179,6 +196,7 @@ checklists for the cases that are not automated.
 - [API reference](docs/api.md)
 - [Technical decisions](docs/decisions.md)
 - [Setup on a new computer](docs/setup.md)
+- [Deployment](docs/setup.md#deployment)
 - [Manual testing](docs/manual-testing.md)
 - [Project log](docs/project-log.md)
 

@@ -7,8 +7,6 @@ decisions, what I learned, feedback, scope changes.
 
 ## Week 1 – Pre-study and scope
 
-**Period:** week 36 2026-08-24 to 2026-08-30
-
 ### Summary of the week
 
 This week I defined what Puls is and what it is not. I created the repository,
@@ -86,7 +84,7 @@ and P2 (should have), and a clear list of what is out of scope.
 
 **What I did**
 
-- Wrote docs/acceptance-criteria.md for US-01 (log in), US-05 (create appointment) and US-08 (crea documentation).
+- Wrote docs/acceptance-criteria.md for US-01 (log in), US-05 (create appointment) and US-08 (create documentation).
 
 **Why**
 
@@ -150,8 +148,6 @@ and P2 (should have), and a clear list of what is out of scope.
 - Write docs/decisions.md with the key technical decisions.
 
 ## Week 2 – UX/UI and architecture
-
-**Period:** week 36 2026-08-31 to 2026-09-06
 
 ### Summary of the week
 
@@ -300,8 +296,6 @@ that starts in week 3 with the project setup.
 - Goal: a working development environment, no features yet.
 
 ## Week 3–4 – Project setup, database and backend foundation
-
-**Period:** week 37-38 2026-09-07 to 2026-09-20
 
 ### Summary
 
@@ -490,8 +484,6 @@ TO puls_user`. See docs/decisions.md #11.
 
 ## Week 5–7 – Authentication, frontend foundation and dashboard
 
-**Period:** week 39-41 2026-09-21 to 2026-10-11
-
 ### Summary
 
 These three weeks took the project from a backend-only API to a working,
@@ -613,8 +605,6 @@ after logging in, fully wired to the backend.
 
 ## Week 8 – Calendar and the appointment booking flow
 
-**Period:** week 42 2026-10-12 to 2026-10-18
-
 ### Summary
 
 This was the heaviest week in the plan, and it delivered the core of the
@@ -724,8 +714,6 @@ already known to behave correctly.
 - Patient appointment history.
 
 ## Week 9–10 – Patients and clinical documentation
-
-**Period:** week 43,44 2026-10-19 to 2026-11-01
 
 ### Summary
 
@@ -929,8 +917,6 @@ and automated tests remain for weeks 11–13.
 
 ## Week 11 – Documentation templates and UX polish
 
-**Period:** week 45 2026-11-02 to 2026-11-08
-
 ### Summary
 
 Week 11 added the last piece of the documentation flow, templates, and then
@@ -951,6 +937,10 @@ patient search was also improved so that a full name finds the patient.
 None of this changes what the application does on a good day, but it
 changes what the user sees when something goes wrong, which matters in a
 healthcare context.
+
+Two pieces of later work were started early: automated tests for the note
+permissions (planned for week 13) and a responsive layout with a separate
+sidebar component, which the admin pages in week 12 needed anyway.
 
 ### Entry 1: Documentation templates
 
@@ -1021,60 +1011,6 @@ healthcare context.
 - Searching for a full name is the first thing a user tries, so a search that
   matches the whole string against one column is not enough.
 
-### Problems and solutions
-
-- **The dashboard showed an error as an empty schedule.** The page only
-  read `isLoading`, so a failed request left `appointments` undefined and
-  the page printed "No appointments today." Fixed by handling `isError`.
-- **`Modal` could not be closed with the keyboard and lost focus.** Added
-  Escape handling and focus management. A list of open modals makes Escape
-  close only the topmost one, which matters when the cancel confirmation is
-  opened on top of the appointment details.
-- **Searching for a full name found nothing, and equal last names moved
-  between requests.** Fixed in the service (see Entry 3).
-- **The same route was registered twice in `index.ts`.** The second line did
-  nothing and Express shows no error. Found by reading the file during week
-  11, the same silent problem as the duplicate routes in week 10.
-- **`/documentation/null`.** The shell variable holding the appointment id was
-  empty because the terminal was a new window without the login token.
-  Variables only live in the window where they were set.
-- **A 30 to 40 second page load when testing loading states with a throttled
-  network.** The development server sends hundreds of separate files, so the
-  whole page waits long before any "Loading..." can be shown. The way to
-  test loading states is to load the app first and throttle the network
-  afterwards, then navigate to a view that has not fetched its data yet. The
-  production build is three files.
-
-### Feedback from supervisor
-
--
-
-### Scope changes
-
-- Delivered as planned: templates, shared components, confirmation dialog,
-  consistent states and the older forms moved over.
-- **Warning about unsaved changes** is OUT OF SCOPE. In-app navigation
-  blocking needs a data router (`useBlocker`), which means rebuilding the
-  routing for a small gain. It is listed as a limitation.
-- **Searchable patient and doctor selects** (73 patients and 28 doctors in
-  plain selects) are COULD, week 14 if time allows.
-- **Marking the visit as completed when a note is saved** and **a "to
-  document" list on the dashboard** (completed visits without a note) are
-  COULD.
-- **A doctor filter in the admin calendar** moves to week 12, where it
-  belongs with permissions and admin features.
-- Known limitation: the dialog does not trap Tab focus, so Tab can leave an
-  open dialog. A production version should use a dialog library or the
-  native `<dialog>` element.
-
-### What I would do differently
-
-- Handle `isError` in every view that fetches data from the start, instead of
-  finding it when reviewing.
-- Create the shared components earlier. The red error box existed in four
-  places before I made one component for it.
-- Build `Modal` with keyboard and focus support from the beginning.
-
 ### Entry 4: Automated note permission tests (early start on week 13)
 
 **What I did**
@@ -1094,7 +1030,7 @@ healthcare context.
 - Starting with the highest-risk rules (journal access) gives more value
   than a broad but shallow suite.
 
-  ### Entry 5: Responsive layout and Sidebar component (step 25b)
+### Entry 5: Responsive layout and Sidebar component (step 25b)
 
 **What I did**
 
@@ -1124,17 +1060,42 @@ healthcare context.
 
 ### Problems and solutions
 
-| Problem                                            | Cause                                  | Solution                                              |
-| -------------------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
-| Patient page scrolled sideways at 375 px           | Grid column sized to the table's width | `grid-cols-1` (`minmax(0, 1fr)`)                      |
-| Tab left the drawer immediately                    | Close button last in the DOM           | Moved it first; focus trap                            |
-| Calendar stuck on 25 October                       | ±24 hours across the DST change        | `addDays` with `setDate`                              |
-| Calendar showed an empty day when the API was down | Only `isLoading` handled               | `ErrorMessage` with "Try again"                       |
-| Form below all previous notes on mobile            | DOM order followed the desktop columns | DOM order = mobile order, `lg:row-span-2` on desktop  |
-| Select popup shifted left                          | Chromium device emulation              | None needed; checked in Firefox (real device week 13) |
+| Problem                                                                | Cause                                                                            | Solution                                                                              |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| The dashboard showed an error as an empty schedule                     | The page only read `isLoading`, so a failed request left the list undefined      | Handle `isError`                                                                      |
+| `Modal` could not be closed with the keyboard and lost focus           | No Escape handling or focus management                                           | Escape closes only the topmost modal (a list of open modals); focus moves in and back |
+| A full name found nothing, and equal last names moved between requests | The whole string was matched against one column; sorting used the last name only | Word-by-word search, sort by last and first name (Entry 3)                            |
+| The same route was registered twice in `index.ts`                      | Express shows no error for a duplicate route                                     | Removed it; found by reading the file, the same silent problem as in week 10          |
+| `/documentation/null` in curl tests                                    | A new terminal window without the login token                                    | Log in again and set the variables in the same window                                 |
+| A 30–40 second page load when testing loading states                   | The development server sends hundreds of files                                   | Load the app first, then throttle the network; the production build is three files    |
+| Patient page scrolled sideways at 375 px                               | Grid column sized to the table's width                                           | `grid-cols-1` (`minmax(0, 1fr)`)                                                      |
+| Tab left the drawer immediately                                        | Close button last in the DOM                                                     | Moved it first; focus trap                                                            |
+| Calendar stuck on 25 October                                           | ±24 hours across the DST change                                                  | `addDays` with `setDate`                                                              |
+| Calendar showed an empty day when the API was down                     | Only `isLoading` handled                                                         | `ErrorMessage` with "Try again"                                                       |
+| Form below all previous notes on mobile                                | DOM order followed the desktop columns                                           | DOM order = mobile order, `lg:row-span-2` on desktop                                  |
+| Select popup shifted left                                              | Chromium device emulation                                                        | None needed; checked in Firefox (real device week 13)                                 |
+
+### Feedback from supervisor
+
+-
 
 ### Scope changes
 
+- Delivered as planned: templates, shared components, confirmation dialog,
+  consistent states and the older forms moved over.
+- **Warning about unsaved changes** is OUT OF SCOPE. In-app navigation
+  blocking needs a data router (`useBlocker`), which means rebuilding the
+  routing for a small gain. It is listed as a limitation.
+- **Searchable patient and doctor selects** (73 patients and 28 doctors in
+  plain selects) are COULD, week 14 if time allows.
+- **Marking the visit as completed when a note is saved** and **a "to
+  document" list on the dashboard** (completed visits without a note) are
+  COULD.
+- **A doctor filter in the admin calendar** moves to week 12, where it
+  belongs with permissions and admin features.
+- Known limitation: the dialog does not trap Tab focus, so Tab can leave an
+  open dialog. A production version should use a dialog library or the
+  native `<dialog>` element.
 - Step 25b was added before week 12 because the role-filtered `Sidebar` is
   needed for the admin pages anyway.
 - Focus trap was planned out of scope but added for the drawer; a shared
@@ -1142,6 +1103,14 @@ healthcare context.
 - A week view is still missing from the calendar (MVP in the project brief);
   decide in week 12 or 14 whether to build a simple one or document the day
   view as enough.
+
+### What I would do differently
+
+- Handle `isError` in every view that fetches data from the start, instead of
+  finding it when reviewing.
+- Create the shared components earlier. The red error box existed in four
+  places before I made one component for it.
+- Build `Modal` with keyboard and focus support from the beginning.
 
 ### Next (week 12)
 
@@ -1156,8 +1125,6 @@ healthcare context.
   cases); the permission suite is already in place as a foundation.
 
 ## Week 12 – Admin features and note sharing
-
-**Period:** week 46 2026-11-09 to 2026-11-15
 
 ### Summary
 
@@ -1238,7 +1205,8 @@ covered by automated tests (33 tests in four suites).
 
 - Note sharing between doctors (SHOULD) was built, since the checkpoint showed
   the week was ahead of schedule.
-- The calendar week view was moved to future development (#41).
+- The calendar week view was moved to future development (#41). It was
+  built later after all, in phase 3 (#57).
 - Patient-controlled sharing and consent stay out of scope; the data model
   leaves room for it (#38).
 - `/admin/users` (COULD) was not built.
@@ -1249,9 +1217,7 @@ covered by automated tests (33 tests in four suites).
   data, instead of "add it at the end".
 - Type Prisma `where` objects from the start instead of `Record<string, unknown>`.
 
-## Week 12 (continued) – Quality, security and tests
-
-**Period:** October 18–23, 2026 (calendar week 43)
+## Week 12 (continued) – Quality, security, tests and redesigen
 
 ### Summary
 
@@ -1276,6 +1242,13 @@ Swedish sorting), the frontend got its first tests (unit and component tests),
 and a CI workflow now runs lint, build and all tests on every push. An
 accessibility review with Lighthouse, axe and the keyboard, and a test on a
 real phone, completed the quality phase.
+
+Phase 3 then rebuilt the whole interface after a new design: design tokens
+and self-hosted fonts, a calendar week view with a details panel, new
+dashboards for doctors and admins, a rebuilt patient list and patient page,
+vital signs in the visit note, status changes from the schedule and a
+searchable select for patients and doctors (entries 13–18). The phase was
+merged to `main` through a pull request.
 
 ### Entry 8: Plan, merge and documentation for others
 
@@ -1584,7 +1557,7 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
   that a strict lock would make mistakes permanent).
 - Moved to future development: logging time changes (COULD), a reason for
   cancellation, and a separate `RESCHEDULED` status (rejected).
-- The redesign waits for the supervisor meeting.
+- The redesign built in phase 3 (entries 13–18).
 - Added phase 2b (patients, doctors, My account) before the redesign.
 - Clinic settings (name, address, phone) added as COULD (2b.7).
 - Phase 3.7 was meant to be visual only. Added after review: changing the
@@ -1606,8 +1579,6 @@ NoteContent` suddenly included `vitals`, and TypeScript stopped code that
 
 ## Week 13 – Polish: measurements fix and patient quick search (phase 5)
 
-**Period:** 5 November 2026 –
-
 ### Summary
 
 Phase 5 started with two smaller pieces of work. The first was a layout bug on
@@ -1623,6 +1594,12 @@ patient without going through the Patients page. Most of the time went to
 keyboard and screen reader behaviour: the component library's defaults for
 Tab and for hiding the rest of the page fit a form field, but not a search
 that opens a page.
+
+The week ended with the app deployed as a public demo on Render and Neon
+(decisions #71 and #72). Since the demo accounts are public, a demo mode
+stops visitors from locking each other out. The most useful lesson was not
+technical: a database address with its password ended up in the shell
+history, and handling secrets became part of the setup guide.
 
 ### Entry 1: Latest measurements overflowed their boxes
 
@@ -1679,16 +1656,51 @@ that opens a page.
   owns the key. Returning early before `preventDefault` hands the key back to
   the browser.
 
+  ### Entry 3: Deployment and a public demo
+
+**What I did**
+
+- Decided to deploy (plan #32) with a time box of 1.5 days, after comparing
+  the current free plans: Render for the API and the frontend, Neon for
+  PostgreSQL, all in Frankfurt (decision #71).
+- Prepared the backend for production: start-up checks for the required
+  variables, a CORS allow-list, and `trust proxy` so the login rate limit
+  counts per visitor.
+- Added a demo mode (decision #72): password changes, email changes and
+  deactivating users are turned off, and My account shows a notice.
+- Ran the migrations and the seed against Neon from my computer, deployed the
+  API (migrations in the build command) and the frontend (rewrite to
+  `index.html`), with auto-deploy only after CI passes.
+- Tested the public site with both roles, on a phone, and after the API had
+  slept (the first login took about 30 seconds).
+
+**What I learned**
+
+- A secret pasted on the command line ends up in the shell history. Read it
+  into a variable with `read -rs` on its own line, and change the password if
+  it leaks.
+- `NODE_ENV=production` makes `npm ci` skip devDependencies, so the build
+  needs `--include=dev`.
+- Service names on a shared host are global: `puls-api` was taken and got a
+  suffix, so addresses must be copied from the dashboard, not guessed.
+- Free plans have limits that shape the demo, such as an API that sleeps
+  after 15 minutes.
+
 ### Problems and solutions
 
-| Problem                                                   | Cause                                                                                 | Solution                                                                        |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| A unit stuck out of its measurement box at 1280 px        | Seven fixed columns at `xl`, about 125 px each                                        | Auto-fill grid with `minmax(10rem, 1fr)`, wrapping unit, non-breaking space     |
-| A wrapped unit was indented                               | The `ms-1` margin followed the unit to the next line                                  | `gap-x-1` on the flex row                                                       |
-| A test could not find the role `status`                   | Headless UI hides everything outside an open list by default (modal)                  | `modal={false}` on `ComboboxOptions`                                            |
-| Tab opened the first patient                              | Headless UI selects the active option on Tab                                          | Stop Tab in the capture phase and keep the browser's default, so focus moves on |
-| Ctrl+K opened the browser's search while a modal was open | The handler returned before `preventDefault`                                          | `preventDefault` on every Ctrl+K; only the focus move is skipped                |
-| `SearchSelect` lost its label while the list was open     | Same Headless UI modal default; the old tests found the field before opening the list | `modal={false}` and a test that checks the name with the list open              |
+| Problem                                                                                   | Cause                                                                                 | Solution                                                                              |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| A unit stuck out of its measurement box at 1280 px                                        | Seven fixed columns at `xl`, about 125 px each                                        | Auto-fill grid with `minmax(10rem, 1fr)`, wrapping unit, non-breaking space           |
+| A wrapped unit was indented                                                               | The `ms-1` margin followed the unit to the next line                                  | `gap-x-1` on the flex row                                                             |
+| A test could not find the role `status`                                                   | Headless UI hides everything outside an open list by default (modal)                  | `modal={false}` on `ComboboxOptions`                                                  |
+| Tab opened the first patient                                                              | Headless UI selects the active option on Tab                                          | Stop Tab in the capture phase and keep the browser's default, so focus moves on       |
+| Ctrl+K opened the browser's search while a modal was open                                 | The handler returned before `preventDefault`                                          | `preventDefault` on every Ctrl+K; only the focus move is skipped                      |
+| `SearchSelect` lost its label while the list was open                                     | Same Headless UI modal default; the old tests found the field before opening the list | `modal={false}` and a test that checks the name with the list open                    |
+| Errors after switching computers (`lucide-react`, `clinicSettings`, `erasableSyntaxOnly`) | `node_modules`, the Prisma client and the editor's TypeScript are not in Git          | `npm ci`, `prisma migrate dev` and `prisma generate`, workspace TypeScript            |
+| The Neon address ended up in the shell history                                            | Pasted on the same line as `read`; `&` in the address split the command               | Removed the line, cleared the history, reset the password; `read -rs` on its own line |
+| A commit landed on `main`                                                                 | The feature branch was not created first                                              | Created the branch from it, moved `main` back with `git branch -f main origin/main`   |
+| `isDemoMode is not a function` in a test                                                  | The new file was not saved                                                            | Saved it; run `tsc -b` when an error looks strange                                    |
+| `useAuth must be used within an AuthProvider`                                             | The page test rendered `ProfileForm`, which needs the auth context                    | Replaced `ProfileForm` with a stand-in in that test                                   |
 
 ### Feedback from supervisor
 
@@ -1697,6 +1709,7 @@ that opens a page.
 - Added: a patient quick search on the dashboard (plan #46, COULD) and search
   by birth year or date of birth on the server.
 - Rejected: a global search in the app's top bar on every page.
+- Added: deployment to Render and Neon with a demo mode (plan #32–33).
 
 ### What I would do differently
 
@@ -1705,7 +1718,5 @@ that opens a page.
 
 ### Next
 
-- `SearchSelect` most likely has the same hidden-label problem while its list
-  is open; check and fix it with `modal={false}` and a test.
 - Screenshots (#36), usability test (#35b), documentation (#35) and the MVP
   freeze after v.46.
