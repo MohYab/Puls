@@ -1,6 +1,7 @@
 import { Card } from "../components/Card";
 import { ErrorMessage, LoadingMessage } from "../components/Feedback";
 import { PageHeader } from "../components/PageHeader";
+import { isDemoMode } from "../config/demo";
 import { PasswordForm } from "../features/account/PasswordForm";
 import { ProfileForm } from "../features/account/ProfileForm";
 import { useAccount } from "../features/account/useAccount";
@@ -23,7 +24,13 @@ export default function AccountPage() {
             <ProfileForm account={account} />
           </Card>
           <Card title="Password">
-            <PasswordForm />
+            {isDemoMode() ? (
+              <p className="text-sm text-muted">
+                Password changes are turned off in the public demo.
+              </p>
+            ) : (
+              <PasswordForm />
+            )}
           </Card>
         </div>
       )}
