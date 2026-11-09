@@ -8,7 +8,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { ApiError } from "../services/apiClient";
 import type { Doctor } from "../types/doctor";
 import { Button } from "../components/Button";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { Badge } from "../components/Badge";
 import { Avatar } from "../components/Avatar";
 import { PageHeader } from "../components/PageHeader";
@@ -109,7 +109,8 @@ export default function DoctorsPage() {
                   <th scope="col" className={`${cellClassName} text-start`}>
                     Name
                   </th>
-                  <th scope="col" className={`${cellClassName} text-start`}>
+                  {/* On a phone the email is shown under the name instead. */}
+                  <th scope="col" className={`${cellClassName} hidden text-start sm:table-cell`}>
                     Email
                   </th>
                   <th scope="col" className={`${cellClassName} text-start`}>
@@ -127,7 +128,11 @@ export default function DoctorsPage() {
                     <tr key={doctor.id} className="hover:bg-subtle">
                       <td className={cellClassName}>
                         <span className="flex items-center gap-3">
-                          <Avatar name={name} size="sm" />
+                          {/* Decorative; on a phone the name needs the width. */}
+                          <span className="hidden sm:contents">
+                            <Avatar name={name} size="sm" />
+                          </span>
+
                           <span className="min-w-0">
                             <span
                               className={`block font-semibold ${isActive ? "text-ink" : "text-muted"}`}
@@ -142,7 +147,7 @@ export default function DoctorsPage() {
                           </span>
                         </span>
                       </td>
-                      <td className={`${cellClassName} break-all`}>{email}</td>
+                      <td className={`${cellClassName} hidden break-all sm:table-cell`}>{email}</td>
                       <td className={cellClassName}>
                         {/* In words, not colour alone. */}
                         {isActive ? (
@@ -152,6 +157,8 @@ export default function DoctorsPage() {
                         )}
                       </td>
                       <td className={`${cellClassName} whitespace-nowrap text-end`}>
+                        {/* Icons on a phone, words from sm. The aria-label names the
+                            action and the doctor on every screen size. */}
                         <span className="inline-flex gap-2">
                           <Button
                             variant="ghost"
@@ -162,7 +169,8 @@ export default function DoctorsPage() {
                             }}
                             aria-label={`Edit ${name}`}
                           >
-                            Edit
+                            <Pencil aria-hidden="true" className="size-4 sm:hidden" />
+                            <span className="hidden sm:inline">Edit</span>
                           </Button>
                           <Button
                             variant={isActive ? "outlineDanger" : "secondary"}
@@ -175,7 +183,14 @@ export default function DoctorsPage() {
                             isPending={isRowPending(doctor.id)}
                             aria-label={`${isActive ? "Deactivate" : "Activate"} ${name}`}
                           >
-                            {isActive ? "Deactivate" : "Activate"}
+                            {isActive ? (
+                              <UserX aria-hidden="true" className="size-4 sm:hidden" />
+                            ) : (
+                              <UserCheck aria-hidden="true" className="size-4 sm:hidden" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {isActive ? "Deactivate" : "Activate"}
+                            </span>
                           </Button>
                         </span>
                       </td>

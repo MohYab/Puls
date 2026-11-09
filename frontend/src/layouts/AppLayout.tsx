@@ -27,15 +27,16 @@ export function AppLayout() {
         Skip to main content
       </a>
 
-      {/* Sticky, so the user and Log out stay visible on long pages. */}
-      <aside className="hidden w-64 shrink-0 md:sticky md:top-0 md:block md:h-screen">
+      {/* Sticky, so the user and Log out stay visible on long pages. From lg
+          (1024 px): on a tablet in portrait the content needs the full width. */}
+      <aside className="hidden w-64 shrink-0 lg:sticky lg:top-0 lg:block lg:h-screen">
         <Sidebar />
       </aside>
 
       <MobileNavDrawer id={MOBILE_NAV_ID} isOpen={isMenuOpen} onClose={closeMenu} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between gap-3 border-b bg-surface px-4 md:justify-end md:px-8">
+        <header className="flex h-14 items-center justify-between gap-3 border-b bg-surface px-4 md:px-8 lg:justify-end">
           <button
             ref={menuButtonRef}
             type="button"
@@ -43,7 +44,7 @@ export function AppLayout() {
             aria-label="Open menu"
             aria-expanded={isMenuOpen}
             aria-controls={MOBILE_NAV_ID}
-            className="-ms-2 rounded-lg p-2 text-ink hover:bg-subtle md:hidden"
+            className="-ms-2 rounded-lg p-2 text-ink hover:bg-subtle lg:hidden"
           >
             <Menu aria-hidden="true" className="h-5 w-5" />
           </button>

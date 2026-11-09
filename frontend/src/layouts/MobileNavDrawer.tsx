@@ -3,8 +3,8 @@ import { X } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { Sidebar } from "./Sidebar";
 
-// Matches Tailwind's md breakpoint (768px), where the fixed sidebar takes over.
-const DESKTOP_QUERY = "(min-width: 768px)";
+// Matches Tailwind's lg breakpoint (1024px), where the fixed sidebar takes over.
+const DESKTOP_QUERY = "(min-width: 1024px)";
 
 interface MobileNavDrawerProps {
   id: string;
@@ -53,7 +53,7 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
   return (
     // h-dvh: the visible height, so the bottom (user and Log out) is never
     // hidden behind the mobile browser's toolbar.
-    <div className="fixed inset-x-0 top-0 z-40 flex h-dvh md:hidden">
+    <div className="fixed inset-x-0 top-0 z-40 flex h-dvh lg:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
 
       <div

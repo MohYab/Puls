@@ -10,7 +10,7 @@ import {
 import type { AppointmentType } from "../types/appointmentType";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { PageHeader } from "../components/PageHeader";
-import { Plus } from "lucide-react";
+import { Ban, CircleCheck, Pencil, Plus } from "lucide-react";
 import { Badge } from "../components/Badge";
 import { cellClassName, headRowClassName, tableWrapperClassName } from "../components/tableStyles";
 import { Button } from "../components/Button";
@@ -115,6 +115,8 @@ export default function AppointmentTypesPage() {
                       )}
                     </td>
                     <td className={`${cellClassName} whitespace-nowrap text-end`}>
+                      {/* Icons on a phone, words from sm. The aria-label names the
+                          action and the type on every screen size. */}
                       <span className="inline-flex gap-2">
                         <Button
                           variant="ghost"
@@ -122,7 +124,8 @@ export default function AppointmentTypesPage() {
                           onClick={() => setFormTarget(type)}
                           aria-label={`Edit ${type.name}`}
                         >
-                          Edit
+                          <Pencil aria-hidden="true" className="size-4 sm:hidden" />
+                          <span className="hidden sm:inline">Edit</span>
                         </Button>
                         <Button
                           variant={type.isActive ? "outlineDanger" : "secondary"}
@@ -131,7 +134,14 @@ export default function AppointmentTypesPage() {
                           isPending={isRowPending(type.id)}
                           aria-label={`${type.isActive ? "Deactivate" : "Activate"} ${type.name}`}
                         >
-                          {type.isActive ? "Deactivate" : "Activate"}
+                          {type.isActive ? (
+                            <Ban aria-hidden="true" className="size-4 sm:hidden" />
+                          ) : (
+                            <CircleCheck aria-hidden="true" className="size-4 sm:hidden" />
+                          )}
+                          <span className="hidden sm:inline">
+                            {type.isActive ? "Deactivate" : "Activate"}
+                          </span>
                         </Button>
                       </span>
                     </td>
