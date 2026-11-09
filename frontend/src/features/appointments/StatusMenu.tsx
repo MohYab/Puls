@@ -3,7 +3,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { StatusBadge } from "../../components/StatusBadge";
-import type { Appointment, AppointmentStatus } from "../../types/appointment";
+import type { AppointmentStatus, StatusChangeTarget } from "../../types/appointment";
 import { STATUS_LABELS, isCorrection, statusTargets } from "../../utils/appointmentStatus";
 import { formatDate, formatTime } from "../../utils/date";
 import { CorrectStatusDialog } from "./CorrectStatusDialog";
@@ -11,9 +11,15 @@ import { useUpdateAppointmentStatus } from "./useAppointments";
 
 type Dialog = { kind: "cancel" } | { kind: "correct"; to: AppointmentStatus } | null;
 
-// The status as a button with a menu of the changes the rules allow (decisions ah, am).
+// The status as a button with a menu of the changes the rules allow.
 // Workflow changes save at once; cancelling asks first; a correction asks for a reason.
-export function StatusMenu({ appointment }: { appointment: Appointment }) {
+interface StatusMenuProps {
+  appointment: StatusChangeTarget;
+  /** "start" in a table column, "end" (default) in the schedule and the panel. */
+  align?: "start" | "end";
+}
+
+export function StatusMenu({ appointment, align = "end" }: StatusMenuProps) {
   const update = useUpdateAppointmentStatus(appointment.id);
   const [dialog, setDialog] = useState<Dialog>(null);
 
@@ -37,7 +43,7 @@ export function StatusMenu({ appointment }: { appointment: Appointment }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className={`flex flex-col gap-1 ${align === "start" ? "items-start" : "items-end"}`}>
       <Menu>
         <MenuButton
           disabled={update.isPending}
@@ -49,8 +55,8 @@ export function StatusMenu({ appointment }: { appointment: Appointment }) {
           <ChevronDown aria-hidden="true" className="size-3.5 text-muted" />
         </MenuButton>
         <MenuItems
-          anchor="bottom end"
-          className="z-30 min-w-36 rounded-lg border bg-surface p-1 shadow-pop [--anchor-gap:4px] focus:outline-none"
+          anchor={align === "start" ? "bottom start" : "bottom end"}
+          className="z-50 min-w-36 rounded-lg border bg-surface p-1 shadow-pop [--anchor-gap:4px] focus:outline-none"
         >
           {targets.map((to) => (
             <MenuItem key={to}>

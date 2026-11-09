@@ -28,13 +28,17 @@ const documented: PatientAppointment = {
   appointmentType: { id: "t1", name: "Annual check-up" },
 };
 
+const patientName = { firstName: "Anna", lastName: "Andersson" };
+
 describe("AppointmentHistory", () => {
   afterEach(() => vi.clearAllMocks());
 
   it("links doctors to the note, with the date in the link name", () => {
     mockRows([{ ...documented, hasNote: true }]);
 
-    renderWithProviders(<AppointmentHistory patientId="p1" />, { user: testDoctor });
+    renderWithProviders(<AppointmentHistory patientId="p1" patientName={patientName} />, {
+      user: testDoctor,
+    });
 
     expect(screen.getByRole("link", { name: "Open note, 22 Oct 2026" })).toHaveAttribute(
       "href",
@@ -45,7 +49,9 @@ describe("AppointmentHistory", () => {
   it("has no documentation column for admins", () => {
     mockRows([documented]);
 
-    renderWithProviders(<AppointmentHistory patientId="p1" />, { user: testAdmin });
+    renderWithProviders(<AppointmentHistory patientId="p1" patientName={patientName} />, {
+      user: testAdmin,
+    });
 
     expect(screen.getByText("Annual check-up")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Documentation" })).not.toBeInTheDocument();

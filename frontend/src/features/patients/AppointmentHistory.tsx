@@ -2,15 +2,21 @@ import { Link } from "react-router-dom";
 import { Badge } from "../../components/Badge";
 import { Card } from "../../components/Card";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
-import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatTime } from "../../utils/date";
 import { useAuth } from "../auth/useAuth";
 import { documentationAction } from "./patientData";
 import { usePatientAppointments } from "./usePatients";
+import { StatusMenu } from "../appointments/StatusMenu";
 
 const cell = "px-4 py-3 md:px-5";
 
-export function AppointmentHistory({ patientId }: { patientId: string }) {
+interface AppointmentHistoryProps {
+  patientId: string;
+  /** For the status menu's label and the cancel dialog ("Cancel the appointment with …"). */
+  patientName: { firstName: string; lastName: string };
+}
+
+export function AppointmentHistory({ patientId, patientName }: AppointmentHistoryProps) {
   const { user } = useAuth();
   // Admins have no access to notes, not even a link (decision #56).
   const isDoctor = user?.role === "DOCTOR";
@@ -75,7 +81,11 @@ export function AppointmentHistory({ patientId }: { patientId: string }) {
                     <td className={`${cell} whitespace-nowrap`}>{appointment.doctor.user.name}</td>
                     <td className={cell}>{appointment.appointmentType.name}</td>
                     <td className={cell}>
-                      <StatusBadge status={appointment.status} />
+                      {/* The same menu and rules as the dashboard and the calendar. */}
+                      <StatusMenu
+                        appointment={{ ...appointment, patient: patientName }}
+                        align="start"
+                      />
                     </td>
                     {isDoctor && (
                       <td className={`${cell} whitespace-nowrap text-end`}>
