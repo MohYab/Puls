@@ -50,7 +50,7 @@ export function StatusMenu({ appointment }: { appointment: Appointment }) {
         </MenuButton>
         <MenuItems
           anchor="bottom end"
-          className="z-30 min-w-36 rounded-lg border bg-surface p-1 shadow-pop [--anchor-gap:4px] focus:outline-none"
+          className="z-50 min-w-36 rounded-lg border bg-surface p-1 shadow-pop [--anchor-gap:4px] focus:outline-none"
         >
           {targets.map((to) => (
             <MenuItem key={to}>
