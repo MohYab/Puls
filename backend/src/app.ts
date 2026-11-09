@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { parseCorsOrigins } from "./utils/runtimeConfig.js";
 import authRoutes from "./routes/auth.js";
 import appointmentTypeRoutes from "./routes/appointmentTypes.js";
 import appointmentRoutes from "./routes/appointments.js";
@@ -24,9 +25,18 @@ interface AppOptions {
 export function createApp({ loginRateLimit = process.env.NODE_ENV !== "test" }: AppOptions = {}) {
   const app = express();
 
+  // Render (and most hosts) put a proxy in front of the app. Trust exactly one
+  // hop, so req.ip is the visitor's address and the login rate limit is per
+  // visitor instead of shared by everyone.
+  if (process.env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
+  }
   // Secure HTTP headers, and no "X-Powered-By: Express".
   app.use(helmet());
-  app.use(cors());
+  // Only the listed origins may read responses in a browser. Without a list
+  // (development, phone testing) every origin is allowed, as before.
+  const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN);
+  app.use(cors({ origin: corsOrigins.length > 0 ? corsOrigins : true }));
   app.use(express.json());
 
   app.get("/api/health", (_req, res) => {

@@ -144,3 +144,84 @@ blocking ports 5173 and 3001. Delete `.env.local` afterwards.
 The calendar counts days in the clinic's time zone (decision #57). Make sure
 `backend/.env` has the line `TZ=Europe/Stockholm` (it is in `.env.example`).
 A `TZ` set in the terminal wins over `.env`; remove it with `unset TZ`.
+
+## Deployment
+
+The public demo runs on free plans, all in Frankfurt (decision #71):
+
+| Part     | Service                  | Address                                |
+| -------- | ------------------------ | -------------------------------------- |
+| Frontend | Render, static site      | https://puls-web.onrender.com          |
+| API      | Render, web service      | https://puls-api-bazo.onrender.com/api |
+| Database | Neon, PostgreSQL project | `puls` (direct connection, no pooling) |
+
+Both Render services deploy `main` automatically, but only after CI has
+passed. Secrets (`DATABASE_URL`, `JWT_SECRET`) are stored only in Render's
+environment variables: never in the repository or in `.env` files.
+
+### Render: API (web service)
+
+| Setting           | Value                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| Root directory    | `backend`                                                                                   |
+| Build command     | `npm ci --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build` |
+| Start command     | `npm start`                                                                                 |
+| Health check path | `/api/health`                                                                               |
+| Auto-deploy       | After CI checks pass                                                                        |
+
+Environment variables: `NODE_ENV=production`, `DEMO_MODE=true`,
+`TZ=Europe/Stockholm`, `DATABASE_URL` (Neon), `JWT_SECRET`
+(`openssl rand -base64 48`), and `CORS_ORIGIN` (the frontend's exact address,
+without a trailing `/`).
+
+- `--include=dev`: with `NODE_ENV=production`, `npm ci` skips devDependencies,
+  and the build needs TypeScript and Prisma.
+- Migrations run in the build command because the pre-deploy command is only
+  available on paid plans. `migrate deploy` only applies missing migrations.
+- The server refuses to start if `DATABASE_URL`, `JWT_SECRET` or `CORS_ORIGIN`
+  is missing, or if the secret is the example value (decision #71).
+
+### Render: frontend (static site)
+
+| Setting           | Value                                 |
+| ----------------- | ------------------------------------- |
+| Root directory    | `frontend`                            |
+| Build command     | `npm ci && npm run build`             |
+| Publish directory | `dist`                                |
+| Rewrite           | `/*` → `/index.html` (action Rewrite) |
+| Auto-deploy       | After CI checks pass                  |
+
+Environment variables: `VITE_API_URL=https://puls-api-bazo.onrender.com/api`
+and `VITE_DEMO_MODE=true`. `VITE_` variables are built into the files, so
+deploy again after changing them.
+
+### Before a demo: reset the data
+
+Run from `backend/` on your own computer. Get the address from Neon
+(Connect, pooling off). Read it into a variable on its own line, so it never
+ends up on the command line or in the shell history:
+
+```bash
+read -rs NEON_URL            # press Enter, then paste the address and press Enter
+DATABASE_URL="$NEON_URL" npx prisma db seed
+```
+
+Open the site a minute before the demo, so the API has woken up.
+
+### If a secret leaks
+
+- Database address: Neon → Roles → Reset password, then update
+  `DATABASE_URL` in Render.
+- `JWT_SECRET`: generate a new one and update it in Render. Everyone is logged
+  out, which is harmless in the demo.
+
+### Deployment troubleshooting
+
+| Problem                                        | Cause                                           | Fix                                                   |
+| ---------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| Login fails with a CORS error in the Console   | `CORS_ORIGIN` differs from the frontend address | Copy the exact address from Render, no trailing `/`   |
+| "Not Found" when reloading `/patients/<id>`    | The rewrite to `index.html` is missing          | Add `/*` → `/index.html` (Rewrite) to the static site |
+| Frontend still calls the old API address       | `VITE_` variables are built in                  | Deploy the static site again                          |
+| Build fails: `tsc` or `prisma` not found       | `npm ci` skipped devDependencies                | Use `npm ci --include=dev` in the build command       |
+| Server stops: "Missing environment variables…" | A required variable is not set in Render        | Add it under Environment                              |
+| First request takes 30–60 seconds              | The free API sleeps after 15 minutes            | Expected; open the site before a demo                 |

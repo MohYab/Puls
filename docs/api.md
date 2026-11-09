@@ -9,31 +9,32 @@ All endpoints except `/auth/login` require `Authorization: Bearer <token>`.
 { "error": { "code": "VALIDATION_ERROR", "message": "startTime is required" } }
 ```
 
-| Code                      | HTTP status | Meaning                                                   |
-| ------------------------- | ----------- | --------------------------------------------------------- |
-| VALIDATION_ERROR          | 400         | Invalid request body or parameters                        |
-| APPOINTMENT_TYPE_INACTIVE | 400         | The appointment type is no longer in use                  |
-| PATIENT_INACTIVE          | 400         | The patient is inactive and cannot be booked              |
-| DOCTOR_INACTIVE           | 400         | The doctor is inactive and cannot be booked               |
-| INVALID_CURRENT_PASSWORD  | 400         | Wrong current password when changing password (not 401)   |
-| UNAUTHORIZED              | 401         | Missing, invalid or expired token                         |
-| INVALID_CREDENTIALS       | 401         | Wrong email or password on login (does not say which)     |
-| FORBIDDEN                 | 403         | Logged in, but not allowed (role or ownership)            |
-| NOT_FOUND                 | 404         | The resource does not exist                               |
-| APPOINTMENT_CONFLICT      | 409         | The doctor already has an appointment at that time        |
-| APPOINTMENT_CANCELLED     | 409         | A cancelled appointment cannot be documented              |
-| NOTE_EXISTS               | 409         | The appointment already has a note                        |
-| APPOINTMENT_TYPE_EXISTS   | 409         | An appointment type with that name already exists         |
-| NOTE_ALREADY_SHARED       | 409         | The note is already shared with this doctor               |
-| INVALID_STATUS_TRANSITION | 409         | The status change is not allowed (see Appointment status) |
-| APPOINTMENT_LOCKED        | 409         | The appointment has a final status and cannot be edited   |
-| PATIENT_EXISTS            | 409         | A patient with the same name and date of birth exists     |
-| PATIENT_STATUS_UNCHANGED  | 409         | The patient already has that status                       |
-| DOCTOR_STATUS_UNCHANGED   | 409         | The doctor already has that status                        |
-| DOCTOR_HAS_APPOINTMENTS   | 409         | The doctor has future appointments (move or cancel first) |
-| EMAIL_IN_USE              | 409         | Another user already has this email address               |
-| TOO_MANY_REQUESTS         | 429         | Too many failed login attempts (10 per 15 minutes per IP) |
-| INTERNAL_ERROR            | 500         | Unexpected server error                                   |
+| Code                      | HTTP status | Meaning                                                             |
+| ------------------------- | ----------- | ------------------------------------------------------------------- |
+| VALIDATION_ERROR          | 400         | Invalid request body or parameters                                  |
+| APPOINTMENT_TYPE_INACTIVE | 400         | The appointment type is no longer in use                            |
+| PATIENT_INACTIVE          | 400         | The patient is inactive and cannot be booked                        |
+| DOCTOR_INACTIVE           | 400         | The doctor is inactive and cannot be booked                         |
+| INVALID_CURRENT_PASSWORD  | 400         | Wrong current password when changing password (not 401)             |
+| UNAUTHORIZED              | 401         | Missing, invalid or expired token                                   |
+| INVALID_CREDENTIALS       | 401         | Wrong email or password on login (does not say which)               |
+| FORBIDDEN                 | 403         | Logged in, but not allowed (role or ownership)                      |
+| NOT_FOUND                 | 404         | The resource does not exist                                         |
+| APPOINTMENT_CONFLICT      | 409         | The doctor already has an appointment at that time                  |
+| APPOINTMENT_CANCELLED     | 409         | A cancelled appointment cannot be documented                        |
+| NOTE_EXISTS               | 409         | The appointment already has a note                                  |
+| APPOINTMENT_TYPE_EXISTS   | 409         | An appointment type with that name already exists                   |
+| NOTE_ALREADY_SHARED       | 409         | The note is already shared with this doctor                         |
+| INVALID_STATUS_TRANSITION | 409         | The status change is not allowed (see Appointment status)           |
+| APPOINTMENT_LOCKED        | 409         | The appointment has a final status and cannot be edited             |
+| PATIENT_EXISTS            | 409         | A patient with the same name and date of birth exists               |
+| PATIENT_STATUS_UNCHANGED  | 409         | The patient already has that status                                 |
+| DOCTOR_STATUS_UNCHANGED   | 409         | The doctor already has that status                                  |
+| DOCTOR_HAS_APPOINTMENTS   | 409         | The doctor has future appointments (move or cancel first)           |
+| EMAIL_IN_USE              | 409         | Another user already has this email address                         |
+| TOO_MANY_REQUESTS         | 429         | Too many failed login attempts (10 per 15 minutes per IP)           |
+| DEMO_MODE                 | 403         | Turned off in the public demo (password, email, deactivating users) |
+| INTERNAL_ERROR            | 500         | Unexpected server error                                             |
 
 ## Auth
 
@@ -176,15 +177,15 @@ scheduled, completed before the start), 409 `APPOINTMENT_CONFLICT`.
 
 ## Patients
 
-| Method | Path                               | Role   | Notes                                                                                                                      |
-| ------ | ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| GET    | /patients?search=&includeInactive= | any    | Active patients by default; `includeInactive=true` also returns inactive ones. Match the first or last name; Swedish order |
-| POST   | /patients                          | any    | Create. 201; 409 `PATIENT_EXISTS`                                                                                          |
-| GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                             |
-| PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                              |
-| PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                       |
-| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient and gets `hasNote`; admin sees all, without note information                 |
-| GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                             |
+| Method | Path                               | Role   | Notes                                                                                                                                                                                          |
+| ------ | ---------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | /patients?search=&includeInactive= | any    | Active patients by default; `includeInactive=true` also returns inactive ones. `search` must match a first or last name, a birth year (`1985`) or a date of birth (`1985-03-12`);Swedish order |
+| POST   | /patients                          | any    | Create. 201; 409 `PATIENT_EXISTS`                                                                                                                                                              |
+| GET    | /patients/:id                      | any    | Also returns inactive patients                                                                                                                                                                 |
+| PUT    | /patients/:id                      | any    | Replace all fields. 200; 409 `PATIENT_EXISTS`                                                                                                                                                  |
+| PATCH  | /patients/:id/status               | ADMIN  | Deactivate or reactivate (see below)                                                                                                                                                           |
+| GET    | /patients/:id/appointments         | any    | Doctor sees own appointments with the patient and gets `hasNote`; admin sees all, without note information                                                                                     |
+| GET    | /patients/:id/notes                | DOCTOR | Own notes and notes shared with the doctor, newest visit first                                                                                                                                 |
 
 Body for POST and PUT:
 

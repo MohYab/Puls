@@ -1285,4 +1285,101 @@ change, which the demo data does not need.
 clinic with thousands of patients would need server-side search (phase 5).
 Headless UI overwrites `aria-describedby` on the input, so `SearchSelect`
 sets it on the element itself; a test checks that the field's error is still
-read out.
+read out. The options list uses `modal={false}`: by default Headless UI hid
+the field's label from screen readers while the list was open (found in
+phase 5, see #70).
+
+## 70. Patient quick search in the dashboard header
+
+**Decision:** The dashboard header (doctor and admin) has a quick search for
+patients, `PatientQuickSearch`. It uses the existing patient search on the
+server, inactive patients included, which matches a name, a birth year
+(`1985`) or a date of birth (`1985-03-12`), word by word. The search starts
+at two characters, waits 250 ms after the last keystroke and shows at most
+eight results with "Born YYYY-MM-DD" and an "Inactive" badge. Enter or a
+click opens the patient's page. Ctrl+K (⌘K on Mac) moves focus to the field.
+The search is only on the dashboard; there is no global search.
+
+**Why:** Finding a patient took two steps (open Patients, then search), and
+staff often know the date of birth or the birth year (#63, #69). The quick
+search is its own component and not `SearchSelect` (#69): it fetches results
+from the server and navigates, instead of filtering a loaded list and setting
+a form value. The Patients page and the quick search use the same server
+search, so the matching rules are the same in both places. Ctrl+K was chosen
+over "/" because a single-character shortcut can be triggered by screen
+reader and speech input commands (WCAG 2.1.4).
+
+Keyboard and screen reader behaviour:
+
+- Tab moves focus on. By default Headless UI selects the active option on
+  Tab, which here would open the first patient.
+- Escape closes the list and clears the text but keeps focus in the field
+  (WAI-ARIA APG combobox pattern), so keyboard users do not lose their place.
+- While a modal is open, Ctrl+K is swallowed: focus stays in the modal's
+  focus trap and the browser's own Ctrl+K does not run either.
+- `ComboboxOptions` uses `modal={false}`. By default Headless UI hides
+  everything outside the open list from assistive technology, which hid the
+  field's label and the status message. A component test found it.
+
+**Alternative considered:** The search in the app's top bar on every page.
+Rejected: the Patients page is one click away, and the mobile menu would need
+room for another field. Reusing `SearchSelect` was rejected for the reasons
+above.
+
+**Known limitation:** The limit of eight results is applied in the browser;
+the API still returns every match. The "Showing 8 of N" message sits under
+the field and is covered by the open list, so mainly screen reader users get
+it. The shortcut only works on the dashboard.
+
+## 71. Deployment on Render and Neon
+
+**Decision:** The app is deployed as a public demo on free plans: the
+frontend as a static site and the API as a web service on Render, and
+PostgreSQL on Neon, all in Frankfurt. Render deploys `main` only after CI has
+passed. Migrations run in the build command (`prisma migrate deploy`); the
+seed only runs manually from the developer's computer. In production the
+server refuses to start without `DATABASE_URL`, a strong `JWT_SECRET` and
+`CORS_ORIGIN`, only the listed origin may read API responses in a browser,
+and Express trusts one proxy hop so the login rate limit counts per visitor.
+
+**Why:** A link lets the supervisor, examiner and employers try the app
+without installing anything. The free plans were compared before choosing:
+Render's free database is deleted 30 days after it is created, while Neon's
+free plan does not expire, which matters because the demo must work at the
+presentation. Render builds both parts from GitHub without a Dockerfile, and
+an EU region keeps even fictional data in Europe. Render's pre-deploy command
+is only available on paid plans, so migrations run in the build.
+
+**Alternative considered:** Koyeb for the API (wakes in seconds, but
+0.1 vCPU makes the deliberately slow password check slow), Railway (no
+permanent free plan), and no deployment at all (local demo and a video only).
+
+**Known limitation:** The free API sleeps after 15 minutes without traffic;
+the first login after that took about 30 seconds in testing. Free plans and
+their limits can change. The app uses a direct database connection without
+pooling, which is enough for one server instance.
+
+## 72. Demo mode for the public site
+
+**Decision:** With `DEMO_MODE=true` the API answers 403 `DEMO_MODE` to
+password changes, email changes and deactivating users. With
+`VITE_DEMO_MODE=true` the frontend shows a short notice on My account instead
+of the password form. Everything else works as usual, and the seed is run
+before every demo. `DEMO_MODE` is separate from `NODE_ENV`.
+
+**Why:** The demo accounts and their password are public in the README. One
+visitor could change a password, an email or deactivate a doctor and lock
+every other visitor out. Only those actions are blocked, so the demo stays
+useful. The backend enforces the rule; the frontend only explains it, since
+`VITE_` variables are visible to everyone. Keeping it separate from
+`NODE_ENV` means the demo can be tested locally, and a real installation is
+never locked by mistake.
+
+**Alternative considered:** A read-only demo (visitors could not try
+booking or documentation), an automatic scheduled reset (another service to
+run and monitor), and an account per visitor (out of scope).
+
+**Known limitation:** Visitors can still change the demo data, for example
+cancel appointments or edit the clinic's name, and could enter inappropriate
+text. The seed restores it. Demo mode does not stop anyone from entering real
+personal data; only the warnings do.

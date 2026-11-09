@@ -10,7 +10,8 @@ import {
 import type { AppointmentType } from "../types/appointmentType";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { PageHeader } from "../components/PageHeader";
-import { Badge, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { Badge } from "../components/Badge";
 import { cellClassName, headRowClassName, tableWrapperClassName } from "../components/tableStyles";
 import { Button } from "../components/Button";
 

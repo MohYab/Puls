@@ -75,7 +75,7 @@ export default function PatientsPage() {
         )}
 
         {patients && patients.length > 0 && (
-          <div className="w-auto overflow-x-auto rounded-lg border bg-surface shadow-card">
+          <div className="relative w-auto overflow-x-auto rounded-lg border bg-surface shadow-card">
             {/* Fixed layout: the columns keep their width when the content changes
                 (e.g. "Inactive" badges). min-w: on a phone the table scrolls instead. */}
             <table className="w-full min-w-xl table-fixed text-sm">

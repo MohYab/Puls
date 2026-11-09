@@ -86,6 +86,7 @@ export function SearchSelect({
 
       <ComboboxOptions
         anchor="bottom start"
+        modal={false}
         className="z-50 max-h-64 w-(--input-width) overflow-auto rounded-lg border bg-surface p-1 text-sm shadow-lg [--anchor-gap:4px] empty:invisible"
       >
         {filtered.map((option) => (

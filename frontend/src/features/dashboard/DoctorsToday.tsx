@@ -40,7 +40,7 @@ export function DoctorsToday({
 
       {isReady && rows.length > 0 && (
         // Scrolls inside the card on a phone instead of widening the page.
-        <div className="-mx-4 overflow-x-auto md:-mx-5">
+        <div className="relative -mx-4 overflow-x-auto md:-mx-5">
           <table className="w-full text-sm tabular-nums">
             <thead>
               <tr className="border-b text-xs font-semibold uppercase tracking-wide text-muted">
