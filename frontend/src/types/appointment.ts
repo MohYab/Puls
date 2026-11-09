@@ -45,3 +45,11 @@ export interface PatientAppointment {
   /** Only sent to doctors (decision #56). */
   hasNote?: boolean;
 }
+export interface StatusChangeTarget {
+  id: string;
+  status: AppointmentStatus;
+  startTime: string;
+  /** Only sent to doctors (decision #56). */
+  hasNote?: boolean;
+  patient: { firstName: string; lastName: string };
+}

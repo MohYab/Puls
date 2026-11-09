@@ -5,14 +5,14 @@ import { FormField } from "../../components/FormField";
 import { inputClassName } from "../../components/formStyles";
 import { Modal } from "../../components/Modal";
 import { correctionFormSchema, type CorrectionFormValues } from "../../schemas/appointmentSchemas";
-import type { Appointment, AppointmentStatus } from "../../types/appointment";
+import type { AppointmentStatus, StatusChangeTarget } from "../../types/appointment";
 import { STATUS_LABELS, isCorrection, statusTargets } from "../../utils/appointmentStatus";
 import { useUpdateAppointmentStatus } from "./useAppointments";
 import { FormError } from "../../components/Feedback";
 import { FormActions } from "../../components/FormActions";
 
 interface CorrectStatusDialogProps {
-  appointment: Appointment;
+  appointment: StatusChangeTarget;
   /** The status chosen in the status menu, already selected. */
   defaultStatus?: AppointmentStatus;
   onClose: () => void;

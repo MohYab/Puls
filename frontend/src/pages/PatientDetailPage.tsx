@@ -128,7 +128,7 @@ export default function PatientDetailPage() {
           {user?.role === "DOCTOR" && <LatestMeasurements patientId={patient.id} />}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
-            <AppointmentHistory patientId={patient.id} />
+            <AppointmentHistory patientId={patient.id} patientName={patient} />
             {user?.role === "DOCTOR" ? (
               <PreviousNotes patientId={patient.id} />
             ) : (
