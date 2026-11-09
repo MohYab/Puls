@@ -60,7 +60,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         {clinic && <div className="mt-0.5 truncate text-xs text-slate-300">{clinic.name}</div>}
       </div>
 
-      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3">
+      <nav aria-label="Main" className="main-h-0 flex-1 overflow-y-auto px-3">
         <NavList items={mainItems} onNavigate={onNavigate} />
 
         {adminItems.length > 0 && (

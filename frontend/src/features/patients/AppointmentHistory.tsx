@@ -39,7 +39,7 @@ export function AppointmentHistory({ patientId }: { patientId: string }) {
 
       {appointments && appointments.length > 0 && (
         // Full width, and scrolls inside the card on a phone.
-        <div className="-mx-4 -mb-4 overflow-x-auto md:-mx-5 md:-mb-5">
+        <div className="relative -mx-4 -mb-4 overflow-x-auto md:-mx-5 md:-mb-5">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-xs font-semibold uppercase tracking-wide text-muted">
