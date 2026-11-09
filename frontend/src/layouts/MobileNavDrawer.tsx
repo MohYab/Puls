@@ -51,7 +51,9 @@ export function MobileNavDrawer({ id, isOpen, onClose }: MobileNavDrawerProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex md:hidden">
+    // h-dvh: the visible height, so the bottom (user and Log out) is never
+    // hidden behind the mobile browser's toolbar.
+    <div className="fixed inset-x-0 top-0 z-40 flex h-dvh md:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
 
       <div
