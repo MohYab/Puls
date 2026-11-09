@@ -78,7 +78,7 @@ export default function PatientsPage() {
           <div className="relative w-auto overflow-x-auto rounded-lg border bg-surface shadow-card">
             {/* Fixed layout: the columns keep their width when the content changes
                 (e.g. "Inactive" badges). min-w: on a phone the table scrolls instead. */}
-            <table className="w-full min-w-xl table-fixed text-sm">
+            <table className="w-full table-fixed text-sm sm:min-w-xl">
               <thead>
                 <tr className="border-b text-xs font-semibold uppercase tracking-wide text-muted">
                   <th scope="col" className={`${cell} text-start`}>
@@ -87,7 +87,7 @@ export default function PatientsPage() {
                   <th scope="col" className={`${cell} text-start`}>
                     Date of birth
                   </th>
-                  <th scope="col" className={`${cell} text-start`}>
+                  <th scope="col" className={`${cell} hidden text-start sm:table-cell`}>
                     Phone
                   </th>
                 </tr>
@@ -99,7 +99,10 @@ export default function PatientsPage() {
                     <tr key={patient.id} className="hover:bg-subtle">
                       <td className={cell}>
                         <span className="flex min-w-0 items-center gap-3">
-                          <Avatar name={name} size="sm" />
+                          <span className="hidden sm:contents">
+                            <Avatar name={name} size="sm" />
+                          </span>
+
                           <Link
                             to={`/patients/${patient.id}`}
                             className={`truncate font-semibold hover:underline ${patient.isActive ? "text-ink" : "text-muted"}`}
@@ -115,9 +118,13 @@ export default function PatientsPage() {
                         </span>
                       </td>
                       <td className={`${cell} whitespace-nowrap tabular-nums`}>
-                        {birthDateAndAge(patient.dateOfBirth)}
+                        {/* Name and date of birth identify the patient (#63); the age is extra. */}
+                        <span className="sm:hidden">{patient.dateOfBirth.slice(0, 10)}</span>
+                        <span className="hidden sm:inline">
+                          {birthDateAndAge(patient.dateOfBirth)}
+                        </span>
                       </td>
-                      <td className={`${cell} whitespace-nowrap tabular-nums`}>
+                      <td className={`${cell} hidden whitespace-nowrap tabular-nums sm:table-cell`}>
                         {patient.phone ?? <span className="text-muted">–</span>}
                       </td>
                     </tr>
