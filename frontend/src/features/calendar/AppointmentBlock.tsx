@@ -68,7 +68,7 @@ export function AppointmentBlock({
           </span>
           <span className="block truncate text-muted">
             <span className="tabular-nums">{formatTimeRange(startTime, endTime)}</span> ·
-            {showType && ` · ${appointmentType.name}`}
+            {showType && ` ${appointmentType.name}`}
           </span>
         </>
       )}
