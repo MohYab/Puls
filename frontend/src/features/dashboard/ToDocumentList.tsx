@@ -1,3 +1,5 @@
+import { useId, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar } from "../../components/Avatar";
 import { Badge } from "../../components/Badge";
@@ -5,6 +7,9 @@ import { Card } from "../../components/Card";
 import { EmptyMessage, ErrorMessage, LoadingMessage } from "../../components/Feedback";
 import type { AppointmentsToDocument } from "../appointments/appointmentService";
 import { formatRelativeDay, formatTime } from "../../utils/date";
+
+// The dashboard is an overview: show a few visits and let the user expand the rest.
+const COLLAPSED_COUNT = 5;
 
 interface ToDocumentListProps {
   data: AppointmentsToDocument | undefined;
@@ -16,6 +21,17 @@ interface ToDocumentListProps {
 
 // Oldest first: the longest-waiting visit is the most urgent.
 export function ToDocumentList({ data, now, isLoading, isError, onRetry }: ToDocumentListProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const listId = useId();
+
+  const appointments = data?.appointments ?? [];
+  // Counts loaded visits, not data.total: the API returns at most a limited number.
+  const hiddenCount = appointments.length - COLLAPSED_COUNT;
+  const canCollapse = hiddenCount > 0;
+  const visibleAppointments =
+    isExpanded || !canCollapse ? appointments : appointments.slice(0, COLLAPSED_COUNT);
+  const showsAllLoaded = visibleAppointments.length === appointments.length;
+
   return (
     <Card
       title="To document"
@@ -38,10 +54,10 @@ export function ToDocumentList({ data, now, isLoading, isError, onRetry }: ToDoc
         <EmptyMessage>All completed visits are documented.</EmptyMessage>
       )}
 
-      {data && data.appointments.length > 0 && (
+      {data && appointments.length > 0 && (
         <>
-          <ul className="flex flex-col gap-2">
-            {data.appointments.map((appointment) => {
+          <ul id={listId} className="flex flex-col gap-2">
+            {visibleAppointments.map((appointment) => {
               const name = `${appointment.patient.firstName} ${appointment.patient.lastName}`;
               return (
                 <li key={appointment.id} className="flex items-center gap-3 rounded-lg border p-3">
@@ -64,9 +80,28 @@ export function ToDocumentList({ data, now, isLoading, isError, onRetry }: ToDoc
               );
             })}
           </ul>
-          {data.total > data.appointments.length && (
+
+          {canCollapse && (
+            <button
+              type="button"
+              aria-expanded={isExpanded}
+              aria-controls={listId}
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+              className="mt-3 inline-flex items-center gap-1 font-semibold text-accent hover:underline"
+            >
+              {isExpanded ? "Show less" : `Show more`}
+              <ChevronDown
+                aria-hidden="true"
+                className={`size-4 transition-transform motion-reduce:transition-none ${
+                  isExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
+
+          {showsAllLoaded && data.total > appointments.length && (
             <p className="mt-3 text-sm text-muted">
-              Showing the oldest {data.appointments.length} of {data.total}.
+              Showing the oldest {appointments.length} of {data.total}.
             </p>
           )}
         </>
