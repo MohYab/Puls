@@ -4,7 +4,7 @@ A small usability test of the Puls MVP, run in week 14 against the public demo.
 
 ## Goal
 
-Find out whether a new user can complete the core doctor workflow without help: find a patient, book a visit, document it and find the documentation again.
+Find out whether a new user can complete the core doctor workflow without help: find a patient, book a visit, document it, find the documentation again and share it with another doctor.
 
 ## Method
 
