@@ -25,6 +25,7 @@ Find out whether a new user can complete the core doctor workflow without help: 
 | 2   | Book an appointment for any patient on any weekday next week.                                    | Booked date and time in the database |
 | 3   | Document a completed visit from the "To document" list with the template "General consultation". | Note for the stated patient          |
 | 4   | Open the note from the patient's page.                                                           | Self-reported                        |
+| 5   | Share a note with another doctor.                                                                | Share to the stated doctor           |
 
 ## Measures
 
@@ -35,6 +36,7 @@ Find out whether a new user can complete the core doctor workflow without help: 
 
 - **Tasks avoid collisions in the shared demo.** Bookings are spread over a week, and each participant chooses any visit to document. A separate seed script (`backend/prisma/usability-seed.ts`) adds 30 completed visits without a note, and leaves out the patient used in task 1 so that the answer cannot change.
 - **Task 3 uses an existing completed visit,** because a visit must have started before it can be marked as completed.
+- **Task 5 tests note sharing,** the feature that is most specific to Puls.
 - **No admin tasks,** because admin changes would affect every other participant.
 
 ## Results
@@ -57,6 +59,7 @@ To be filled in after the test period.
 | 2    |     |        |     |                   |                        |
 | 3    |     |        |     |                   |                        |
 | 4    |     |        |     |                   | –                      |
+| 5    |     |        |     |                   |                        |
 
 ### SUS
 
@@ -76,7 +79,6 @@ To be filled in after the test period.
 
 - The participants are developers, students and teachers, not healthcare staff.
 - The number of participants is small.
-- Success is self-reported. Tasks 1–3 have answers that can be checked, task 4 does not.
+- Success is self-reported. Tasks 1–3 and 5 have answers that can be checked, task 4 does not.
 - Everyone shares one demo account, so participants can see each other's bookings and notes.
-- The test does not cover changing a visit's status to Completed.
 - The form and the app are in English, but most participants have Swedish as their first language.
