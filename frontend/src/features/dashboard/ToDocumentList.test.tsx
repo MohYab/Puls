@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { AppointmentsToDocument } from "../appointments/appointmentService";
@@ -45,15 +46,15 @@ describe("ToDocumentList", () => {
     expect(button).toHaveAttribute("aria-controls", screen.getByRole("list").id);
   });
 
-  it("expands and collapses the list", () => {
+  it("expands and collapses the list", async () => {
     renderList(makeData(8));
 
-    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    await userEvent.click(screen.getByRole("button", { name: "Show more" }));
     expect(visibleRows()).toHaveLength(8);
     const button = screen.getByRole("button", { name: "Show less" });
     expect(button).toHaveAttribute("aria-expanded", "true");
 
-    fireEvent.click(button);
+    await userEvent.click(button);
     expect(visibleRows()).toHaveLength(5);
   });
 
@@ -64,11 +65,11 @@ describe("ToDocumentList", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("explains the limit only when all loaded visits are shown", () => {
+  it("explains the limit only when all loaded visits are shown", async () => {
     renderList(makeData(20, 31));
 
     expect(screen.queryByText(/Showing the oldest/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    await userEvent.click(screen.getByRole("button", { name: "Show more" }));
     expect(screen.getByText("Showing the oldest 20 of 31.")).toBeInTheDocument();
   });
 });

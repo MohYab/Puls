@@ -10,11 +10,21 @@ function ymd(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-// A weekday at least 90 days ahead; the seed only uses days around today.
-function testDay(): string {
+// Today at local midnight, plus a number of days.
+function daysFromToday(days: number): Date {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() + 90);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+// The seed books visits at most this many days after the day it was run
+// (prisma/seed.ts), and it is never run in the future.
+const SEED_MAX_DAYS_AHEAD = 7;
+
+// A weekday at least 90 days ahead, well after any seeded visit.
+function testDay(): string {
+  const date = daysFromToday(90);
   while (date.getDay() === 0 || date.getDay() === 6) {
     date.setDate(date.getDate() + 1);
   }
@@ -91,7 +101,28 @@ describe("Appointment conflicts", () => {
     erikDoctorId = requireValue(erik.user.doctorId, "Erik must have a doctor profile");
     saraDoctorId = requireValue(sara.user.doctorId, "Sara must have a doctor profile");
 
-    // The day must be empty for both doctors, or the results would mean nothing.
+    // A run that was interrupted before afterAll (e.g. Ctrl+C) leaves its
+    // appointments on the test day, and the next run would fail below. So
+    // first delete whatever these two doctors have on that day. This may only
+    // ever touch appointments this suite created: the day must lie after the
+    // last day the seed uses, which the check below guarantees.
+    const dayStart = new Date(`${day}T00:00:00`);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    expect(
+      dayStart.getTime(),
+      `Test day ${day} must be after the seed's last day`
+    ).toBeGreaterThanOrEqual(daysFromToday(SEED_MAX_DAYS_AHEAD + 1).getTime());
+
+    const leftover = {
+      doctorId: { in: [erikDoctorId, saraDoctorId] },
+      startTime: { gte: dayStart, lt: dayEnd },
+    };
+    // Status changes first (foreign key).
+    await prisma.appointmentStatusChange.deleteMany({ where: { appointment: leftover } });
+    await prisma.appointment.deleteMany({ where: leftover });
+
+    // The day must now be empty for both doctors, or the results would mean nothing.
     const [erikDay, saraDay] = await Promise.all([listDay(erikToken), listDay(saraToken)]);
     expect(erikDay.status).toBe(200);
     expect(saraDay.status).toBe(200);
