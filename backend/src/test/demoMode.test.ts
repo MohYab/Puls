@@ -1,5 +1,5 @@
 import request from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app.js";
 import { auth, loginAs } from "./helpers.js";
 
@@ -21,8 +21,12 @@ describe("demo mode (DEMO_MODE=true)", () => {
   let erik: DoctorRow;
   let sara: DoctorRow;
 
+  // Per test, since testEnvSetup.ts unstubs all env variables after each one.
+  beforeEach(() => {
+    vi.stubEnv("DEMO_MODE", "true");
+  });
+
   beforeAll(async () => {
-    process.env.DEMO_MODE = "true";
     adminToken = (await loginAs(app, "admin@puls.test")).token;
     doctorToken = (await loginAs(app, "erik@puls.test")).token;
 
@@ -30,10 +34,6 @@ describe("demo mode (DEMO_MODE=true)", () => {
     const doctors = res.body as DoctorRow[];
     erik = doctors.find((doctor) => doctor.user.email === "erik@puls.test")!;
     sara = doctors.find((doctor) => doctor.user.email === "sara@puls.test")!;
-  });
-
-  afterAll(() => {
-    delete process.env.DEMO_MODE;
   });
 
   it("blocks password changes", async () => {
