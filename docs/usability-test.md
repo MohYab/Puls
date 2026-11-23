@@ -45,11 +45,12 @@ To be filled in after the test period.
 
 ### Participants
 
-| Role                  | Form | Moderated |
-| --------------------- | ---- | --------- |
-| Student               |      |           |
-| Teacher or supervisor |      |           |
-| Other                 |      |           |
+| Role                        | Form | Moderated |
+| --------------------------- | ---- | --------- |
+| Junior developer or student |      |           |
+| Senior developer            |      |           |
+| Healthcare professional     |      |           |
+| Other                       |      |           |
 
 ### Task results
 
